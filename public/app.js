@@ -348,23 +348,56 @@ async function startChecking() {
       elLastCheck.textContent = new Date().toLocaleTimeString();
 
       try {
-        const response = await fetch('/api/proxy-check', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            url: targetUrl,
-            method: elMethod.value,
-            headers: headers,
-            body: requestPayload
-          })
-        });
-
-        const resData = await response.json();
+        let resData;
+        const isSameOrigin = targetUrl.startsWith('/') || targetUrl.startsWith(window.location.origin);
         
-        if (!response.ok) {
-          throw new Error(resData.message || `Proxy server returned status ${response.status}`);
+        if (isSameOrigin) {
+          const relativeUrl = targetUrl.startsWith(window.location.origin)
+            ? targetUrl.substring(window.location.origin.length)
+            : targetUrl;
+            
+          const fetchOptions = {
+            method: elMethod.value,
+            headers: { ...headers }
+          };
+          
+          if (requestPayload && ['POST', 'PUT', 'PATCH'].includes(elMethod.value.toUpperCase())) {
+            fetchOptions.body = typeof requestPayload === 'object' ? JSON.stringify(requestPayload) : requestPayload;
+            fetchOptions.headers['Content-Type'] = 'application/json';
+          }
+          
+          const response = await fetch(relativeUrl, fetchOptions);
+          const responseText = await response.text();
+          const responseHeaders = {};
+          if (response.headers.has('retry-after')) {
+            responseHeaders['retry-after'] = response.headers.get('retry-after');
+          }
+          
+          resData = {
+            status: response.status,
+            statusText: response.statusText,
+            headers: responseHeaders,
+            data: responseText
+          };
+        } else {
+          const response = await fetch('/api/proxy-check', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              url: targetUrl,
+              method: elMethod.value,
+              headers: headers,
+              body: requestPayload
+            })
+          });
+
+          resData = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(resData.message || `Proxy server returned status ${response.status}`);
+          }
         }
 
         const remoteStatus = resData.status;

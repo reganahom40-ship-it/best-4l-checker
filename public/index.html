@@ -10,8 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
   <style>
     :root {
       --bg-black: #000000;
@@ -46,22 +44,38 @@
       background-color: var(--bg-black);
       color: var(--text-primary);
       display: flex;
-      flex-direction: column;
       height: 100vh;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
-    /* TOP HEADER BAR */
-    nav {
-      height: 64px;
+    /* MAIN CONTAINER: SIDEBAR + CONTENT */
+    .app-wrapper {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* LEFT SIDEBAR */
+    aside {
+      width: 320px;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.8);
+    }
+
+    .brand-section {
+      padding: 24px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px;
-      background: var(--bg-card);
     }
 
     .brand {
@@ -99,6 +113,42 @@
       text-transform: uppercase;
     }
 
+    .sidebar-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+
+    /* MAIN RIGHT PANEL */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-black);
+    }
+
+    /* TOP HEADER */
+    header {
+      height: 64px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: var(--bg-card);
+      flex-shrink: 0;
+    }
+
+    .header-title h2 {
+      font-size: 1.10rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
     .status-indicator {
       display: flex;
       align-items: center;
@@ -126,20 +176,73 @@
       animation: pulse 1.2s infinite;
     }
 
-    /* DASHBOARD WRAPPER */
-    .dashboard {
+    /* MAIN CONTENT VIEW */
+    .view-content {
       flex: 1;
+      padding: 24px 32px;
       display: grid;
-      grid-template-columns: 360px 1fr;
+      grid-template-rows: auto 1fr;
       gap: 24px;
-      padding: 24px 32px 24px 32px;
       overflow: hidden;
     }
 
-    @media (max-width: 950px) {
-      .dashboard {
-        grid-template-columns: 1fr;
-      }
+    /* TOP METRICS ROW */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .metric-card.available { border-top: 2px solid var(--success); }
+    .metric-card.rate-limited { border-top: 2px solid var(--warning); }
+    .metric-card.failed { border-top: 2px solid var(--danger); }
+
+    .metric-lbl {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .metric-data-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .metric-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .metric-pct {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .metric-card.available .metric-pct { color: var(--success); }
+    .metric-card.rate-limited .metric-pct { color: var(--warning); }
+
+    /* LAYOUT: SPLIT DISPLAY PANELS */
+    .display-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      overflow: hidden;
     }
 
     /* CARD STRUCTURE */
@@ -159,6 +262,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-shrink: 0;
     }
 
     .card-header h3 {
@@ -167,15 +271,6 @@
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--text-secondary);
-    }
-
-    .card-body {
-      padding: 24px;
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
     }
 
     /* INPUTS & SELECTS */
@@ -398,84 +493,12 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
-    /* RIGHT COLUMN LAYOUT */
-    .main-panel {
-      display: grid;
-      grid-template-rows: auto 1fr;
-      gap: 20px;
-      overflow: hidden;
-    }
-
-    /* TOP METRICS ROW */
-    .metrics-row {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-    }
-
-    .metric-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 14px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    }
-
-    .metric-card.available { border-top: 2px solid var(--success); }
-    .metric-card.rate-limited { border-top: 2px solid var(--warning); }
-    .metric-card.failed { border-top: 2px solid var(--danger); }
-
-    .metric-lbl {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    .metric-data-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-
-    .metric-val {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-
-    .metric-pct {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .metric-card.available .metric-pct { color: var(--success); }
-    .metric-card.rate-limited .metric-pct { color: var(--warning); }
-
-    /* CONTENT DISPLAY PANELS (SPLIT GRID) */
-    .display-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      overflow: hidden;
-    }
-
-    @media (max-width: 800px) {
-      .display-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
     /* TAB CONTROL & LISTS */
     .tab-nav {
       display: flex;
       border-bottom: 1px solid var(--border-color);
       background: rgba(255, 255, 255, 0.01);
+      flex-shrink: 0;
     }
 
     .tab-link {
@@ -537,7 +560,7 @@
     }
 
     .list-row {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.015);
       border: 1px solid var(--border-color);
       border-radius: 6px;
       padding: 12px 16px;
@@ -550,7 +573,7 @@
 
     .list-row.available {
       border-left: 3px solid var(--success);
-      box-shadow: inset 4px 0 0 rgba(16, 185, 129, 0.05);
+      box-shadow: inset 4px 0 0 rgba(16, 185, 129, 0.02);
     }
 
     .list-row.taken {
@@ -597,21 +620,62 @@
       opacity: 0.15;
     }
 
-    /* TERMINAL CONSOLE PANEL */
-    .terminal-console {
-      flex: 1;
+    /* PREMIUM TERMINAL MOCKUP */
+    .terminal-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
       background: #020203;
       border: 1px solid var(--border-color);
-      border-radius: 8px;
-      margin: 20px;
-      padding: 16px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+    }
+
+    .terminal-header {
+      height: 40px;
+      background: #09090b;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-color);
+    }
+
+    .terminal-dot.red { background: #ff5f56; }
+    .terminal-dot.yellow { background: #ffbd2e; }
+    .terminal-dot.green { background: #27c93f; }
+
+    .terminal-title {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .terminal-console {
+      flex: 1;
+      padding: 20px;
       font-family: var(--font-mono);
       font-size: 0.8rem;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 6px;
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
     }
 
     .terminal-row {
@@ -675,29 +739,18 @@
 </head>
 <body>
 
-  <!-- TOP HEADER -->
-  <nav>
-    <div class="brand">
-      <div class="brand-logo">❄</div>
-      <div class="brand-name">Snowflake</div>
-      <div class="brand-tag">API Scanner</div>
-    </div>
-
-    <div class="status-indicator">
-      <div class="status-dot" id="sysDot"></div>
-      <span id="sysStatusText">Status: Idle</span>
-    </div>
-  </nav>
-
-  <!-- DASHBOARD WRAPPER -->
-  <div class="dashboard">
-    <!-- LEFT SIDEBAR PANEL -->
-    <div class="card">
-      <div class="card-header">
-        <h3>Configuration</h3>
+  <div class="app-wrapper">
+    <!-- LEFT SIDEBAR: ALL CONFIGS -->
+    <aside>
+      <div class="brand-section">
+        <div class="brand">
+          <div class="brand-logo">❄</div>
+          <div class="brand-name">Snowflake</div>
+        </div>
+        <div class="brand-tag">v2.0</div>
       </div>
       
-      <div class="card-body">
+      <div class="sidebar-body">
         <div class="form-group">
           <label for="genMode">Scan Mode</label>
           <select id="genMode">
@@ -723,14 +776,14 @@
 
         <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 5px;">
           <label class="toggle-row">
-            <span>Auto-retry 429 rate limits</span>
+            <span>Auto-retry 429 limits</span>
             <span class="switch">
               <input type="checkbox" id="autoRetry" checked>
               <span class="slider-switch"></span>
             </span>
           </label>
           <label class="toggle-row">
-            <span>Play chime on available</span>
+            <span>Play chime on success</span>
             <span class="switch">
               <input type="checkbox" id="soundAlert" checked>
               <span class="slider-switch"></span>
@@ -739,7 +792,7 @@
         </div>
 
         <!-- COLLAPSIBLE ACCORDION FOR ADVANCED SETTINGS -->
-        <details style="margin-top: 10px; cursor: pointer; font-size: 0.85rem; color: var(--text-secondary);">
+        <details style="margin-top: 5px; cursor: pointer; font-size: 0.85rem; color: var(--text-secondary);">
           <summary style="font-weight: 700; text-transform: uppercase; outline: none; user-select: none; letter-spacing: 0.5px;">
             Advanced Options
           </summary>
@@ -776,106 +829,126 @@
           <button id="btnReset" class="btn btn-secondary">Clear Statistics</button>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <!-- RIGHT DASHBOARD METRICS & CONSOLE -->
-    <div class="main-panel">
-      <!-- TOP STATUS METRICS -->
-      <div class="metrics-row">
-        <div class="metric-card scanned">
-          <span class="metric-lbl">Processed</span>
-          <div class="metric-data-row">
-            <span class="metric-val" id="statScanned">0 / 0</span>
-            <span class="metric-pct" id="pctScanned">0%</span>
-          </div>
-        </div>
-        
-        <div class="metric-card available">
-          <span class="metric-lbl">Available</span>
-          <div class="metric-data-row">
-            <span class="metric-val" id="statAvailable">0</span>
-            <span class="metric-pct" id="pctAvailable">0%</span>
-          </div>
+    <!-- RIGHT MAIN CONTENT SPACE -->
+    <main>
+      <!-- HEADER NAVBAR -->
+      <header>
+        <div class="header-title">
+          <h2>Dashboard Overview</h2>
         </div>
 
-        <div class="metric-card taken">
-          <span class="metric-lbl">Taken</span>
-          <div class="metric-data-row">
-            <span class="metric-val" id="statTaken">0</span>
-            <span class="metric-pct" id="pctTaken">0%</span>
-          </div>
+        <div class="status-indicator">
+          <div class="status-dot" id="sysDot"></div>
+          <span id="sysStatusText">Status: Idle</span>
         </div>
+      </header>
 
-        <div class="metric-card rate-limited">
-          <span class="metric-lbl">Limited (429)</span>
-          <div class="metric-data-row">
-            <span class="metric-val" id="statLimited">0</span>
-            <span class="metric-pct" id="pctLimited">0%</span>
+      <!-- VIEW GRID CONTENT -->
+      <div class="view-content">
+        <!-- TOP STATUS METRICS -->
+        <div class="metrics-row">
+          <div class="metric-card scanned">
+            <span class="metric-lbl">Processed</span>
+            <div class="metric-data-row">
+              <span class="metric-val" id="statScanned">0 / 0</span>
+              <span class="metric-pct" id="pctScanned">0%</span>
+            </div>
           </div>
-        </div>
-
-        <div class="metric-card failed">
-          <span class="metric-lbl">Failed</span>
-          <div class="metric-data-row">
-            <span class="metric-val" id="statFailed">0</span>
-            <span class="metric-pct" id="pctFailed">0%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- RESULTS SPLIT GRID -->
-      <div class="card display-layout">
-        <!-- Results Panel (Left Half) -->
-        <div style="display: flex; flex-direction: column; height: 100%; border-right: 1px solid var(--border-color);">
-          <div class="tab-nav">
-            <button class="tab-link active" id="tab-available">
-              Available
-              <span class="tab-num" id="badgeAvailable">0</span>
-            </button>
-            <button class="tab-link" id="tab-taken">
-              Taken
-              <span class="tab-num" id="badgeTaken">0</span>
-            </button>
-          </div>
-
-          <div class="list-container" id="results-display-list">
-            <div class="empty-state" id="list-empty-state">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-              <div>No results recorded. Select a mode and begin.</div>
+          
+          <div class="metric-card available">
+            <span class="metric-lbl">Available</span>
+            <div class="metric-data-row">
+              <span class="metric-val" id="statAvailable">0</span>
+              <span class="metric-pct" id="pctAvailable">0%</span>
             </div>
           </div>
 
-          <div style="padding: 14px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
-            <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 6px 14px; font-size: 0.75rem; border-radius: 4px;">Copy list</button>
+          <div class="metric-card taken">
+            <span class="metric-lbl">Taken</span>
+            <div class="metric-data-row">
+              <span class="metric-val" id="statTaken">0</span>
+              <span class="metric-pct" id="pctTaken">0%</span>
+            </div>
+          </div>
+
+          <div class="metric-card rate-limited">
+            <span class="metric-lbl">Limited (429)</span>
+            <div class="metric-data-row">
+              <span class="metric-val" id="statLimited">0</span>
+              <span class="metric-pct" id="pctLimited">0%</span>
+            </div>
+          </div>
+
+          <div class="metric-card failed">
+            <span class="metric-lbl">Failed</span>
+            <div class="metric-data-row">
+              <span class="metric-val" id="statFailed">0</span>
+              <span class="metric-pct" id="pctFailed">0%</span>
+            </div>
           </div>
         </div>
 
-        <!-- Terminal Console Panel (Right Half) -->
-        <div style="display: flex; flex-direction: column; height: 100%;">
-          <div class="card-header">
-            <h3>Live Activity Log</h3>
-            <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.7rem; border-radius: 4px;">Clear Console</button>
+        <!-- RESULTS GRID VIEW -->
+        <div class="display-layout">
+          <!-- Results Tab List Panel (Left side) -->
+          <div class="card" style="height: 100%;">
+            <div class="tab-nav">
+              <button class="tab-link active" id="tab-available">
+                Available
+                <span class="tab-num" id="badgeAvailable">0</span>
+              </button>
+              <button class="tab-link" id="tab-taken">
+                Taken
+                <span class="tab-num" id="badgeTaken">0</span>
+              </button>
+            </div>
+
+            <div class="list-container" id="results-display-list">
+              <div class="empty-state" id="list-empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div>No results recorded. Configure and start.</div>
+              </div>
+            </div>
+
+            <div style="padding: 14px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; flex-shrink: 0;">
+              <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 6px 14px; font-size: 0.75rem; border-radius: 4px;">Copy list</button>
+            </div>
           </div>
-          
-          <div id="logContent" class="terminal-console"></div>
+
+          <!-- Terminal Activity Log Panel (Right side) -->
+          <div class="terminal-container">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+              </div>
+              <span class="terminal-title">snowflake@activity-console: ~</span>
+              <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.65rem; border-radius: 4px; border: 1px solid var(--border-color);">Clear</button>
+            </div>
+            
+            <div id="logContent" class="terminal-console"></div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <!-- FOOTER STATS METRIC BAR -->
+      <footer>
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <span>Est. Remaining (ETA): <span class="footer-highlight" id="lblETA">00:00:00</span></span>
+        </div>
+
+        <div class="footer-metrics">
+          <div>Duration: <span class="footer-val" id="lblDuration">00:00:00</span></div>
+          <div>Reqs/Min: <span class="footer-val" id="lblReqMin">0</span></div>
+          <div>Total Hits: <span class="footer-val" id="lblTotalHits">0</span></div>
+          <div>Last Check: <span class="footer-val" id="lblLastCheck">Never</span></div>
+        </div>
+      </footer>
+    </main>
   </div>
-
-  <!-- STATUS FOOTER BAR -->
-  <footer>
-    <div style="display: flex; align-items: center; gap: 15px;">
-      <span>Est. Remaining (ETA): <span class="footer-highlight" id="lblETA">00:00:00</span></span>
-    </div>
-
-    <div class="footer-metrics">
-      <div>Duration: <span class="footer-val" id="lblDuration">00:00:00</span></div>
-      <div>Reqs/Min: <span class="footer-val" id="lblReqMin">0</span></div>
-      <div>Total Hits: <span class="footer-val" id="lblTotalHits">0</span></div>
-      <div>Last Check: <span class="footer-val" id="lblLastCheck">Never</span></div>
-    </div>
-  </footer>
 
   <script src="app.js"></script>
 </body>
