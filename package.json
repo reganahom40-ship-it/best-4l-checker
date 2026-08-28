@@ -1,0 +1,12 @@
+{
+  "name": "generic-api-checker",
+  "version": "1.0.0",
+  "description": "Generic API checking client dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
