@@ -111,8 +111,17 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
 
                 req = urllib.request.Request(target_url, data=req_body, headers=headers, method=method)
                 
+                proxy = payload.get('proxy')
+                if proxy:
+                    if not proxy.startswith('http://') and not proxy.startswith('https://'):
+                        proxy = 'http://' + proxy
+                    proxy_handler = urllib.request.ProxyHandler({'http': proxy, 'https': proxy})
+                    opener = urllib.request.build_opener(proxy_handler)
+                else:
+                    opener = urllib.request.build_opener()
+
                 try:
-                    with urllib.request.urlopen(req) as resp:
+                    with opener.open(req, timeout=12) as resp:
                         resp_status = resp.status
                         resp_headers = dict(resp.headers)
                         resp_data = resp.read().decode('utf-8', errors='replace')

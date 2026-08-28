@@ -1,4 +1,8 @@
-// State Variables
+// ==========================================
+// SNOWFLAKE v4.0 PRO — REQUEST ARCHITECTURE
+// ==========================================
+
+// Global State
 let isRunning = false;
 let queue = [];
 let totalCount = 0;
@@ -6,15 +10,19 @@ let scannedCount = 0;
 let availableCount = 0;
 let takenCount = 0;
 let rateLimitedCount = 0;
+let verificationCount = 0;
 let failedCount = 0;
 
 let availableList = [];
 let checkedList = [];
 
-// Timers & Metrics
+// Latency & Metrics Tracking
+let totalLatencyMs = 0;
+let latencySamples = 0;
 let startTime = null;
 let durationInterval = null;
 let totalRequests = 0;
+let activeWorkersCount = 0;
 
 // Tab State
 let activeResultTab = 'available';
@@ -28,7 +36,10 @@ const elTargetUrl = document.getElementById('targetUrl');
 const elMethod = document.getElementById('method');
 const elDelaySlider = document.getElementById('delaySlider');
 const elLblSpeed = document.getElementById('lblSpeed');
-const elHeaders = document.getElementById('headers');
+const elConcurrencySlider = document.getElementById('concurrencySlider');
+const elLblConcurrency = document.getElementById('lblConcurrency');
+const elCredentialPoolInput = document.getElementById('credentialPoolInput');
+const elProxyListInput = document.getElementById('proxyListInput');
 const elRequestBody = document.getElementById('requestBody');
 const elAutoRetry = document.getElementById('autoRetry');
 const elSoundAlert = document.getElementById('soundAlert');
@@ -38,18 +49,20 @@ const elBtnStop = document.getElementById('btnStop');
 const elBtnReset = document.getElementById('btnReset');
 const elBtnExport = document.getElementById('btnExport');
 const elBtnClearLogs = document.getElementById('btnClearLogs');
+const elBtnDismissVerification = document.getElementById('btnDismissVerification');
 
 const elStatScanned = document.getElementById('statScanned');
 const elStatAvailable = document.getElementById('statAvailable');
 const elStatTaken = document.getElementById('statTaken');
 const elStatLimited = document.getElementById('statLimited');
-const elStatFailed = document.getElementById('statFailed');
+const elStatVerification = document.getElementById('statVerification');
+const elStatAvgLatency = document.getElementById('statAvgLatency');
 
 const elPctScanned = document.getElementById('pctScanned');
 const elPctAvailable = document.getElementById('pctAvailable');
 const elPctTaken = document.getElementById('pctTaken');
 const elPctLimited = document.getElementById('pctLimited');
-const elPctFailed = document.getElementById('pctFailed');
+const elPctVerification = document.getElementById('pctVerification');
 
 const elProgressFill = document.getElementById('progressFill');
 const elLblProgressPct = document.getElementById('lblProgressPct');
@@ -59,12 +72,16 @@ const elBadgeTaken = document.getElementById('badgeTaken');
 
 const elResultsDisplayList = document.getElementById('results-display-list');
 const elLogContent = document.getElementById('logContent');
+const elCredentialStatusList = document.getElementById('credentialStatusList');
+const elLblActiveCredsCount = document.getElementById('lblActiveCredsCount');
+const elVerificationBanner = document.getElementById('verificationBanner');
 
 const elDuration = document.getElementById('lblDuration');
 const elReqMin = document.getElementById('lblReqMin');
 const elTotalHits = document.getElementById('lblTotalHits');
 const elLastCheck = document.getElementById('lblLastCheck');
 const elETA = document.getElementById('lblETA');
+const elActiveWorkers = document.getElementById('lblActiveWorkers');
 
 const elSysDot = document.getElementById('sysDot');
 const elSysStatusText = document.getElementById('sysStatusText');
@@ -72,44 +89,189 @@ const elSysStatusText = document.getElementById('sysStatusText');
 const elTabAvailable = document.getElementById('tab-available');
 const elTabTaken = document.getElementById('tab-taken');
 
-// Sidebar Navigation Smooth Scroll / Selection
-document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', (e) => {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    item.classList.add('active');
-  });
+// ==========================================
+// 1. CREDENTIAL POOL MANAGER
+// ==========================================
+class CredentialPool {
+  constructor() {
+    this.credentials = [];
+    this.currentIndex = 0;
+  }
+
+  loadFromInput(rawText) {
+    const lines = rawText.split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+    
+    this.credentials = lines.map((token, idx) => ({
+      id: idx + 1,
+      token: token,
+      masked: this.maskSecret(token),
+      cooldownUntil: 0,
+      requestsCount: 0,
+      rateLimitCount: 0
+    }));
+
+    if (this.credentials.length === 0) {
+      this.credentials.push({
+        id: 1,
+        token: '',
+        masked: 'Unauthenticated',
+        cooldownUntil: 0,
+        requestsCount: 0,
+        rateLimitCount: 0
+      });
+    }
+
+    this.renderUI();
+  }
+
+  maskSecret(secret) {
+    if (!secret || secret.length < 8) return 'Token #Active';
+    return secret.substring(0, 4) + '...' + secret.substring(secret.length - 4);
+  }
+
+  getAvailableCredential() {
+    const now = Date.now();
+    const readyCreds = this.credentials.filter(c => c.cooldownUntil <= now);
+    
+    if (readyCreds.length === 0) {
+      // All in cooldown: find the one that will be ready soonest
+      let soonest = this.credentials[0];
+      for (const c of this.credentials) {
+        if (c.cooldownUntil < soonest.cooldownUntil) soonest = c;
+      }
+      const waitMs = Math.max(0, soonest.cooldownUntil - now);
+      return { credential: null, waitMs: waitMs };
+    }
+
+    // Round-robin selection among ready credentials
+    this.currentIndex = (this.currentIndex + 1) % readyCreds.length;
+    const selected = readyCreds[this.currentIndex];
+    selected.requestsCount++;
+    this.renderUI();
+    return { credential: selected, waitMs: 0 };
+  }
+
+  setCooldown(credId, seconds) {
+    const cred = this.credentials.find(c => c.id === credId);
+    if (cred) {
+      cred.cooldownUntil = Date.now() + (seconds * 1000);
+      cred.rateLimitCount++;
+      this.renderUI();
+    }
+  }
+
+  renderUI() {
+    if (!elCredentialStatusList) return;
+    elCredentialStatusList.innerHTML = '';
+    const now = Date.now();
+
+    elLblActiveCredsCount.textContent = this.credentials.length;
+
+    this.credentials.forEach(c => {
+      const isCooldown = c.cooldownUntil > now;
+      const remainingSec = Math.ceil((c.cooldownUntil - now) / 1000);
+
+      const row = document.createElement('div');
+      row.className = 'credential-badge-row';
+
+      const left = document.createElement('div');
+      left.style.display = 'flex';
+      left.style.alignItems = 'center';
+      left.style.gap = '6px';
+
+      const dot = document.createElement('div');
+      dot.className = `cred-status-dot ${isCooldown ? 'cooldown' : ''}`;
+      left.appendChild(dot);
+
+      const label = document.createElement('span');
+      label.textContent = c.masked;
+      left.appendChild(label);
+
+      row.appendChild(left);
+
+      const right = document.createElement('span');
+      right.style.color = isCooldown ? 'var(--amber)' : 'var(--text-muted)';
+      right.textContent = isCooldown ? `Cooldown ${remainingSec}s` : `Reqs: ${c.requestsCount}`;
+      row.appendChild(right);
+
+      elCredentialStatusList.appendChild(row);
+    });
+  }
+}
+
+const credentialPool = new CredentialPool();
+
+// ==========================================
+// 2. PROXY POOL MANAGER
+// ==========================================
+class ProxyPool {
+  constructor() {
+    this.proxies = [];
+    this.currentIndex = 0;
+  }
+
+  loadFromInput(rawText) {
+    this.proxies = rawText.split('\n')
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
+  }
+
+  getNextProxy() {
+    if (this.proxies.length === 0) return null;
+    this.currentIndex = (this.currentIndex + 1) % this.proxies.length;
+    return this.proxies[this.currentIndex];
+  }
+}
+
+const proxyPool = new ProxyPool();
+
+// ==========================================
+// 3. UI CONTROLS & LISTENERS
+// ==========================================
+elDelaySlider.addEventListener('input', () => {
+  elLblSpeed.textContent = `${elDelaySlider.value}ms`;
 });
 
-// Preset Switcher
+elConcurrencySlider.addEventListener('input', () => {
+  const val = elConcurrencySlider.value;
+  elLblConcurrency.textContent = `${val} Worker${val > 1 ? 's' : ''}`;
+});
+
+elCredentialPoolInput.addEventListener('input', () => {
+  credentialPool.loadFromInput(elCredentialPoolInput.value);
+});
+
+elProxyListInput.addEventListener('input', () => {
+  proxyPool.loadFromInput(elProxyListInput.value);
+});
+
+elBtnDismissVerification.addEventListener('click', () => {
+  elVerificationBanner.classList.remove('active');
+});
+
 elApiPreset.addEventListener('change', () => {
   const preset = elApiPreset.value;
   if (preset === 'discord') {
     elTargetUrl.value = 'https://discord.com/api/v9/users/@me/pomelo-attempt';
     elMethod.value = 'POST';
-    elHeaders.value = '{\n  "Authorization": "YOUR_DISCORD_TOKEN",\n  "Content-Type": "application/json"\n}';
     elRequestBody.value = '{\n  "username": "{id}"\n}';
-    log('Loaded Discord Pomelo Preset. Provide your token in Endpoint & Authorization.', 'warn');
+    log('Loaded Discord Pomelo Preset. Enter your authorized Discord token in the Credential Pool.', 'warn');
   } else if (preset === 'github') {
     elTargetUrl.value = 'https://api.github.com/users/{id}';
     elMethod.value = 'GET';
-    elHeaders.value = '{\n  "User-Agent": "Snowflake-Checker"\n}';
     elRequestBody.value = '';
     log('Loaded GitHub Users Preset (404 = Available, 200 = Taken).', 'info');
   } else if (preset === 'mock') {
     elTargetUrl.value = window.location.origin + '/api/mock-check/{id}';
     elMethod.value = 'GET';
-    elHeaders.value = '';
     elRequestBody.value = '';
     log('Loaded Local Mock Test Simulator.', 'info');
   }
 });
 
-// Slider Label
-elDelaySlider.addEventListener('input', () => {
-  elLblSpeed.textContent = `${elDelaySlider.value}ms`;
-});
-
-// Chime Alert via Web Audio
+// Chime Alert via Web Audio API
 function playSuccessSound() {
   if (!elSoundAlert.checked) return;
   try {
@@ -129,12 +291,10 @@ function playSuccessSound() {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
     
     osc.stop(ctx.currentTime + 0.3);
-  } catch (err) {
-    console.error('Audio chime error:', err);
-  }
+  } catch (err) {}
 }
 
-// Log messages
+// Log message to activity terminal
 function log(msg, type = 'info') {
   const time = new Date().toLocaleTimeString();
   const row = document.createElement('div');
@@ -169,7 +329,7 @@ function log(msg, type = 'info') {
   elLogContent.scrollTop = elLogContent.scrollHeight;
 }
 
-// Update stats tiles
+// Update dashboard statistics
 function updateStatsUI() {
   const total = totalCount || 1;
   const pct = Math.round((scannedCount / total) * 100);
@@ -189,16 +349,23 @@ function updateStatsUI() {
   elStatLimited.textContent = rateLimitedCount;
   elPctLimited.textContent = `${Math.round((rateLimitedCount / total) * 100)}%`;
 
-  elStatFailed.textContent = failedCount;
-  elPctFailed.textContent = `${Math.round((failedCount / total) * 100)}%`;
+  elStatVerification.textContent = verificationCount;
+  elPctVerification.textContent = `${Math.round((verificationCount / total) * 100)}%`;
+
+  if (latencySamples > 0) {
+    const avgMs = Math.round(totalLatencyMs / latencySamples);
+    elStatAvgLatency.textContent = `${avgMs}ms`;
+  } else {
+    elStatAvgLatency.textContent = '0ms';
+  }
 
   elBadgeAvailable.textContent = availableCount;
   elBadgeTaken.textContent = takenCount;
-
   elTotalHits.textContent = totalRequests;
+  elActiveWorkers.textContent = activeWorkersCount;
 }
 
-// Update duration and ETA
+// Update duration, RPM, and ETA
 function updateMetrics() {
   if (!startTime) return;
   const diff = Date.now() - startTime;
@@ -209,9 +376,9 @@ function updateMetrics() {
 
   const elapsedMinutes = diff / 60000;
   if (elapsedMinutes > 0.05) {
-    elReqMin.textContent = Math.round(totalRequests / elapsedMinutes);
+    elReqMin.textContent = `${Math.round(totalRequests / elapsedMinutes)} RPM`;
   } else {
-    elReqMin.textContent = '0';
+    elReqMin.textContent = '0 RPM';
   }
 
   const remaining = totalCount - scannedCount;
@@ -221,15 +388,18 @@ function updateMetrics() {
   }
 
   const delayMs = parseInt(elDelaySlider.value, 10);
+  const workers = Math.max(1, parseInt(elConcurrencySlider.value, 10));
   if (delayMs === 0) {
     elETA.textContent = 'Instant';
   } else {
-    const totalRemainingSecs = Math.round((remaining * delayMs) / 1000);
+    const totalRemainingSecs = Math.round(((remaining * delayMs) / workers) / 1000);
     const etaH = String(Math.floor(totalRemainingSecs / 3600)).padStart(2, '0');
     const etaM = String(Math.floor((totalRemainingSecs % 3600) / 60)).padStart(2, '0');
     const etaS = String(totalRemainingSecs % 60).padStart(2, '0');
     elETA.textContent = `${etaH}:${etaM}:${etaS}`;
   }
+
+  credentialPool.renderUI();
 }
 
 // Render Results List
@@ -281,20 +451,31 @@ function resetStats() {
   availableCount = 0;
   takenCount = 0;
   rateLimitedCount = 0;
+  verificationCount = 0;
   failedCount = 0;
   totalRequests = 0;
+  totalLatencyMs = 0;
+  latencySamples = 0;
   availableList = [];
   checkedList = [];
   startTime = null;
   elDuration.textContent = '00:00:00';
-  elReqMin.textContent = '0';
+  elReqMin.textContent = '0 RPM';
   elTotalHits.textContent = '0';
   elLastCheck.textContent = 'Never';
   elETA.textContent = '00:00:00';
+  elStatAvgLatency.textContent = '0ms';
+
+  credentialPool.credentials.forEach(c => {
+    c.requestsCount = 0;
+    c.rateLimitCount = 0;
+    c.cooldownUntil = 0;
+  });
 
   updateStatsUI();
   renderList();
-  log('Dashboard statistics cleared.');
+  credentialPool.renderUI();
+  log('Scheduler and statistics reset.');
 }
 
 // Combinations Generator
@@ -335,7 +516,219 @@ function generateCombinations(mode) {
   return list;
 }
 
-// Main check loop
+// ==========================================
+// 4. RATE-LIMIT SCHEDULER & WORKER POOL
+// ==========================================
+async function runWorker(workerId) {
+  activeWorkersCount++;
+  updateStatsUI();
+
+  const rawBody = elRequestBody.value.trim();
+
+  while (isRunning && queue.length > 0) {
+    // 1. Acquire Credential from Pool
+    let credSelection = credentialPool.getAvailableCredential();
+    if (!credSelection.credential) {
+      // All credentials on rate limit cooldown
+      const waitSec = Math.ceil(credSelection.waitMs / 1000);
+      log(`[WORKER #${workerId}] All credentials in cooldown. Pausing worker for ${waitSec}s...`, 'warn');
+      await new Promise(r => setTimeout(r, Math.min(credSelection.waitMs, 5000)));
+      continue;
+    }
+
+    const cred = credSelection.credential;
+    const id = queue.shift();
+    if (!id) break;
+
+    const targetUrl = elTargetUrl.value.replace('{id}', encodeURIComponent(id));
+    const proxy = proxyPool.getNextProxy();
+
+    // Prepare Request Headers
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    if (cred.token) {
+      headers['Authorization'] = cred.token;
+    }
+
+    let requestPayload = null;
+    if (rawBody) {
+      requestPayload = rawBody.replace(/{id}/g, id);
+      try {
+        requestPayload = JSON.parse(requestPayload);
+      } catch (err) {
+        requestPayload = rawBody.replace(/{id}/g, id);
+      }
+    }
+
+    totalRequests++;
+    elLastCheck.textContent = new Date().toLocaleTimeString();
+
+    const requestStartTime = Date.now();
+    let resData;
+
+    try {
+      const isSameOrigin = (targetUrl.startsWith('/') || targetUrl.startsWith(window.location.origin)) && !proxy;
+
+      if (isSameOrigin) {
+        const relativeUrl = targetUrl.startsWith(window.location.origin)
+          ? targetUrl.substring(window.location.origin.length)
+          : targetUrl;
+          
+        const fetchOptions = {
+          method: elMethod.value,
+          headers: { ...headers }
+        };
+        
+        if (requestPayload && ['POST', 'PUT', 'PATCH'].includes(elMethod.value.toUpperCase())) {
+          fetchOptions.body = typeof requestPayload === 'object' ? JSON.stringify(requestPayload) : requestPayload;
+        }
+        
+        const response = await fetch(relativeUrl, fetchOptions);
+        const responseText = await response.text();
+        const responseHeaders = {};
+        if (response.headers.has('retry-after')) {
+          responseHeaders['retry-after'] = response.headers.get('retry-after');
+        }
+        
+        resData = {
+          status: response.status,
+          statusText: response.statusText,
+          headers: responseHeaders,
+          data: responseText
+        };
+      } else {
+        const response = await fetch('/api/proxy-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: targetUrl,
+            method: elMethod.value,
+            headers: headers,
+            body: requestPayload,
+            proxy: proxy
+          })
+        });
+
+        resData = await response.json();
+        if (!response.ok) {
+          throw new Error(resData.message || `Proxy error ${response.status}`);
+        }
+      }
+
+      // Record Latency
+      const latency = Date.now() - requestStartTime;
+      totalLatencyMs += latency;
+      latencySamples++;
+
+      const remoteStatus = resData.status;
+      let jsonPayload = null;
+      try {
+        if (resData.data) {
+          jsonPayload = typeof resData.data === 'string' ? JSON.parse(resData.data) : resData.data;
+        }
+      } catch (e) {}
+
+      // A. HTTP 429 — Rate Limit Detected
+      if (remoteStatus === 429) {
+        rateLimitedCount++;
+        
+        let waitSec = 5;
+        if (resData.headers && resData.headers['retry-after']) {
+          const parsed = parseInt(resData.headers['retry-after'], 10);
+          if (!isNaN(parsed)) waitSec = parsed;
+        } else if (jsonPayload && jsonPayload.retry_after) {
+          waitSec = Math.ceil(jsonPayload.retry_after);
+        }
+
+        log(`[429 RATE LIMIT] Token "${cred.masked}" rate-limited on "${id}". Cooldown: ${waitSec}s`, 'warn');
+        credentialPool.setCooldown(cred.id, waitSec);
+
+        // Put identifier back to front of queue to avoid missing it
+        queue.unshift(id);
+      }
+      // B. Verification / CAPTCHA Challenge (403 / verification payload)
+      else if (remoteStatus === 403 || (jsonPayload && (jsonPayload.captcha_key || jsonPayload.captcha_sitekey))) {
+        verificationCount++;
+        log(`[VERIFICATION REQUIRED] Remote server requested verification for token "${cred.masked}". Pausing job.`, 'error');
+        elVerificationBanner.classList.add('active');
+        stopChecking();
+        break;
+      }
+      // C. HTTP 401 — Unauthorized Token
+      else if (remoteStatus === 401) {
+        failedCount++;
+        log(`[AUTH ERROR] 401 Unauthorized for token "${cred.masked}". Check token validity.`, 'error');
+      }
+      // D. Discord Pomelo Response Evaluation
+      else if (jsonPayload && typeof jsonPayload.taken === 'boolean') {
+        if (jsonPayload.taken === false) {
+          availableCount++;
+          availableList.push({ name: id, status: 'available', code: 200 });
+          log(`[AVAILABLE] "${id}" is free on Discord!`, 'success');
+          playSuccessSound();
+        } else {
+          takenCount++;
+          checkedList.push({ name: id, status: 'taken', code: 200 });
+          log(`[TAKEN] "${id}" is taken.`, 'info');
+        }
+      }
+      // E. GitHub Endpoint (404 = available)
+      else if (elApiPreset.value === 'github') {
+        if (remoteStatus === 404) {
+          availableCount++;
+          availableList.push({ name: id, status: 'available', code: 404 });
+          log(`[AVAILABLE] "${id}" is free on GitHub!`, 'success');
+          playSuccessSound();
+        } else if (remoteStatus === 200) {
+          takenCount++;
+          checkedList.push({ name: id, status: 'taken', code: 200 });
+          log(`[TAKEN] "${id}" is registered on GitHub.`, 'info');
+        } else {
+          failedCount++;
+        }
+      }
+      // F. Standard HTTP Status Check
+      else if (remoteStatus === 200) {
+        availableCount++;
+        availableList.push({ name: id, status: 'available', code: 200 });
+        log(`[AVAILABLE] "${id}" returned HTTP 200.`, 'success');
+        playSuccessSound();
+      } else if ([400, 404, 409].includes(remoteStatus)) {
+        takenCount++;
+        checkedList.push({ name: id, status: 'taken', code: remoteStatus });
+        log(`[TAKEN] "${id}" (${remoteStatus})`, 'info');
+      } else {
+        failedCount++;
+        log(`Status ${remoteStatus} for "${id}"`, 'error');
+      }
+
+    } catch (err) {
+      failedCount++;
+      log(`Error querying "${id}": ${err.message}`, 'error');
+    }
+
+    scannedCount++;
+    updateStatsUI();
+    renderList();
+
+    // Respect user-configured delay between checks
+    if (isRunning && queue.length > 0) {
+      const ms = parseInt(elDelaySlider.value, 10);
+      if (ms > 0) await new Promise(r => setTimeout(r, ms));
+    }
+  }
+
+  activeWorkersCount--;
+  updateStatsUI();
+
+  if (activeWorkersCount === 0 && isRunning) {
+    stopChecking();
+    log('Scheduler completed processing all queue targets.');
+  }
+}
+
+// Start checking process
 async function startChecking() {
   if (isRunning) return;
 
@@ -343,7 +736,7 @@ async function startChecking() {
   if (mode === 'manual') {
     const rawText = elIdentifiers.value.trim();
     if (!rawText) {
-      alert('Please enter at least one identifier in the custom queue.');
+      alert('Please enter at least one identifier in the queue.');
       return;
     }
     queue = rawText.split('\n')
@@ -352,28 +745,18 @@ async function startChecking() {
   } else {
     log(`Generating combinations for mode: ${mode}...`);
     queue = generateCombinations(mode);
-    log(`Prepared ${queue.length} target combinations.`);
+    log(`Prepared ${queue.length} targets for execution.`);
   }
 
-  let headers = {};
-  let rawBody = '';
-  try {
-    if (elHeaders.value.trim()) headers = JSON.parse(elHeaders.value);
-    rawBody = elRequestBody.value.trim();
-    if (rawBody) JSON.parse(rawBody);
-  } catch (e) {
-    log(`JSON Syntax Error in Headers/Body: ${e.message}`, 'error');
-    alert(`Invalid JSON format: ${e.message}`);
-    return;
-  }
-
-  if (elApiPreset.value === 'discord' && headers.Authorization && headers.Authorization.includes('YOUR_DISCORD_TOKEN')) {
-    log('Notice: Default placeholder token detected. Discord requests may return 401 Unauthorized.', 'warn');
-  }
+  // Load Credentials and Proxies
+  credentialPool.loadFromInput(elCredentialPoolInput.value);
+  proxyPool.loadFromInput(elProxyListInput.value);
 
   totalCount = queue.length;
   scannedCount = 0;
   totalRequests = 0;
+  totalLatencyMs = 0;
+  latencySamples = 0;
   updateStatsUI();
 
   isRunning = true;
@@ -387,201 +770,15 @@ async function startChecking() {
   startTime = Date.now();
   durationInterval = setInterval(updateMetrics, 1000);
 
-  log(`Live scanner running for ${totalCount} targets...`);
+  const concurrency = parseInt(elConcurrencySlider.value, 10);
+  log(`Scheduler dispatched with ${concurrency} concurrent worker(s)...`);
 
-  while (isRunning && queue.length > 0) {
-    const id = queue.shift();
-    const targetUrl = elTargetUrl.value.replace('{id}', encodeURIComponent(id));
-    
-    let requestPayload = null;
-    if (rawBody) {
-      requestPayload = rawBody.replace(/{id}/g, id);
-      try {
-        requestPayload = JSON.parse(requestPayload);
-      } catch (err) {
-        requestPayload = rawBody.replace(/{id}/g, id);
-      }
-    }
-
-    let success = false;
-    
-    while (isRunning && !success) {
-      totalRequests++;
-      elLastCheck.textContent = new Date().toLocaleTimeString();
-
-      try {
-        let resData;
-        const isSameOrigin = targetUrl.startsWith('/') || targetUrl.startsWith(window.location.origin);
-        
-        if (isSameOrigin) {
-          const relativeUrl = targetUrl.startsWith(window.location.origin)
-            ? targetUrl.substring(window.location.origin.length)
-            : targetUrl;
-            
-          const fetchOptions = {
-            method: elMethod.value,
-            headers: { ...headers }
-          };
-          
-          if (requestPayload && ['POST', 'PUT', 'PATCH'].includes(elMethod.value.toUpperCase())) {
-            fetchOptions.body = typeof requestPayload === 'object' ? JSON.stringify(requestPayload) : requestPayload;
-            fetchOptions.headers['Content-Type'] = 'application/json';
-          }
-          
-          const response = await fetch(relativeUrl, fetchOptions);
-          const responseText = await response.text();
-          const responseHeaders = {};
-          if (response.headers.has('retry-after')) {
-            responseHeaders['retry-after'] = response.headers.get('retry-after');
-          }
-          
-          resData = {
-            status: response.status,
-            statusText: response.statusText,
-            headers: responseHeaders,
-            data: responseText
-          };
-        } else {
-          const response = await fetch('/api/proxy-check', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              url: targetUrl,
-              method: elMethod.value,
-              headers: headers,
-              body: requestPayload
-            })
-          });
-
-          resData = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(resData.message || `Proxy server status ${response.status}`);
-          }
-        }
-
-        const remoteStatus = resData.status;
-        let jsonPayload = null;
-        try {
-          if (resData.data) {
-            jsonPayload = typeof resData.data === 'string' ? JSON.parse(resData.data) : resData.data;
-          }
-        } catch (e) {}
-
-        // HTTP 429 - Rate Limited
-        if (remoteStatus === 429) {
-          rateLimitedCount++;
-          updateStatsUI();
-
-          let waitSec = 5;
-          if (resData.headers && resData.headers['retry-after']) {
-            const parsed = parseInt(resData.headers['retry-after'], 10);
-            if (!isNaN(parsed)) waitSec = parsed;
-          } else if (jsonPayload && jsonPayload.retry_after) {
-            waitSec = Math.ceil(jsonPayload.retry_after);
-          }
-
-          log(`Rate limit on "${id}" (429). Cooldown: ${waitSec}s`, 'warn');
-
-          if (elAutoRetry.checked) {
-            log(`Backing off: Pausing for ${waitSec} seconds...`, 'warn');
-            for (let s = waitSec; s > 0; s--) {
-              if (!isRunning) break;
-              await new Promise(r => setTimeout(r, 1000));
-            }
-            continue;
-          } else {
-            failedCount++;
-            success = true;
-          }
-        }
-        // HTTP 401 - Unauthorized
-        else if (remoteStatus === 401) {
-          failedCount++;
-          log(`[AUTH REQUIRED] 401 Unauthorized for "${id}". Valid token required in Custom Headers.`, 'error');
-          success = true;
-        }
-        // Check CAPTCHA requirement or challenge
-        else if (remoteStatus === 403 && jsonPayload && (jsonPayload.captcha_key || jsonPayload.captcha_sitekey)) {
-          failedCount++;
-          log(`[VERIFICATION REQUIRED] Remote server requested CAPTCHA verification for "${id}". Pausing.`, 'warn');
-          success = true;
-        }
-        // Discord Pomelo checks
-        else if (jsonPayload && typeof jsonPayload.taken === 'boolean') {
-          if (jsonPayload.taken === false) {
-            availableCount++;
-            availableList.push({ name: id, status: 'available', code: 200 });
-            log(`[AVAILABLE] "${id}" is AVAILABLE!`, 'success');
-            playSuccessSound();
-          } else {
-            takenCount++;
-            checkedList.push({ name: id, status: 'taken', code: 200 });
-            log(`[TAKEN] "${id}" is taken.`, 'info');
-          }
-          success = true;
-        }
-        // GitHub mode (404 = available)
-        else if (elApiPreset.value === 'github') {
-          if (remoteStatus === 404) {
-            availableCount++;
-            availableList.push({ name: id, status: 'available', code: 404 });
-            log(`[AVAILABLE] "${id}" is free on GitHub!`, 'success');
-            playSuccessSound();
-          } else if (remoteStatus === 200) {
-            takenCount++;
-            checkedList.push({ name: id, status: 'taken', code: 200 });
-            log(`[TAKEN] "${id}" is registered on GitHub.`, 'info');
-          } else {
-            failedCount++;
-            log(`Status code ${remoteStatus} for "${id}"`, 'error');
-          }
-          success = true;
-        }
-        // Standard HTTP status code check
-        else if (remoteStatus === 200) {
-          availableCount++;
-          availableList.push({ name: id, status: 'available', code: 200 });
-          log(`[AVAILABLE] "${id}" returned HTTP 200`, 'success');
-          playSuccessSound();
-          success = true;
-        } 
-        else if ([400, 403, 404, 409].includes(remoteStatus)) {
-          takenCount++;
-          checkedList.push({ name: id, status: 'taken', code: remoteStatus });
-          log(`[TAKEN] "${id}" (${remoteStatus})`, 'info');
-          success = true;
-        } 
-        else {
-          failedCount++;
-          log(`Status code ${remoteStatus} for "${id}"`, 'error');
-          success = true;
-        }
-
-      } catch (err) {
-        failedCount++;
-        log(`Error querying "${id}": ${err.message}`, 'error');
-        success = true;
-      }
-    }
-
-    scannedCount++;
-    updateStatsUI();
-    renderList();
-
-    if (isRunning && queue.length > 0) {
-      const ms = parseInt(elDelaySlider.value, 10);
-      if (ms > 0) await new Promise(r => setTimeout(r, ms));
-    }
+  for (let i = 1; i <= concurrency; i++) {
+    runWorker(i);
   }
-
-  stopChecking();
-  log('Scan queue execution completed.');
 }
 
-// Stop checking
+// Stop checking process
 function stopChecking() {
   isRunning = false;
   elBtnStart.style.display = 'flex';
@@ -603,9 +800,11 @@ function toggleInputs(disabled) {
   elGenMode.disabled = disabled;
   elIdentifiers.disabled = disabled;
   elDelaySlider.disabled = disabled;
+  elConcurrencySlider.disabled = disabled;
   elTargetUrl.disabled = disabled;
   elMethod.disabled = disabled;
-  elHeaders.disabled = disabled;
+  elCredentialPoolInput.disabled = disabled;
+  elProxyListInput.disabled = disabled;
   elRequestBody.disabled = disabled;
 }
 
@@ -653,9 +852,12 @@ elGenMode.addEventListener('change', () => {
   }
 });
 
-// Initialize
+// Initialize on DOM load
 window.addEventListener('DOMContentLoaded', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
+  elLblConcurrency.textContent = `${elConcurrencySlider.value} Worker`;
+  credentialPool.loadFromInput(elCredentialPoolInput.value);
+  proxyPool.loadFromInput(elProxyListInput.value);
   renderList();
-  log('Snowflake v3.5 PRO ready. Select target platform and scan mode.');
+  log('Snowflake v4.0 PRO Scheduler initialized and ready.');
 });
