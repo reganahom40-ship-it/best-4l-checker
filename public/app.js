@@ -1168,6 +1168,138 @@ elGenMode.addEventListener('change', () => {
   }
 });
 
+// ==========================================
+// 7. DISCORD OAUTH2 FLOW INTEGRATION
+// ==========================================
+const elBtnDiscordOAuth = document.getElementById('btnDiscordOAuth');
+const elBtnConnectOAuthHub = document.getElementById('btnConnectOAuthHub');
+const elDiscordUserBadge = document.getElementById('discordUserBadge');
+const elDiscordAvatarImg = document.getElementById('discordAvatarImg');
+const elDiscordUsernameText = document.getElementById('discordUsernameText');
+const elBtnDisconnectDiscord = document.getElementById('btnDisconnectDiscord');
+const elOauthClientId = document.getElementById('oauthClientId');
+const elOauthClientSecret = document.getElementById('oauthClientSecret');
+const elOauthRedirectUri = document.getElementById('oauthRedirectUri');
+
+let oauthConfig = {
+  configured: false,
+  client_id: '',
+  redirect_uri: window.location.origin + '/api/auth/discord/callback'
+};
+
+async function initDiscordOAuth() {
+  try {
+    const res = await fetch('/api/auth/discord/config');
+    oauthConfig = await res.json();
+    if (elOauthRedirectUri) {
+      elOauthRedirectUri.value = oauthConfig.redirect_uri || (window.location.origin + '/api/auth/discord/callback');
+    }
+    if (oauthConfig.client_id && elOauthClientId && !elOauthClientId.value) {
+      elOauthClientId.value = oauthConfig.client_id;
+    }
+  } catch (err) {
+    if (elOauthRedirectUri) {
+      elOauthRedirectUri.value = window.location.origin + '/api/auth/discord/callback';
+    }
+  }
+
+  // Restore stored session
+  const storedUser = localStorage.getItem('snowflake_discord_user');
+  const storedToken = localStorage.getItem('snowflake_discord_token');
+  if (storedUser && storedToken) {
+    try {
+      const user = JSON.parse(storedUser);
+      applyDiscordUserSession(storedToken, user);
+    } catch (e) {}
+  }
+
+  // Check localStorage for callback from non-popup redirect
+  const oauthCreds = localStorage.getItem('snowflake_oauth_creds');
+  if (oauthCreds) {
+    try {
+      const data = JSON.parse(oauthCreds);
+      localStorage.removeItem('snowflake_oauth_creds');
+      applyDiscordUserSession(data.token, data.user);
+    } catch (e) {}
+  }
+}
+
+function launchDiscordOAuthPopup() {
+  const clientId = (elOauthClientId ? elOauthClientId.value.trim() : '') || oauthConfig.client_id;
+  const clientSecret = elOauthClientSecret ? elOauthClientSecret.value.trim() : '';
+  const redirectUri = (elOauthRedirectUri ? elOauthRedirectUri.value.trim() : '') || oauthConfig.redirect_uri;
+
+  if (!clientId) {
+    const enteredId = prompt('Enter your Discord Application Client ID (from Discord Developer Portal):');
+    if (!enteredId) return;
+    if (elOauthClientId) elOauthClientId.value = enteredId.trim();
+  }
+
+  let authUrl = `/api/auth/discord/login?client_id=${encodeURIComponent(clientId || elOauthClientId.value.trim())}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  if (clientSecret) {
+    authUrl += `&client_secret=${encodeURIComponent(clientSecret)}`;
+  }
+
+  const width = 500;
+  const height = 750;
+  const left = window.screenX + (window.outerWidth - width) / 2;
+  const top = window.screenY + (window.outerHeight - height) / 2;
+
+  window.open(
+    authUrl,
+    'DiscordOAuth',
+    `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=no,status=no`
+  );
+}
+
+function applyDiscordUserSession(token, user) {
+  localStorage.setItem('snowflake_discord_token', token);
+  localStorage.setItem('snowflake_discord_user', JSON.stringify(user));
+
+  if (elBtnDiscordOAuth) elBtnDiscordOAuth.style.display = 'none';
+  if (elDiscordUserBadge) {
+    elDiscordUserBadge.style.display = 'flex';
+    if (elDiscordUsernameText) {
+      elDiscordUsernameText.textContent = user.global_name ? `${user.global_name} (@${user.username})` : `@${user.username}`;
+    }
+    if (elDiscordAvatarImg && user.avatar) {
+      elDiscordAvatarImg.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=64`;
+      elDiscordAvatarImg.style.display = 'block';
+    }
+  }
+
+  // Prepend or add authorized OAuth token to credential pool
+  const currentTokens = elCredentialPoolInput.value.split('\n').filter(t => t.trim() && !t.includes('YOUR_DISCORD_TOKEN'));
+  if (!currentTokens.includes(token)) {
+    currentTokens.unshift(token);
+    elCredentialPoolInput.value = currentTokens.join('\n');
+    elCredentialHubInput.value = elCredentialPoolInput.value;
+    credentialPool.loadFromInput(elCredentialPoolInput.value);
+  }
+
+  log(`Discord OAuth2 Authorized: Connected as @${user.username} (${user.id}). Token loaded into Credential Pool.`, 'success');
+}
+
+function disconnectDiscordSession() {
+  localStorage.removeItem('snowflake_discord_token');
+  localStorage.removeItem('snowflake_discord_user');
+
+  if (elBtnDiscordOAuth) elBtnDiscordOAuth.style.display = 'flex';
+  if (elDiscordUserBadge) elDiscordUserBadge.style.display = 'none';
+  log('Disconnected Discord OAuth2 session.', 'info');
+}
+
+if (elBtnDiscordOAuth) elBtnDiscordOAuth.addEventListener('click', launchDiscordOAuthPopup);
+if (elBtnConnectOAuthHub) elBtnConnectOAuthHub.addEventListener('click', launchDiscordOAuthPopup);
+if (elBtnDisconnectDiscord) elBtnDisconnectDiscord.addEventListener('click', disconnectDiscordSession);
+
+// Listen for OAuth2 popup message
+window.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'DISCORD_OAUTH_SUCCESS') {
+    applyDiscordUserSession(event.data.token, event.data.user);
+  }
+});
+
 // Initialize on DOM load
 window.addEventListener('DOMContentLoaded', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
@@ -1176,6 +1308,7 @@ window.addEventListener('DOMContentLoaded', () => {
   elProxyHubInput.value = elProxyListInput.value;
   credentialPool.loadFromInput(elCredentialPoolInput.value);
   proxyPool.loadFromInput(elProxyListInput.value);
+  initDiscordOAuth();
   renderList();
-  log('Snowflake v4.5 PRO Multi-View Dashboard online.');
+  log('Snowflake v4.5 PRO Multi-View Dashboard with Discord OAuth2 online.');
 });

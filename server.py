@@ -1,6 +1,7 @@
 import http.server
 import socketserver
 import urllib.request
+import urllib.parse
 import urllib.error
 import json
 import os
@@ -10,11 +11,15 @@ import random
 PORT = int(os.environ.get('PORT', 3000))
 PUBLIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public')
 
+DISCORD_CLIENT_ID = os.environ.get('DISCORD_CLIENT_ID', '')
+DISCORD_CLIENT_SECRET = os.environ.get('DISCORD_CLIENT_SECRET', '')
+DISCORD_REDIRECT_URI = os.environ.get('DISCORD_REDIRECT_URI', '')
+
 class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -38,9 +43,163 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
         return os.path.join(PUBLIC_DIR, 'index.html')
 
     def do_GET(self):
-        # Handle Mock API Endpoint: GET /api/mock-check/<id>
-        if self.path.startswith('/api/mock-check/'):
-            identifier = self.path[len('/api/mock-check/'):]
+        parsed_url = urllib.parse.urlparse(self.path)
+        path = parsed_url.path
+        query_params = urllib.parse.parse_qs(parsed_url.query)
+
+        # 1. OAuth2 Config Info
+        if path == '/api/auth/discord/config':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            host = self.headers.get('Host', f'localhost:{PORT}')
+            proto = 'https' if 'onrender.com' in host or self.headers.get('X-Forwarded-Proto') == 'https' else 'http'
+            default_redirect = f"{proto}://{host}/api/auth/discord/callback"
+            
+            payload = {
+                'configured': bool(DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET),
+                'client_id': DISCORD_CLIENT_ID,
+                'redirect_uri': DISCORD_REDIRECT_URI or default_redirect
+            }
+            self.wfile.write(json.dumps(payload).encode('utf-8'))
+            return
+
+        # 2. OAuth2 Authorization Redirect
+        if path == '/api/auth/discord/login':
+            client_id = query_params.get('client_id', [DISCORD_CLIENT_ID])[0]
+            host = self.headers.get('Host', f'localhost:{PORT}')
+            proto = 'https' if 'onrender.com' in host or self.headers.get('X-Forwarded-Proto') == 'https' else 'http'
+            default_redirect = f"{proto}://{host}/api/auth/discord/callback"
+            redirect_uri = query_params.get('redirect_uri', [DISCORD_REDIRECT_URI or default_redirect])[0]
+            
+            if not client_id:
+                self.send_response(400)
+                self.send_header('Content-Type', 'text/html')
+                self.end_headers()
+                self.wfile.write(b"<h3>Error: Discord Client ID is required for OAuth2 flow.</h3>")
+                return
+
+            auth_params = {
+                'client_id': client_id,
+                'redirect_uri': redirect_uri,
+                'response_type': 'code',
+                'scope': 'identify'
+            }
+            auth_url = f"https://discord.com/api/oauth2/authorize?{urllib.parse.urlencode(auth_params)}"
+            
+            self.send_response(302)
+            self.send_header('Location', auth_url)
+            self.end_headers()
+            return
+
+        # 3. OAuth2 Callback Endpoint
+        if path == '/api/auth/discord/callback':
+            code = query_params.get('code', [None])[0]
+            client_id = query_params.get('client_id', [DISCORD_CLIENT_ID])[0]
+            client_secret = query_params.get('client_secret', [DISCORD_CLIENT_SECRET])[0]
+            host = self.headers.get('Host', f'localhost:{PORT}')
+            proto = 'https' if 'onrender.com' in host or self.headers.get('X-Forwarded-Proto') == 'https' else 'http'
+            default_redirect = f"{proto}://{host}/api/auth/discord/callback"
+            redirect_uri = query_params.get('redirect_uri', [DISCORD_REDIRECT_URI or default_redirect])[0]
+
+            if not code:
+                self.send_response(400)
+                self.send_header('Content-Type', 'text/html')
+                self.end_headers()
+                error_msg = query_params.get('error_description', ['Authorization code missing'])[0]
+                self.wfile.write(f"<h3>OAuth2 Error: {error_msg}</h3>".encode('utf-8'))
+                return
+
+            # Exchange code for token
+            token_url = 'https://discord.com/api/oauth2/token'
+            data = urllib.parse.urlencode({
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': redirect_uri
+            }).encode('utf-8')
+
+            token_req = urllib.request.Request(token_url, data=data, headers={
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'Snowflake-Dashboard/4.5'
+            })
+
+            try:
+                with urllib.request.urlopen(token_req) as resp:
+                    token_res = json.loads(resp.read().decode('utf-8'))
+                    access_token = token_res.get('access_token')
+                    token_type = token_res.get('token_type', 'Bearer')
+                    
+                    # Fetch user metadata
+                    user_req = urllib.request.Request('https://discord.com/api/users/@me', headers={
+                        'Authorization': f"{token_type} {access_token}",
+                        'User-Agent': 'Snowflake-Dashboard/4.5'
+                    })
+                    user_profile = {}
+                    try:
+                        with urllib.request.urlopen(user_req) as u_resp:
+                            user_profile = json.loads(u_resp.read().decode('utf-8'))
+                    except Exception:
+                        pass
+
+                    html_response = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Discord Authorization</title>
+  <style>
+    body {{ background: #07070b; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }}
+    .box {{ background: #12121c; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 28px; text-align: center; max-width: 360px; }}
+    h2 {{ color: #5865F2; margin-top: 0; }}
+    p {{ color: #9ca3af; font-size: 0.85rem; }}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Authorization Complete</h2>
+    <p>Connected account: <strong>@{user_profile.get('username', 'Discord User')}</strong></p>
+    <p>Linking credentials to Snowflake Dashboard...</p>
+  </div>
+  <script>
+    const payload = {{
+      type: 'DISCORD_OAUTH_SUCCESS',
+      token: "{token_type} {access_token}",
+      user: {json.dumps(user_profile)}
+    }};
+    if (window.opener) {{
+      window.opener.postMessage(payload, window.location.origin);
+      setTimeout(() => window.close(), 1200);
+    }} else {{
+      localStorage.setItem('snowflake_oauth_creds', JSON.stringify(payload));
+      setTimeout(() => {{ window.location.href = '/'; }}, 1200);
+    }}
+  </script>
+</body>
+</html>"""
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/html; charset=utf-8')
+                    self.end_headers()
+                    self.wfile.write(html_response.encode('utf-8'))
+                    return
+
+            except urllib.error.HTTPError as e:
+                err_body = e.read().decode('utf-8', errors='replace')
+                self.send_response(400)
+                self.send_header('Content-Type', 'text/html')
+                self.end_headers()
+                self.wfile.write(f"<h3>OAuth2 Token Exchange Failed ({e.code}):</h3><pre>{err_body}</pre>".encode('utf-8'))
+                return
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'text/html')
+                self.end_headers()
+                self.wfile.write(f"<h3>Internal OAuth2 Error: {str(e)}</h3>".encode('utf-8'))
+                return
+
+        # 4. Handle Mock API Endpoint: GET /api/mock-check/<id>
+        if path.startswith('/api/mock-check/'):
+            identifier = path[len('/api/mock-check/'):]
             if not identifier or len(identifier) < 3:
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
@@ -172,8 +331,8 @@ if __name__ == '__main__':
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), handler) as httpd:
         print(f"==================================================")
-        print(f"Generic API Checker Python Server on port {PORT}")
-        print(f"Mock endpoint: http://localhost:{PORT}/api/mock-check/<id>")
+        print(f"Snowflake API Server with Discord OAuth2 on port {PORT}")
+        print(f"OAuth2 Login: http://localhost:{PORT}/api/auth/discord/login")
         print(f"Dashboard interface: http://localhost:{PORT}")
         print(f"==================================================")
         try:
