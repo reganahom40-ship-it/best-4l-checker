@@ -482,17 +482,43 @@ function resetStats() {
 function generateCombinations(mode) {
   const letters = 'abcdefghijklmnopqrstuvwxyz';
   const alphanum = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  const list = [];
+  const validChars = 'abcdefghijklmnopqrstuvwxyz0123456789._';
+  let list = [];
 
-  if (mode === 'auto3') {
-    for (let i = 0; i < letters.length; i++) {
-      for (let j = 0; j < letters.length; j++) {
-        for (let k = 0; k < letters.length; k++) {
-          list.push(letters[i] + letters[j] + letters[k]);
-        }
+  // Helper: Fisher-Yates Shuffle
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  // 1. Random 4L Mixed (a-z, 0-9, ., _)
+  if (mode === 'rand4special') {
+    const set = new Set();
+    // Generate 50,000 unique randomized 4-char combinations with special chars
+    while (set.size < 50000) {
+      // Must start with letter or digit (not dot/underscore)
+      const c1 = alphanum[Math.floor(Math.random() * alphanum.length)];
+      const c2 = validChars[Math.floor(Math.random() * validChars.length)];
+      const c3 = validChars[Math.floor(Math.random() * validChars.length)];
+      // Must not end with dot
+      let c4 = validChars[Math.floor(Math.random() * validChars.length)];
+      while (c4 === '.') {
+        c4 = validChars[Math.floor(Math.random() * validChars.length)];
+      }
+      
+      const candidate = `${c1}${c2}${c3}${c4}`;
+      // Prevent consecutive dots
+      if (!candidate.includes('..')) {
+        set.add(candidate);
       }
     }
-  } else if (mode === 'auto4') {
+    list = Array.from(set);
+  }
+  // 2. Random 4-Letter (a-z)
+  else if (mode === 'rand4') {
     for (let i = 0; i < letters.length; i++) {
       for (let j = 0; j < letters.length; j++) {
         for (let k = 0; k < letters.length; k++) {
@@ -502,7 +528,60 @@ function generateCombinations(mode) {
         }
       }
     }
-  } else if (mode === 'auto4num') {
+    shuffle(list);
+  }
+  // 3. Random 3L Mixed (a-z, 0-9, ., _)
+  else if (mode === 'rand3special') {
+    const set = new Set();
+    while (set.size < 15000) {
+      const c1 = alphanum[Math.floor(Math.random() * alphanum.length)];
+      const c2 = validChars[Math.floor(Math.random() * validChars.length)];
+      let c3 = validChars[Math.floor(Math.random() * validChars.length)];
+      while (c3 === '.') {
+        c3 = validChars[Math.floor(Math.random() * validChars.length)];
+      }
+      const candidate = `${c1}${c2}${c3}`;
+      if (!candidate.includes('..')) {
+        set.add(candidate);
+      }
+    }
+    list = Array.from(set);
+  }
+  // 4. Random 3-Letter (a-z)
+  else if (mode === 'rand3') {
+    for (let i = 0; i < letters.length; i++) {
+      for (let j = 0; j < letters.length; j++) {
+        for (let k = 0; k < letters.length; k++) {
+          list.push(letters[i] + letters[j] + letters[k]);
+        }
+      }
+    }
+    shuffle(list);
+  }
+  // 5. Sequential 4-Letter
+  else if (mode === 'auto4') {
+    for (let i = 0; i < letters.length; i++) {
+      for (let j = 0; j < letters.length; j++) {
+        for (let k = 0; k < letters.length; k++) {
+          for (let l = 0; l < letters.length; l++) {
+            list.push(letters[i] + letters[j] + letters[k] + letters[l]);
+          }
+        }
+      }
+    }
+  }
+  // 6. Sequential 3-Letter
+  else if (mode === 'auto3') {
+    for (let i = 0; i < letters.length; i++) {
+      for (let j = 0; j < letters.length; j++) {
+        for (let k = 0; k < letters.length; k++) {
+          list.push(letters[i] + letters[j] + letters[k]);
+        }
+      }
+    }
+  }
+  // 7. Sequential 4-Alphanumeric
+  else if (mode === 'auto4num') {
     for (let i = 0; i < alphanum.length; i++) {
       for (let j = 0; j < alphanum.length; j++) {
         for (let k = 0; k < alphanum.length; k++) {
