@@ -68,12 +68,12 @@ const elSysStatusText = document.getElementById('sysStatusText');
 const elTabAvailable = document.getElementById('tab-available');
 const elTabTaken = document.getElementById('tab-taken');
 
-// Update Speed Slider Label
+// Slider Label
 elDelaySlider.addEventListener('input', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
 });
 
-// Synthetic Success Chime using Web Audio API
+// Chime Alert via Web Audio
 function playSuccessSound() {
   if (!elSoundAlert.checked) return;
   try {
@@ -85,44 +85,55 @@ function playSuccessSound() {
     gain.connect(ctx.destination);
     
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
     gain.gain.setValueAtTime(0.08, ctx.currentTime);
     
     osc.start();
-    // Play second note for a nice double-tone chime
-    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // E5
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08); // A5
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
     
-    osc.stop(ctx.currentTime + 0.25);
+    osc.stop(ctx.currentTime + 0.3);
   } catch (err) {
     console.error('Audio chime error:', err);
   }
 }
 
-// Log messages to Console Panel
+// Log messages
 function log(msg, type = 'info') {
   const time = new Date().toLocaleTimeString();
   const row = document.createElement('div');
-  row.className = 'log-line';
+  row.className = 'log-entry';
 
   const spanTime = document.createElement('span');
-  spanTime.className = 'timestamp';
+  spanTime.className = 'time';
   spanTime.textContent = `[${time}]`;
   row.appendChild(spanTime);
 
+  const spanTag = document.createElement('span');
+  if (type === 'success') {
+    spanTag.className = 'tag tag-hit';
+    spanTag.textContent = '[HIT]';
+  } else if (type === 'warn') {
+    spanTag.className = 'tag tag-warn';
+    spanTag.textContent = '[429]';
+  } else if (type === 'error') {
+    spanTag.className = 'tag tag-err';
+    spanTag.textContent = '[ERR]';
+  } else {
+    spanTag.className = 'tag tag-taken';
+    spanTag.textContent = '[SYS]';
+  }
+  row.appendChild(spanTag);
+
   const spanMsg = document.createElement('span');
   spanMsg.textContent = msg;
-
-  if (type === 'error') spanMsg.className = 'status-err';
-  else if (type === 'warn') spanMsg.className = 'status-warn';
-  else if (type === 'success') spanMsg.className = 'status-success';
-  
   row.appendChild(spanMsg);
+
   elLogContent.appendChild(row);
   elLogContent.scrollTop = elLogContent.scrollHeight;
 }
 
-// Update stats percentages and numbers
+// Update stats tiles
 function updateStatsUI() {
   const total = totalCount || 1;
   
@@ -147,7 +158,7 @@ function updateStatsUI() {
   elTotalHits.textContent = totalRequests;
 }
 
-// Format duration counter (hh:mm:ss) and calculate ETA / Velocity
+// Update duration and ETA
 function updateMetrics() {
   if (!startTime) return;
   const diff = Date.now() - startTime;
@@ -156,7 +167,6 @@ function updateMetrics() {
   const seconds = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
   elDuration.textContent = `${hours}:${minutes}:${seconds}`;
 
-  // Calculate Requests per Minute (RPM)
   const elapsedMinutes = diff / 60000;
   if (elapsedMinutes > 0.05) {
     elReqMin.textContent = Math.round(totalRequests / elapsedMinutes);
@@ -164,7 +174,6 @@ function updateMetrics() {
     elReqMin.textContent = '0';
   }
 
-  // Calculate ETA (Estimated Time Remaining)
   const remaining = totalCount - scannedCount;
   if (remaining <= 0) {
     elETA.textContent = '00:00:00';
@@ -183,7 +192,7 @@ function updateMetrics() {
   }
 }
 
-// Render selected tab list
+// Render Results List with individual copy options
 function renderList() {
   elResultsDisplayList.textContent = '';
   const currentList = activeResultTab === 'available' ? availableList : checkedList;
@@ -194,26 +203,35 @@ function renderList() {
     emptyPrompt.id = 'list-empty-state';
     emptyPrompt.innerHTML = `
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-      <div>No ${activeResultTab} items found. Configure and start.</div>
+      <div>No ${activeResultTab} records found yet.</div>
     `;
     elResultsDisplayList.appendChild(emptyPrompt);
     return;
   }
 
   currentList.forEach(item => {
-    const row = document.createElement('div');
-    row.className = `result-row ${item.status}`;
+    const card = document.createElement('div');
+    card.className = `item-card ${item.status}`;
     
-    const spanName = document.createElement('span');
-    spanName.textContent = item.name;
-    row.appendChild(spanName);
+    const leftBox = document.createElement('div');
+    leftBox.className = 'item-identifier';
+    
+    const dot = document.createElement('div');
+    dot.className = 'item-dot';
+    leftBox.appendChild(dot);
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = item.name;
+    leftBox.appendChild(nameSpan);
 
-    const spanTag = document.createElement('span');
-    spanTag.className = `status-badge ${item.status}`;
-    spanTag.textContent = item.status === 'available' ? 'Available' : `Taken (${item.code})`;
-    row.appendChild(spanTag);
+    card.appendChild(leftBox);
 
-    elResultsDisplayList.appendChild(row);
+    const rightPill = document.createElement('span');
+    rightPill.className = `item-pill ${item.status}`;
+    rightPill.textContent = item.status === 'available' ? 'AVAILABLE' : `TAKEN (${item.code})`;
+    card.appendChild(rightPill);
+
+    elResultsDisplayList.appendChild(card);
   });
 }
 
@@ -294,7 +312,7 @@ async function startChecking() {
   } else {
     log(`Generating combinations for mode: ${mode}...`);
     queue = generateCombinations(mode);
-    log(`Successfully generated ${queue.length} combinations.`);
+    log(`Successfully prepared ${queue.length} targets.`);
   }
 
   let headers = {};
@@ -315,17 +333,16 @@ async function startChecking() {
 
   isRunning = true;
   elBtnStart.style.display = 'none';
-  elBtnStop.style.display = 'inline-flex';
+  elBtnStop.style.display = 'flex';
   toggleInputs(true);
 
-  // Update navbar status to scanning
   elSysDot.className = 'status-dot scanning';
-  elSysStatusText.textContent = 'System Status: Scanning...';
+  elSysStatusText.textContent = 'Status: Scanning...';
 
   startTime = Date.now();
   durationInterval = setInterval(updateMetrics, 1000);
 
-  log(`Bulk scan initialized for ${totalCount} identifiers...`);
+  log(`Live scanner initiated for ${totalCount} targets...`);
 
   while (isRunning && queue.length > 0) {
     const id = queue.shift();
@@ -396,7 +413,7 @@ async function startChecking() {
           resData = await response.json();
           
           if (!response.ok) {
-            throw new Error(resData.message || `Proxy server returned status ${response.status}`);
+            throw new Error(resData.message || `Proxy error ${response.status}`);
           }
         }
 
@@ -413,15 +430,15 @@ async function startChecking() {
             if (!isNaN(parsed)) waitSec = parsed;
           }
 
-          log(`Rate limited on "${id}" (HTTP 429). Retry-After: ${waitSec}s`, 'warn');
+          log(`Rate limit reached on "${id}" (HTTP 429). Retry in ${waitSec}s`, 'warn');
 
           if (elAutoRetry.checked) {
-            log(`Backing off: Waiting ${waitSec} seconds to retry...`, 'warn');
+            log(`Cooling down for ${waitSec}s...`, 'warn');
             for (let s = waitSec; s > 0; s--) {
               if (!isRunning) break;
               await new Promise(r => setTimeout(r, 1000));
             }
-            continue; // Retry loops
+            continue;
           } else {
             failedCount++;
             success = true;
@@ -431,7 +448,7 @@ async function startChecking() {
         else if (remoteStatus === 200) {
           availableCount++;
           availableList.push({ name: id, status: 'available', code: 200 });
-          log(`[AVAILABLE] "${id}" returned status code 200.`, 'success');
+          log(`AVAILABLE: "${id}" discovered!`, 'success');
           playSuccessSound();
           success = true;
         } 
@@ -439,19 +456,19 @@ async function startChecking() {
         else if ([400, 403, 409].includes(remoteStatus)) {
           takenCount++;
           checkedList.push({ name: id, status: 'taken', code: remoteStatus });
-          log(`[TAKEN] "${id}" returned status code ${remoteStatus}.`);
+          log(`Taken: "${id}" (${remoteStatus})`, 'info');
           success = true;
         } 
         // Other HTTP Failures
         else {
           failedCount++;
-          log(`Unexpected response status ${remoteStatus} for "${id}"`, 'error');
+          log(`Code ${remoteStatus} for "${id}"`, 'error');
           success = true;
         }
 
       } catch (err) {
         failedCount++;
-        log(`Request error for "${id}": ${err.message}`, 'error');
+        log(`Network error "${id}": ${err.message}`, 'error');
         success = true;
       }
     }
@@ -460,7 +477,6 @@ async function startChecking() {
     updateStatsUI();
     renderList();
 
-    // Delay between iterations (read dynamically from slider)
     if (isRunning && queue.length > 0) {
       const ms = parseInt(elDelaySlider.value, 10);
       if (ms > 0) await new Promise(r => setTimeout(r, ms));
@@ -468,18 +484,18 @@ async function startChecking() {
   }
 
   stopChecking();
-  log('Queue scan run completed.');
+  log('Scan queue finished.');
 }
 
-// Stop checking process
+// Stop checking
 function stopChecking() {
   isRunning = false;
-  elBtnStart.style.display = 'inline-flex';
+  elBtnStart.style.display = 'flex';
   elBtnStop.style.display = 'none';
   toggleInputs(false);
   
   elSysDot.className = 'status-dot';
-  elSysStatusText.textContent = 'System Status: Idle';
+  elSysStatusText.textContent = 'Status: Idle';
 
   if (durationInterval) {
     clearInterval(durationInterval);
@@ -487,7 +503,7 @@ function stopChecking() {
   }
 }
 
-// Toggle inputs block
+// Toggle form inputs
 function toggleInputs(disabled) {
   elGenMode.disabled = disabled;
   elIdentifiers.disabled = disabled;
@@ -501,15 +517,15 @@ function toggleInputs(disabled) {
 // Tab Toggles
 elTabAvailable.addEventListener('click', () => {
   activeResultTab = 'available';
-  elTabAvailable.className = 'tab-link active';
-  elTabTaken.className = 'tab-link';
+  elTabAvailable.className = 'tab-btn active';
+  elTabTaken.className = 'tab-btn';
   renderList();
 });
 
 elTabTaken.addEventListener('click', () => {
   activeResultTab = 'taken';
-  elTabAvailable.className = 'tab-link';
-  elTabTaken.className = 'tab-link active';
+  elTabAvailable.className = 'tab-btn';
+  elTabTaken.className = 'tab-btn active';
   renderList();
 });
 
@@ -526,14 +542,14 @@ elBtnExport.addEventListener('click', () => {
   }
   const txt = currentList.map(item => item.name).join('\n');
   navigator.clipboard.writeText(txt);
-  log(`Copied ${currentList.length} items from ${activeResultTab} list to clipboard.`);
+  log(`Exported ${currentList.length} ${activeResultTab} items to clipboard.`);
 });
 
 elBtnClearLogs.addEventListener('click', () => {
   elLogContent.textContent = '';
 });
 
-// GenMode select change visibility listener
+// Select change
 elGenMode.addEventListener('change', () => {
   if (elGenMode.value === 'manual') {
     elIdentifiersGroup.style.display = 'flex';
@@ -547,5 +563,5 @@ window.addEventListener('DOMContentLoaded', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
   elTargetUrl.value = window.location.origin + '/api/mock-check/{id}';
   renderList();
-  log('Snowflake API Checker initialized and ready.');
+  log('Snowflake v3.0 core online. Ready to scan.');
 });

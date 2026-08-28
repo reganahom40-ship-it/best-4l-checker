@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snowflake — API Checker</title>
+  <title>Snowflake — Next-Gen Identifier Scanner</title>
   
   <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,24 +12,27 @@
   
   <style>
     :root {
-      --bg-black: #000000;
-      --bg-card: #09090b;
-      --bg-input: #121214;
-      --border-color: #1e1e24;
-      --border-focus: #00f0ff;
+      --bg-base: #030305;
+      --bg-panel: rgba(13, 13, 18, 0.75);
+      --bg-panel-solid: #0d0d12;
+      --bg-card: rgba(20, 20, 26, 0.6);
+      --bg-input: #0a0a0f;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-hover: rgba(255, 255, 255, 0.12);
       
-      --accent-cyan: #00f0ff;
-      --accent-blue: #0066ff;
-      --accent-glow: rgba(0, 240, 255, 0.08);
+      --cyan: #00f5ff;
+      --cyan-glow: rgba(0, 245, 255, 0.15);
+      --blue: #3b82f6;
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.15);
+      --amber: #f59e0b;
+      --rose: #f43f5e;
       
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --text-main: #ffffff;
+      --text-dim: #9496a1;
+      --text-muted: #525462;
       
-      --text-primary: #f4f4f5;
-      --text-secondary: #a1a1aa;
-      --text-muted: #52525b;
-      
+      --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
@@ -37,42 +40,45 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      font-family: var(--font-ui);
     }
 
     body {
-      background-color: var(--bg-black);
-      color: var(--text-primary);
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 245, 255, 0.07), transparent 70%),
+        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.04), transparent 50%);
+      color: var(--text-main);
       display: flex;
       height: 100vh;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* MAIN CONTAINER: SIDEBAR + CONTENT */
-    .app-wrapper {
+    /* APP LAYOUT */
+    .app {
       display: flex;
       width: 100%;
       height: 100%;
       overflow: hidden;
     }
 
-    /* LEFT SIDEBAR */
+    /* SIDEBAR */
     aside {
-      width: 320px;
-      background: var(--bg-card);
-      border-right: 1px solid var(--border-color);
+      width: 340px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      overflow-y: auto;
-      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.8);
+      z-index: 10;
     }
 
-    .brand-section {
-      padding: 24px;
-      border-bottom: 1px solid var(--border-color);
+    .brand-box {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -84,256 +90,170 @@
       gap: 12px;
     }
 
-    .brand-logo {
-      color: var(--accent-cyan);
+    .snowflake-icon {
       font-size: 1.6rem;
-      animation: spinSlow 15s linear infinite;
+      color: var(--cyan);
+      display: inline-block;
+      animation: spin 20s linear infinite;
       user-select: none;
+      filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.4));
     }
 
-    .brand-name {
-      font-size: 1.1rem;
+    .brand-title {
+      font-size: 1.15rem;
       font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan));
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
     }
 
-    .brand-tag {
+    .version-pill {
       font-size: 0.65rem;
-      background: rgba(0, 240, 255, 0.06);
-      border: 1px solid rgba(0, 240, 255, 0.2);
-      color: var(--accent-cyan);
-      padding: 2px 8px;
-      border-radius: 4px;
+      font-family: var(--font-mono);
       font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .sidebar-body {
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      flex: 1;
-    }
-
-    /* MAIN RIGHT PANEL */
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: var(--bg-black);
-    }
-
-    /* TOP HEADER */
-    header {
-      height: 64px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 32px;
-      background: var(--bg-card);
-      flex-shrink: 0;
-    }
-
-    .header-title h2 {
-      font-size: 1.10rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .status-indicator {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-color);
-      padding: 6px 14px;
+      background: rgba(0, 245, 255, 0.08);
+      color: var(--cyan);
+      border: 1px solid rgba(0, 245, 255, 0.2);
+      padding: 3px 8px;
       border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-secondary);
+      letter-spacing: 0.5px;
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 10px var(--success);
-    }
-
-    .status-dot.scanning {
-      background: var(--accent-cyan);
-      box-shadow: 0 0 12px var(--accent-cyan);
-      animation: pulse 1.2s infinite;
-    }
-
-    /* MAIN CONTENT VIEW */
-    .view-content {
+    .sidebar-content {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
       flex: 1;
-      padding: 24px 32px;
-      display: grid;
-      grid-template-rows: auto 1fr;
-      gap: 24px;
-      overflow: hidden;
+      overflow-y: auto;
     }
 
-    /* TOP METRICS ROW */
-    .metrics-row {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-    }
-
-    .metric-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 14px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    }
-
-    .metric-card.available { border-top: 2px solid var(--success); }
-    .metric-card.rate-limited { border-top: 2px solid var(--warning); }
-    .metric-card.failed { border-top: 2px solid var(--danger); }
-
-    .metric-lbl {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    .metric-data-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-
-    .metric-val {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-
-    .metric-pct {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .metric-card.available .metric-pct { color: var(--success); }
-    .metric-card.rate-limited .metric-pct { color: var(--warning); }
-
-    /* LAYOUT: SPLIT DISPLAY PANELS */
-    .display-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      overflow: hidden;
-    }
-
-    /* CARD STRUCTURE */
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
-    }
-
-    .card-header {
-      padding: 18px 24px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-
-    .card-header h3 {
-      font-size: 0.8rem;
+    /* SECTION LABELS */
+    .section-label {
+      font-size: 0.7rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: var(--text-secondary);
+      color: var(--text-muted);
+      margin-bottom: 4px;
     }
 
-    /* INPUTS & SELECTS */
-    .form-group {
+    /* FORM CONTROLS */
+    .field {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
-    .form-group label {
-      font-size: 0.7rem;
+    .field label {
+      font-size: 0.75rem;
       font-weight: 700;
-      color: var(--text-muted);
+      color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.5px;
     }
 
-    .form-group select,
-    .form-group input,
-    .form-group textarea {
+    select, input[type="text"], input[type="number"], textarea {
       background: var(--bg-input);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      color: var(--text-primary);
-      padding: 11px 14px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 12px 14px;
       font-size: 0.85rem;
+      font-weight: 500;
       outline: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.2s ease;
     }
 
-    .form-group select {
+    select {
       appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg fill='%23a1a1aa' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+      background-image: url("data:image/svg+xml;utf8,<svg fill='%239496a1' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
       background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 36px;
+      background-position: right 14px center;
+      padding-right: 40px;
+      cursor: pointer;
     }
 
-    .form-group select:focus,
-    .form-group input:focus,
-    .form-group textarea:focus {
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px var(--cyan-glow);
     }
 
-    .form-group textarea {
+    textarea {
       resize: vertical;
-      min-height: 90px;
+      min-height: 80px;
       font-family: var(--font-mono);
       font-size: 0.8rem;
     }
 
-    /* CUSTOM SWITCH TOGGLE */
-    .toggle-row {
+    /* RANGE SLIDER */
+    .slider-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .slider-header .value-tag {
+      color: var(--cyan);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: rgba(0, 245, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 245, 255, 0.15);
+    }
+
+    .range-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #181820;
+      outline: none;
+    }
+
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+      transition: all 0.15s ease;
+    }
+
+    .range-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: var(--cyan);
+      box-shadow: 0 0 14px var(--cyan);
+    }
+
+    /* TOGGLE SWITCHES */
+    .toggle-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 4px 0;
       font-size: 0.8rem;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--text-dim);
       cursor: pointer;
       user-select: none;
-      padding: 4px 0;
     }
 
     .switch {
@@ -350,258 +270,469 @@
       height: 0;
     }
 
-    .slider-switch {
+    .switch-track {
       position: absolute;
       cursor: pointer;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #1a1a1e;
-      transition: .2s cubic-bezier(0.16, 1, 0.3, 1);
+      background-color: #181820;
+      border: 1px solid var(--border-subtle);
       border-radius: 20px;
-      border: 1px solid var(--border-color);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .slider-switch:before {
+    .switch-track:before {
       position: absolute;
       content: "";
       height: 12px;
       width: 12px;
       left: 3px;
       bottom: 3px;
-      background-color: #71717a;
-      transition: .2s cubic-bezier(0.16, 1, 0.3, 1);
+      background-color: var(--text-muted);
       border-radius: 50%;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    input:checked + .slider-switch {
-      background-color: rgba(0, 240, 255, 0.1);
-      border-color: var(--accent-cyan);
+    input:checked + .switch-track {
+      background-color: rgba(0, 245, 255, 0.12);
+      border-color: var(--cyan);
     }
 
-    input:checked + .slider-switch:before {
+    input:checked + .switch-track:before {
       transform: translateX(18px);
-      background-color: var(--accent-cyan);
+      background-color: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
     }
 
-    /* INTERVAL SPEED SLIDER */
-    .speed-slider {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    /* DETAILS ACCORDION */
+    details {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px 14px;
+      transition: all 0.2s ease;
     }
 
-    .speed-slider-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.7rem;
+    details[open] {
+      border-color: var(--border-hover);
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    summary {
+      font-size: 0.75rem;
       font-weight: 700;
-      color: var(--text-muted);
+      color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.8px;
-    }
-
-    .speed-slider-header span.val {
-      color: var(--accent-cyan);
-      font-family: var(--font-mono);
-      font-weight: 600;
-    }
-
-    .slider-input {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 4px;
-      border-radius: 2px;
-      background: var(--border-color);
-      outline: none;
-    }
-
-    .slider-input::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #ffffff;
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-      transition: transform 0.1s ease;
+      outline: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    .slider-input::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-      background: var(--accent-cyan);
-      box-shadow: 0 0 10px var(--accent-cyan);
+    summary::after {
+      content: '›';
+      font-size: 1.1rem;
+      transition: transform 0.2s ease;
     }
 
-    /* BUTTONS */
+    details[open] summary::after {
+      transform: rotate(90deg);
+      color: var(--cyan);
+    }
+
+    .details-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    /* ACTION BUTTONS */
+    .btn-group {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 12px;
+    }
+
     .btn {
       width: 100%;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-weight: 700;
+      padding: 13px 20px;
+      border-radius: 8px;
       font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
       cursor: pointer;
       border: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .btn-primary {
-      background: #ffffff;
+      background: linear-gradient(135deg, #ffffff, #e0e0e8);
       color: #000000;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
     }
 
     .btn-primary:hover:not(:disabled) {
-      background: var(--accent-cyan);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+      background: linear-gradient(135deg, var(--cyan), #00c8e0);
+      box-shadow: 0 6px 25px rgba(0, 245, 255, 0.35);
       transform: translateY(-1px);
     }
 
-    .btn-primary:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
     .btn-danger {
-      background: var(--danger);
-      color: white;
-      box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+      background: linear-gradient(135deg, var(--rose), #e11d48);
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(244, 63, 94, 0.25);
     }
 
     .btn-danger:hover {
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+      box-shadow: 0 6px 25px rgba(244, 63, 94, 0.45);
       transform: translateY(-1px);
     }
 
     .btn-secondary {
       background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-dim);
+      padding: 10px 16px;
+      font-size: 0.75rem;
+      border-radius: 6px;
     }
 
     .btn-secondary:hover {
-      color: var(--text-primary);
-      border-color: var(--text-secondary);
-      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-main);
+      border-color: var(--border-hover);
+      background: rgba(255, 255, 255, 0.03);
     }
 
-    /* TAB CONTROL & LISTS */
-    .tab-nav {
+    /* MAIN VIEWPORT */
+    main {
+      flex: 1;
       display: flex;
-      border-bottom: 1px solid var(--border-color);
-      background: rgba(255, 255, 255, 0.01);
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* TOP BAR */
+    header {
+      height: 70px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-panel);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
       flex-shrink: 0;
     }
 
-    .tab-link {
+    .header-title h2 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .header-title p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      padding: 7px 16px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+    }
+
+    .status-dot.scanning {
+      background: var(--cyan);
+      box-shadow: 0 0 14px var(--cyan);
+      animation: pulse 1.2s infinite;
+    }
+
+    /* CONTENT WRAPPER */
+    .content-view {
+      flex: 1;
+      padding: 24px 32px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    /* STATS METRIC TILES */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+
+    .stat-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .stat-tile:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    .stat-tile.available {
+      border-top: 2px solid var(--emerald);
+      box-shadow: 0 4px 20px -5px var(--emerald-glow);
+    }
+
+    .stat-tile.limited {
+      border-top: 2px solid var(--amber);
+    }
+
+    .stat-tile.failed {
+      border-top: 2px solid var(--rose);
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-data {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .stat-number {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-percent {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .stat-tile.available .stat-percent { color: var(--emerald); }
+    .stat-tile.limited .stat-percent { color: var(--amber); }
+
+    /* SPLIT MAIN PANELS */
+    .grid-panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .grid-panels {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* CARD CONTAINERS */
+    .panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* TABS */
+    .tabs-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.015);
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+
+    .tabs-group {
+      display: flex;
+    }
+
+    .tab-btn {
       background: none;
       border: none;
-      color: var(--text-muted);
-      padding: 16px 24px;
+      color: var(--text-dim);
+      padding: 16px 20px;
       font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
       position: relative;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      transition: color 0.2s ease;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .tab-link:hover {
-      color: var(--text-secondary);
+    .tab-btn:hover {
+      color: var(--text-main);
     }
 
-    .tab-link.active {
-      color: var(--accent-cyan);
+    .tab-btn.active {
+      color: var(--cyan);
     }
 
-    .tab-link.active::after {
+    .tab-btn.active::after {
       content: '';
       position: absolute;
       bottom: -1px;
       left: 0;
       height: 2px;
       width: 100%;
-      background: var(--accent-cyan);
-      box-shadow: 0 0 10px var(--accent-cyan);
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
     }
 
-    .tab-num {
+    .count-badge {
       font-size: 0.65rem;
-      background: var(--border-color);
-      color: var(--text-secondary);
-      padding: 1px 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-dim);
+      padding: 2px 7px;
       border-radius: 4px;
-      margin-left: 8px;
       font-family: var(--font-mono);
+      font-weight: 700;
     }
 
-    .tab-link.active .tab-num {
-      background: rgba(0, 240, 255, 0.1);
-      color: var(--accent-cyan);
-      border: 1px solid rgba(0, 240, 255, 0.2);
+    .tab-btn.active .count-badge {
+      background: rgba(0, 245, 255, 0.1);
+      color: var(--cyan);
+      border: 1px solid rgba(0, 245, 255, 0.2);
     }
 
-    .list-container {
+    /* LIST ITEMS */
+    .results-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
+      gap: 8px;
+    }
+
+    .item-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+    }
+
+    .item-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--border-hover);
+      transform: translateX(2px);
+    }
+
+    .item-card.available {
+      border-left: 3px solid var(--emerald);
+    }
+
+    .item-card.taken {
+      border-left: 3px solid var(--border-subtle);
+      opacity: 0.65;
+    }
+
+    .item-identifier {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
       gap: 10px;
     }
 
-    .list-row {
-      background: rgba(255, 255, 255, 0.015);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
+    .item-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
     }
 
-    .list-row.available {
-      border-left: 3px solid var(--success);
-      box-shadow: inset 4px 0 0 rgba(16, 185, 129, 0.02);
+    .item-card.taken .item-dot {
+      background: var(--text-muted);
+      box-shadow: none;
     }
 
-    .list-row.taken {
-      border-left: 3px solid var(--border-color);
-      opacity: 0.6;
-    }
-
-    .badge {
-      font-size: 0.7rem;
-      font-weight: 700;
+    .item-pill {
+      font-size: 0.65rem;
+      font-weight: 800;
       text-transform: uppercase;
-      padding: 2px 6px;
+      letter-spacing: 0.8px;
+      padding: 4px 10px;
       border-radius: 4px;
-      letter-spacing: 0.5px;
+      font-family: var(--font-mono);
     }
 
-    .badge.available {
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--success);
-      border: 1px solid rgba(16, 185, 129, 0.2);
+    .item-pill.available {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.25);
     }
 
-    .badge.taken {
+    .item-pill.taken {
       background: rgba(255, 255, 255, 0.04);
-      color: var(--text-secondary);
+      color: var(--text-dim);
+      border: 1px solid var(--border-subtle);
     }
 
-    .empty-state {
+    .empty-prompt {
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -611,31 +742,31 @@
       font-size: 0.85rem;
       text-align: center;
       padding: 40px;
-      gap: 15px;
+      gap: 14px;
     }
 
-    .empty-state svg {
-      width: 44px;
-      height: 44px;
+    .empty-prompt svg {
+      width: 48px;
+      height: 48px;
       opacity: 0.15;
     }
 
-    /* PREMIUM TERMINAL MOCKUP */
-    .terminal-container {
+    /* TERMINAL CONSOLE */
+    .terminal-window {
       display: flex;
       flex-direction: column;
       height: 100%;
-      background: #020203;
-      border: 1px solid var(--border-color);
+      background: #020204;
+      border: 1px solid var(--border-subtle);
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
     }
 
-    .terminal-header {
-      height: 40px;
-      background: #09090b;
-      border-bottom: 1px solid var(--border-color);
+    .terminal-topbar {
+      height: 44px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -644,32 +775,31 @@
       user-select: none;
     }
 
-    .terminal-dots {
+    .window-dots {
       display: flex;
-      gap: 6px;
+      gap: 7px;
     }
 
-    .terminal-dot {
+    .w-dot {
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: var(--border-color);
     }
 
-    .terminal-dot.red { background: #ff5f56; }
-    .terminal-dot.yellow { background: #ffbd2e; }
-    .terminal-dot.green { background: #27c93f; }
+    .w-dot.red { background: #ff5f56; }
+    .w-dot.yellow { background: #ffbd2e; }
+    .w-dot.green { background: #27c93f; }
 
-    .terminal-title {
+    .terminal-heading {
       font-size: 0.75rem;
       font-family: var(--font-mono);
       color: var(--text-muted);
-      font-weight: 500;
+      font-weight: 600;
     }
 
-    .terminal-console {
+    .terminal-body {
       flex: 1;
-      padding: 20px;
+      padding: 18px 20px;
       font-family: var(--font-mono);
       font-size: 0.8rem;
       overflow-y: auto;
@@ -678,131 +808,136 @@
       gap: 6px;
     }
 
-    .terminal-row {
-      line-height: 1.5;
+    .log-entry {
+      line-height: 1.6;
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
 
-    .terminal-row .time {
+    .log-entry .time {
       color: var(--text-muted);
       user-select: none;
     }
 
-    .terminal-row .c-success { color: var(--success); }
-    .terminal-row .c-warn { color: var(--warning); }
-    .terminal-row .c-err { color: var(--danger); }
+    .log-entry .tag {
+      font-weight: 700;
+      padding: 0 4px;
+      border-radius: 2px;
+    }
+
+    .tag-hit { color: var(--emerald); }
+    .tag-taken { color: var(--text-dim); }
+    .tag-warn { color: var(--amber); }
+    .tag-err { color: var(--rose); }
 
     /* FOOTER STATUS BAR */
     footer {
-      height: 44px;
-      border-top: 1px solid var(--border-color);
+      height: 48px;
+      border-top: 1px solid var(--border-subtle);
       padding: 0 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 0.75rem;
-      color: var(--text-secondary);
-      background: var(--bg-card);
+      color: var(--text-dim);
+      background: var(--bg-panel);
       flex-shrink: 0;
     }
 
-    .footer-metrics {
+    .footer-metrics-group {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 28px;
     }
 
-    .footer-highlight {
-      color: var(--accent-cyan);
-      font-weight: 700;
+    .footer-cyan {
+      color: var(--cyan);
+      font-weight: 800;
       font-family: var(--font-mono);
     }
 
-    .footer-val {
-      color: var(--text-primary);
-      font-weight: 600;
+    .footer-white {
+      color: var(--text-main);
+      font-weight: 700;
     }
 
-    /* KEYFRAME ANIMATIONS */
-    @keyframes spinSlow {
+    /* ANIMATIONS */
+    @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
 
     @keyframes pulse {
-      0% { opacity: 0.5; }
+      0% { opacity: 0.4; }
       50% { opacity: 1; }
-      100% { opacity: 0.5; }
+      100% { opacity: 0.4; }
     }
   </style>
 </head>
 <body>
 
-  <div class="app-wrapper">
-    <!-- LEFT SIDEBAR: ALL CONFIGS -->
+  <div class="app">
+    <!-- LEFT CONTROL SIDEBAR -->
     <aside>
-      <div class="brand-section">
+      <div class="brand-box">
         <div class="brand">
-          <div class="brand-logo">❄</div>
-          <div class="brand-name">Snowflake</div>
+          <div class="snowflake-icon">❄</div>
+          <div class="brand-title">Snowflake</div>
         </div>
-        <div class="brand-tag">v2.0</div>
+        <div class="version-pill">v3.0 PRO</div>
       </div>
       
-      <div class="sidebar-body">
-        <div class="form-group">
+      <div class="sidebar-content">
+        <div class="field">
           <label for="genMode">Scan Mode</label>
           <select id="genMode">
-            <option value="auto3">Auto 3-Letter (a-z)</option>
             <option value="auto4" selected>Auto 4-Letter (a-z)</option>
+            <option value="auto3">Auto 3-Letter (a-z)</option>
             <option value="auto4num">Auto 4-Alphanumeric (a-z0-9)</option>
-            <option value="manual">Manual Input List</option>
+            <option value="manual">Manual Custom List</option>
           </select>
         </div>
 
-        <div class="form-group" id="identifiers-group" style="display: none;">
-          <label for="identifiers">Identifier List</label>
-          <textarea id="identifiers" placeholder="Enter identifiers here, one per line"></textarea>
+        <div class="field" id="identifiers-group" style="display: none;">
+          <label for="identifiers">Custom Queue</label>
+          <textarea id="identifiers" placeholder="Enter identifiers, one per line"></textarea>
         </div>
 
-        <div class="speed-slider">
-          <div class="speed-slider-header">
-            <span>Interval Delay</span>
-            <span class="val" id="lblSpeed">1000ms</span>
+        <div class="slider-box">
+          <div class="slider-header">
+            <span>Interval Speed</span>
+            <span class="value-tag" id="lblSpeed">1000ms</span>
           </div>
-          <input type="range" id="delaySlider" class="slider-input" min="0" max="2000" step="50" value="1000">
+          <input type="range" id="delaySlider" class="range-slider" min="0" max="2000" step="50" value="1000">
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 5px;">
-          <label class="toggle-row">
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+          <label class="toggle-item">
             <span>Auto-retry 429 limits</span>
             <span class="switch">
               <input type="checkbox" id="autoRetry" checked>
-              <span class="slider-switch"></span>
+              <span class="switch-track"></span>
             </span>
           </label>
-          <label class="toggle-row">
-            <span>Play chime on success</span>
+
+          <label class="toggle-item">
+            <span>Audio chime on hits</span>
             <span class="switch">
               <input type="checkbox" id="soundAlert" checked>
-              <span class="slider-switch"></span>
+              <span class="switch-track"></span>
             </span>
           </label>
         </div>
 
-        <!-- COLLAPSIBLE ACCORDION FOR ADVANCED SETTINGS -->
-        <details style="margin-top: 5px; cursor: pointer; font-size: 0.85rem; color: var(--text-secondary);">
-          <summary style="font-weight: 700; text-transform: uppercase; outline: none; user-select: none; letter-spacing: 0.5px;">
-            Advanced Options
-          </summary>
-          <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); cursor: default;">
-            <div class="form-group">
+        <details>
+          <summary>Advanced Endpoint Settings</summary>
+          <div class="details-body">
+            <div class="field">
               <label for="targetUrl">Target Request URL</label>
               <input type="text" id="targetUrl" value="http://localhost:3000/api/mock-check/{id}">
             </div>
             
-            <div class="form-group">
+            <div class="field">
               <label for="method">HTTP Method</label>
               <select id="method">
                 <option value="GET" selected>GET</option>
@@ -811,140 +946,140 @@
               </select>
             </div>
 
-            <div class="form-group">
+            <div class="field">
               <label for="headers">Custom Headers (JSON)</label>
               <textarea id="headers" placeholder='{ "Content-Type": "application/json" }'></textarea>
             </div>
 
-            <div class="form-group">
+            <div class="field">
               <label for="requestBody">Request Body Template</label>
               <textarea id="requestBody" placeholder='{ "username": "{id}" }'></textarea>
             </div>
           </div>
         </details>
 
-        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+        <div class="btn-group">
           <button id="btnStart" class="btn btn-primary">Start Scanning</button>
           <button id="btnStop" class="btn btn-danger" style="display: none;">Stop Scanning</button>
-          <button id="btnReset" class="btn btn-secondary">Clear Statistics</button>
+          <button id="btnReset" class="btn btn-secondary">Clear Dashboard</button>
         </div>
       </div>
     </aside>
 
-    <!-- RIGHT MAIN CONTENT SPACE -->
+    <!-- RIGHT MAIN WORKSPACE -->
     <main>
       <!-- HEADER NAVBAR -->
       <header>
         <div class="header-title">
           <h2>Dashboard Overview</h2>
+          <p>Real-time high velocity identifier availability scanner</p>
         </div>
 
-        <div class="status-indicator">
+        <div class="status-badge">
           <div class="status-dot" id="sysDot"></div>
           <span id="sysStatusText">Status: Idle</span>
         </div>
       </header>
 
-      <!-- VIEW GRID CONTENT -->
-      <div class="view-content">
-        <!-- TOP STATUS METRICS -->
-        <div class="metrics-row">
-          <div class="metric-card scanned">
-            <span class="metric-lbl">Processed</span>
-            <div class="metric-data-row">
-              <span class="metric-val" id="statScanned">0 / 0</span>
-              <span class="metric-pct" id="pctScanned">0%</span>
+      <!-- VIEW CONTENT GRID -->
+      <div class="content-view">
+        <!-- TOP 5 STAT METRIC TILES -->
+        <div class="stats-row">
+          <div class="stat-tile">
+            <span class="stat-label">Processed</span>
+            <div class="stat-data">
+              <span class="stat-number" id="statScanned">0 / 0</span>
+              <span class="stat-percent" id="pctScanned">0%</span>
             </div>
           </div>
           
-          <div class="metric-card available">
-            <span class="metric-lbl">Available</span>
-            <div class="metric-data-row">
-              <span class="metric-val" id="statAvailable">0</span>
-              <span class="metric-pct" id="pctAvailable">0%</span>
+          <div class="stat-tile available">
+            <span class="stat-label">Available Hits</span>
+            <div class="stat-data">
+              <span class="stat-number" id="statAvailable" style="color: var(--emerald);">0</span>
+              <span class="stat-percent" id="pctAvailable">0%</span>
             </div>
           </div>
 
-          <div class="metric-card taken">
-            <span class="metric-lbl">Taken</span>
-            <div class="metric-data-row">
-              <span class="metric-val" id="statTaken">0</span>
-              <span class="metric-pct" id="pctTaken">0%</span>
+          <div class="stat-tile">
+            <span class="stat-label">Taken</span>
+            <div class="stat-data">
+              <span class="stat-number" id="statTaken">0</span>
+              <span class="stat-percent" id="pctTaken">0%</span>
             </div>
           </div>
 
-          <div class="metric-card rate-limited">
-            <span class="metric-lbl">Limited (429)</span>
-            <div class="metric-data-row">
-              <span class="metric-val" id="statLimited">0</span>
-              <span class="metric-pct" id="pctLimited">0%</span>
+          <div class="stat-tile limited">
+            <span class="stat-label">Rate Limited (429)</span>
+            <div class="stat-data">
+              <span class="stat-number" id="statLimited" style="color: var(--amber);">0</span>
+              <span class="stat-percent" id="pctLimited">0%</span>
             </div>
           </div>
 
-          <div class="metric-card failed">
-            <span class="metric-lbl">Failed</span>
-            <div class="metric-data-row">
-              <span class="metric-val" id="statFailed">0</span>
-              <span class="metric-pct" id="pctFailed">0%</span>
+          <div class="stat-tile failed">
+            <span class="stat-label">Errors / Failed</span>
+            <div class="stat-data">
+              <span class="stat-number" id="statFailed" style="color: var(--rose);">0</span>
+              <span class="stat-percent" id="pctFailed">0%</span>
             </div>
           </div>
         </div>
 
-        <!-- RESULTS GRID VIEW -->
-        <div class="display-layout">
-          <!-- Results Tab List Panel (Left side) -->
-          <div class="card" style="height: 100%;">
-            <div class="tab-nav">
-              <button class="tab-link active" id="tab-available">
-                Available
-                <span class="tab-num" id="badgeAvailable">0</span>
-              </button>
-              <button class="tab-link" id="tab-taken">
-                Taken
-                <span class="tab-num" id="badgeTaken">0</span>
-              </button>
-            </div>
-
-            <div class="list-container" id="results-display-list">
-              <div class="empty-state" id="list-empty-state">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <div>No results recorded. Configure and start.</div>
+        <!-- MAIN SPLIT WORKSPACE -->
+        <div class="grid-panels">
+          <!-- LEFT: TABBED RESULTS LIST CARD -->
+          <div class="panel-card">
+            <div class="tabs-bar">
+              <div class="tabs-group">
+                <button class="tab-btn active" id="tab-available">
+                  Available Hits
+                  <span class="count-badge" id="badgeAvailable">0</span>
+                </button>
+                <button class="tab-btn" id="tab-taken">
+                  Taken / Checked
+                  <span class="count-badge" id="badgeTaken">0</span>
+                </button>
               </div>
+              <button id="btnExport" class="btn btn-secondary">Export .txt</button>
             </div>
 
-            <div style="padding: 14px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; flex-shrink: 0;">
-              <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 6px 14px; font-size: 0.75rem; border-radius: 4px;">Copy list</button>
+            <div class="results-scroll" id="results-display-list">
+              <div class="empty-prompt" id="list-empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div>No hits recorded yet. Select scan mode and start.</div>
+              </div>
             </div>
           </div>
 
-          <!-- Terminal Activity Log Panel (Right side) -->
-          <div class="terminal-container">
-            <div class="terminal-header">
-              <div class="terminal-dots">
-                <span class="terminal-dot red"></span>
-                <span class="terminal-dot yellow"></span>
-                <span class="terminal-dot green"></span>
+          <!-- RIGHT: MACOS-STYLED ACTIVITY TERMINAL -->
+          <div class="terminal-window">
+            <div class="terminal-topbar">
+              <div class="window-dots">
+                <div class="w-dot red"></div>
+                <div class="w-dot yellow"></div>
+                <div class="w-dot green"></div>
               </div>
-              <span class="terminal-title">snowflake@activity-console: ~</span>
-              <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.65rem; border-radius: 4px; border: 1px solid var(--border-color);">Clear</button>
+              <span class="terminal-heading">snowflake@live-activity: ~</span>
+              <button id="btnClearLogs" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.65rem;">Clear</button>
             </div>
             
-            <div id="logContent" class="terminal-console"></div>
+            <div id="logContent" class="terminal-body"></div>
           </div>
         </div>
       </div>
 
-      <!-- FOOTER STATS METRIC BAR -->
+      <!-- FOOTER STATUS METRICS -->
       <footer>
-        <div style="display: flex; align-items: center; gap: 15px;">
-          <span>Est. Remaining (ETA): <span class="footer-highlight" id="lblETA">00:00:00</span></span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span>Est. Remaining (ETA): <span class="footer-cyan" id="lblETA">00:00:00</span></span>
         </div>
 
-        <div class="footer-metrics">
-          <div>Duration: <span class="footer-val" id="lblDuration">00:00:00</span></div>
-          <div>Reqs/Min: <span class="footer-val" id="lblReqMin">0</span></div>
-          <div>Total Hits: <span class="footer-val" id="lblTotalHits">0</span></div>
-          <div>Last Check: <span class="footer-val" id="lblLastCheck">Never</span></div>
+        <div class="footer-metrics-group">
+          <div>Duration: <span class="footer-white" id="lblDuration">00:00:00</span></div>
+          <div>Reqs/Min: <span class="footer-white" id="lblReqMin">0</span></div>
+          <div>Total Hits: <span class="footer-white" id="lblTotalHits">0</span></div>
+          <div>Last Check: <span class="footer-white" id="lblLastCheck">Never</span></div>
         </div>
       </footer>
     </main>
