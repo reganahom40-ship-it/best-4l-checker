@@ -21,6 +21,22 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
+    def translate_path(self, path):
+        clean_path = path.split('?')[0].split('#')[0]
+        if clean_path == '/':
+            clean_path = '/index.html'
+
+        local_file_path = os.path.join(PUBLIC_DIR, clean_path.lstrip('/'))
+        normalized_path = os.path.abspath(local_file_path)
+
+        if not normalized_path.startswith(os.path.abspath(PUBLIC_DIR)):
+            return os.path.join(PUBLIC_DIR, 'notfound')
+
+        if os.path.exists(normalized_path) and os.path.isfile(normalized_path):
+            return normalized_path
+        
+        return os.path.join(PUBLIC_DIR, 'index.html')
+
     def do_GET(self):
         # Handle Mock API Endpoint: GET /api/mock-check/<id>
         if self.path.startswith('/api/mock-check/'):
@@ -60,37 +76,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({'status': 'taken', 'message': 'Identifier is already registered'}).encode('utf-8'))
             return
 
-        # Serve static files from public/ folder
-        clean_path = self.path.split('?')[0].split('#')[0]
-        if clean_path == '/':
-            clean_path = '/index.html'
-
-        local_file_path = os.path.join(PUBLIC_DIR, clean_path.lstrip('/'))
-        normalized_path = os.path.abspath(local_file_path)
-
-        if not normalized_path.startswith(os.path.abspath(PUBLIC_DIR)):
-            self.send_response(403)
-            self.end_headers()
-            self.wfile.write(b'Access Denied')
-            return
-
-        if os.path.exists(normalized_path) and os.path.isfile(normalized_path):
-            self.path = clean_path
-            original_dir = os.getcwd()
-            os.chdir(PUBLIC_DIR)
-            try:
-                super().do_GET()
-            finally:
-                os.chdir(original_dir)
-        else:
-            # SPA Fallback
-            self.path = '/index.html'
-            original_dir = os.getcwd()
-            os.chdir(PUBLIC_DIR)
-            try:
-                super().do_GET()
-            finally:
-                os.chdir(original_dir)
+        super().do_GET()
 
     def do_POST(self):
         if self.path == '/api/proxy-check':
