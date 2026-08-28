@@ -7,7 +7,7 @@ import os
 import sys
 import random
 
-PORT = 3000
+PORT = int(os.environ.get('PORT', 3000))
 PUBLIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public')
 
 class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):

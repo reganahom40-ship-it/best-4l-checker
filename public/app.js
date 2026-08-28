@@ -512,6 +512,7 @@ elGenMode.addEventListener('change', () => {
 // Initialize
 window.addEventListener('DOMContentLoaded', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
+  elTargetUrl.value = window.location.origin + '/api/mock-check/{id}';
   renderList();
   log('Snowflake API Checker initialized and ready.');
 });
