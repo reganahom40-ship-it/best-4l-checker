@@ -3,304 +3,168 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Identifier Checker v2.0</title>
-  <!-- Chart.js CDN for live graphing -->
+  <title>Snowflake — API Checker</title>
+  <!-- Chart.js for premium analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg-dark: #0f0c1b;
-      --bg-surface: rgba(26, 22, 37, 0.65);
-      --bg-surface-light: rgba(37, 32, 51, 0.8);
-      --border-color: rgba(255, 255, 255, 0.06);
-      --border-glow: rgba(139, 92, 246, 0.2);
+      --bg-black: #000000;
+      --bg-panel: #09090b;
+      --bg-input: #121214;
+      --border-color: #1f1f23;
       
-      --primary: #8b5cf6;
-      --primary-hover: #7c3aed;
-      --accent: #3b82f6;
+      --accent-cyan: #00f0ff;
+      --accent-blue: #0066ff;
+      --accent-glow: rgba(0, 240, 255, 0.15);
+      
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
       
-      --text-main: #f9fafb;
-      --text-muted: #9ca3af;
+      --text-main: #f4f4f5;
+      --text-muted: #71717a;
       
-      --font-mono: "Fira Code", Monaco, Consolas, "Liberation Mono", monospace;
+      --font-mono: "Fira Code", Monaco, Consolas, monospace;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      background-color: var(--bg-dark);
-      background-image: 
-        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+      background-color: var(--bg-black);
       color: var(--text-main);
       display: flex;
+      flex-direction: column;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* GLASSMORPHISM BASE */
-    .glass {
-      background: var(--bg-surface);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-
-    /* SIDEBAR */
-    aside {
-      width: 240px;
+    /* TOP HEADER NAVBAR */
+    nav {
+      height: 60px;
+      border-bottom: 1px solid var(--border-color);
       display: flex;
-      flex-direction: column;
-      border-right: 1px solid var(--border-color);
-      padding: 20px;
-      flex-shrink: 0;
-      background: rgba(15, 12, 27, 0.95);
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      background: var(--bg-panel);
     }
 
-    .logo-container {
+    .brand {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 30px;
-      padding-left: 5px;
     }
 
-    .logo-icon {
-      width: 28px;
-      height: 28px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      border-radius: 6px;
+    .brand-logo {
+      color: var(--accent-cyan);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      color: white;
-      font-size: 0.9rem;
-      box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+      font-size: 1.5rem;
+      animation: spinSlow 12s linear infinite;
     }
 
-    .logo-title {
+    .brand-title {
       font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ffffff, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .logo-version {
+    .brand-badge {
       font-size: 0.65rem;
-      background: rgba(139, 92, 246, 0.2);
-      color: var(--primary);
-      padding: 2px 6px;
-      border-radius: 10px;
-      font-weight: 600;
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 8px var(--accent-glow);
     }
 
-    .menu-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      list-style: none;
-    }
-
-    .menu-item button {
-      width: 100%;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      text-align: left;
+    .system-status {
       display: flex;
       align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
     }
 
-    .menu-item.active button {
-      color: var(--text-main);
-      background: rgba(139, 92, 246, 0.15);
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      box-shadow: 0 0 10px rgba(139, 92, 246, 0.1);
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
     }
 
-    .menu-item button:hover:not(.active button) {
-      color: var(--text-main);
-      background: rgba(255, 255, 255, 0.03);
+    .status-dot.scanning {
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan);
+      animation: pulse 1.5s infinite;
     }
 
-    .menu-item svg {
-      width: 18px;
-      height: 18px;
-      opacity: 0.7;
-    }
-
-    .menu-item.active svg {
-      opacity: 1;
-      color: var(--primary);
-    }
-
-    /* MAIN CONTAINER */
-    main {
+    /* DASHBOARD WRAPPER */
+    .dashboard-container {
       flex: 1;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* TOP HEADER & STATS */
-    header {
-      padding: 20px 24px;
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--border-color);
     }
 
-    .header-info h2 {
-      font-size: 1.25rem;
+    .card-header h3 {
+      font-size: 0.9rem;
       font-weight: 700;
-    }
-
-    .header-info p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .toggle-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg-surface-light);
-      padding: 6px 12px;
-      border-radius: 20px;
-      border: 1px solid var(--border-color);
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .toggle-container input {
-      cursor: pointer;
-    }
-
-    /* STATS GRID */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 15px;
-      padding: 20px 24px;
-      flex-shrink: 0;
-    }
-
-    .stat-card {
-      padding: 15px 20px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-card::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 3px;
-      width: 100%;
-      background: var(--border-color);
-    }
-
-    .stat-card.scanned::after { background: var(--text-main); }
-    .stat-card.available::after { background: var(--success); }
-    .stat-card.taken::after { background: var(--text-muted); }
-    .stat-card.rate-limited::after { background: var(--warning); }
-    .stat-card.failed::after { background: var(--danger); }
-
-    .stat-card .label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-    }
-
-    .stat-card .value-wrapper {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
-
-    .stat-card .value {
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-
-    .stat-card .percentage {
-      font-size: 0.8rem;
-      font-weight: 600;
-      opacity: 0.8;
-    }
-
-    /* CONTENT LAYOUT GRID */
-    .content-grid {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 320px 1fr 340px;
-      gap: 20px;
-      padding: 0 24px 20px 24px;
-      overflow: hidden;
-    }
-
-    .panel-card {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .panel-header {
-      padding: 15px 20px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .panel-header h3 {
-      font-size: 0.95rem;
-      font-weight: 700;
       color: var(--text-main);
     }
 
-    .panel-body {
+    .card-body {
       padding: 20px;
       flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 16px;
     }
 
-    /* CONFIGURATION PANEL */
+    /* CONTROLS & INPUTS */
     .form-group {
       display: flex;
       flex-direction: column;
@@ -315,24 +179,24 @@
       letter-spacing: 0.3px;
     }
 
-    .form-group input, 
-    .form-group select, 
+    .form-group select,
+    .form-group input,
     .form-group textarea {
-      background: rgba(15, 12, 27, 0.6);
+      background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: 6px;
       color: var(--text-main);
-      padding: 8px 12px;
+      padding: 10px 12px;
       font-size: 0.85rem;
       outline: none;
       transition: all 0.2s ease;
     }
 
-    .form-group input:focus, 
-    .form-group select:focus, 
+    .form-group select:focus,
+    .form-group input:focus,
     .form-group textarea:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 8px rgba(139, 92, 246, 0.15);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-glow);
     }
 
     .form-group textarea {
@@ -342,17 +206,67 @@
       font-size: 0.8rem;
     }
 
-    .row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .slider-header span.val {
+      color: var(--accent-cyan);
+    }
+
+    .slider-input {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border-color);
+      outline: none;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-group input {
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    /* BUTTONS */
     .btn {
       width: 100%;
-      padding: 10px 16px;
+      padding: 12px 20px;
       border-radius: 6px;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 0.85rem;
       cursor: pointer;
       border: none;
@@ -361,69 +275,152 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      color: white;
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+    .btn-glow {
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     }
 
-    .btn-primary:hover:not(:disabled) {
+    .btn-glow:hover:not(:disabled) {
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
       transform: translateY(-1px);
-      box-shadow: 0 6px 15px rgba(139, 92, 246, 0.35);
     }
 
-    .btn-primary:disabled {
-      opacity: 0.6;
+    .btn-glow:disabled {
+      opacity: 0.5;
       cursor: not-allowed;
     }
 
     .btn-danger {
       background: var(--danger);
       color: white;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
     }
 
-    .btn-danger:hover:not(:disabled) {
-      opacity: 0.9;
+    .btn-danger:hover {
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
     }
 
-    .btn-secondary {
+    .btn-border {
       background: transparent;
       border: 1px solid var(--border-color);
       color: var(--text-muted);
     }
 
-    .btn-secondary:hover {
+    .btn-border:hover {
       color: var(--text-main);
-      background: rgba(255, 255, 255, 0.03);
       border-color: var(--text-muted);
     }
 
-    /* TABS & RESULTS CONTAINER */
-    .tabs-header {
-      background: rgba(15, 12, 27, 0.4);
+    /* RIGHT WORKSPACE GRID */
+    .main-grid {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    /* STATS HEADER ROW */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .stat-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 3px;
+    }
+
+    .stat-card.scanned::before { background: var(--text-muted); }
+    .stat-card.available::before { background: var(--success); }
+    .stat-card.taken::before { background: var(--border-color); }
+    .stat-card.rate-limited::before { background: var(--warning); }
+    .stat-card.failed::before { background: var(--danger); }
+
+    .stat-lbl {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-num-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .stat-num {
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+
+    .stat-pct {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .stat-card.available .stat-pct { color: var(--success); }
+    .stat-card.rate-limited .stat-pct { color: var(--warning); }
+
+    /* RESULTS & LOGS COLUMN LAYOUT */
+    .results-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      .results-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* RESULT LIST PANEL */
+    .tab-header {
       display: flex;
       border-bottom: 1px solid var(--border-color);
-      padding: 0 10px;
+      background: rgba(255, 255, 255, 0.01);
     }
 
     .tab-btn {
       background: none;
       border: none;
       color: var(--text-muted);
-      padding: 12px 18px;
-      font-size: 0.85rem;
-      font-weight: 600;
+      padding: 14px 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
       cursor: pointer;
       position: relative;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .tab-btn.active {
-      color: var(--primary);
+      color: var(--accent-cyan);
     }
 
     .tab-btn.active::after {
@@ -433,29 +430,23 @@
       left: 0;
       height: 2px;
       width: 100%;
-      background: var(--primary);
-      box-shadow: 0 0 8px var(--primary);
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
     }
 
     .tab-badge {
-      font-size: 0.7rem;
-      background: rgba(255, 255, 255, 0.08);
+      font-size: 0.65rem;
+      background: var(--border-color);
       color: var(--text-muted);
       padding: 1px 6px;
-      border-radius: 10px;
+      border-radius: 4px;
+      margin-left: 6px;
     }
 
     .tab-btn.active .tab-badge {
-      background: rgba(139, 92, 246, 0.2);
-      color: var(--primary);
-    }
-
-    .results-body {
-      flex: 1;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      background: rgba(0, 240, 255, 0.1);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 240, 255, 0.2);
     }
 
     .results-list {
@@ -467,378 +458,324 @@
       gap: 8px;
     }
 
-    .result-item {
-      background: rgba(15, 12, 27, 0.4);
+    .result-row {
+      background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 8px 12px;
+      padding: 10px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-family: var(--font-mono);
       font-size: 0.85rem;
-      animation: slideIn 0.2s ease-out;
     }
 
-    .result-item.available {
+    .result-row.available {
       border-left: 3px solid var(--success);
     }
 
-    .result-item.taken {
+    .result-row.taken {
       border-left: 3px solid var(--border-color);
-      opacity: 0.8;
+      opacity: 0.7;
     }
 
-    .result-tag {
+    .status-badge {
       font-size: 0.7rem;
-      text-transform: uppercase;
       font-weight: 700;
+      text-transform: uppercase;
       padding: 2px 6px;
       border-radius: 4px;
     }
 
-    .result-tag.available {
-      background: rgba(16, 185, 129, 0.15);
+    .status-badge.available {
+      background: rgba(16, 185, 129, 0.1);
       color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
-    .result-tag.taken {
-      background: rgba(255, 255, 255, 0.05);
+    .status-badge.taken {
+      background: rgba(255, 255, 255, 0.03);
       color: var(--text-muted);
     }
 
-    .empty-state {
+    .empty-prompt {
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
       color: var(--text-muted);
+      font-size: 0.85rem;
       text-align: center;
-      padding: 30px;
+      padding: 40px;
       gap: 12px;
     }
 
-    .empty-state svg {
-      width: 48px;
-      height: 48px;
-      opacity: 0.3;
+    .empty-prompt svg {
+      width: 40px;
+      height: 40px;
+      opacity: 0.2;
     }
 
-    /* CHART BOX */
-    .chart-container {
-      height: 160px;
-      position: relative;
-    }
-
-    /* SYSTEM LOGS & ACTIVITY */
-    .activity-feed {
+    /* LOG CONSOLE PANEL */
+    .console-box {
       flex: 1;
-      background: rgba(15, 12, 27, 0.8);
-      border-radius: 6px;
+      background: #040405;
       border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin: 15px;
+      padding: 15px;
       font-family: var(--font-mono);
       font-size: 0.8rem;
-      padding: 12px;
       overflow-y: auto;
-      white-space: pre-wrap;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
 
-    .log-row {
+    .log-line {
       line-height: 1.4;
       display: flex;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .log-row .time {
+    .log-line .timestamp {
       color: var(--text-muted);
     }
 
-    .log-row .status-200 { color: var(--success); }
-    .log-row .status-429 { color: var(--warning); }
-    .log-row .status-other { color: var(--danger); }
+    .log-line .status-success { color: var(--success); }
+    .log-line .status-warn { color: var(--warning); }
+    .log-line .status-err { color: var(--danger); }
 
-    /* FOOTER STATUS BAR */
+    /* FOOTER METRICS BAR */
     footer {
       height: 40px;
-      background: rgba(15, 12, 27, 0.95);
       border-top: 1px solid var(--border-color);
-      padding: 0 24px;
+      padding: 0 30px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 0.75rem;
       color: var(--text-muted);
+      background: var(--bg-panel);
       flex-shrink: 0;
     }
 
-    .status-indicator {
+    .footer-metrics-group {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-weight: 600;
+      gap: 24px;
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-    }
-
-    .status-dot.offline {
-      background: var(--danger);
-      box-shadow: 0 0 8px var(--danger);
-    }
-
-    .footer-metrics {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .footer-metric span {
+    .footer-val {
       color: var(--text-main);
       font-weight: 600;
     }
 
-    /* ANIMATIONS */
-    @keyframes slideIn {
-      from { transform: translateY(5px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+    /* SYSTEM TRANSITIONS & ROTATIONS */
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
     }
   </style>
 </head>
 <body>
 
-  <!-- LEFT SIDEBAR -->
-  <aside>
-    <div class="logo-container">
-      <div class="logo-icon">C</div>
-      <div class="logo-title">API Checker</div>
-      <div class="logo-version">v2.0</div>
+  <!-- NAVBAR -->
+  <nav>
+    <div class="brand">
+      <div class="brand-logo">❄</div>
+      <div class="brand-title">Snowflake</div>
+      <div class="brand-badge">API Checker</div>
     </div>
 
-    <ul class="menu-list">
-      <li class="menu-item active" id="menu-dashboard">
-        <button>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path></svg>
-          Dashboard
-        </button>
-      </li>
-      <li class="menu-item" id="menu-logs">
-        <button>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          Logs & History
-        </button>
-      </li>
-    </ul>
-  </aside>
-
-  <!-- MAIN WINDOW -->
-  <main>
-    <!-- TOP HEADER -->
-    <header>
-      <div class="header-info">
-        <h2>Dashboard Overview</h2>
-        <p>Real-time API identifier scanning and availability dashboard.</p>
-      </div>
-
-      <div class="header-actions">
-        <div class="toggle-container">
-          <input type="checkbox" id="autoRetry" checked>
-          <label for="autoRetry">Auto-retry 429</label>
-        </div>
-        <button id="btnStart" class="btn btn-primary" style="width: auto; padding: 8px 16px;">
-          <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          Start Checking
-        </button>
-        <button id="btnStop" class="btn btn-danger" style="width: auto; padding: 8px 16px; display: none;">
-          Stop
-        </button>
-      </div>
-    </header>
-
-    <!-- STATS OVERVIEW ROW -->
-    <div class="stats-row">
-      <div class="glass stat-card scanned">
-        <span class="label">Scanned / Total</span>
-        <div class="value-wrapper">
-          <span class="value" id="statScanned">0 / 0</span>
-          <span class="percentage" id="pctScanned">0%</span>
-        </div>
-      </div>
-      <div class="glass stat-card available">
-        <span class="label">Available</span>
-        <div class="value-wrapper">
-          <span class="value" id="statAvailable">0</span>
-          <span class="percentage" id="pctAvailable">0%</span>
-        </div>
-      </div>
-      <div class="glass stat-card taken">
-        <span class="label">Taken / Registered</span>
-        <div class="value-wrapper">
-          <span class="value" id="statTaken">0</span>
-          <span class="percentage" id="pctTaken">0%</span>
-        </div>
-      </div>
-      <div class="glass stat-card rate-limited">
-        <span class="label">Rate Limited</span>
-        <div class="value-wrapper">
-          <span class="value" id="statLimited">0</span>
-          <span class="percentage" id="pctLimited">0%</span>
-        </div>
-      </div>
-      <div class="glass stat-card failed">
-        <span class="label">Errors / Failed</span>
-        <div class="value-wrapper">
-          <span class="value" id="statFailed">0</span>
-          <span class="percentage" id="pctFailed">0%</span>
-        </div>
-      </div>
+    <div class="system-status">
+      <div class="status-dot" id="sysDot"></div>
+      <span id="sysStatusText">System Status: Idle</span>
     </div>
+  </nav>
 
-    <!-- MAIN DASHBOARD CONTENT GRID -->
-    <div class="content-grid">
-      <!-- COLUMN 1: CONFIGURATION -->
-      <div class="glass panel-card">
-        <div class="panel-header">
-          <h3>Configuration</h3>
+  <!-- DASHBOARD CONTAINER -->
+  <div class="dashboard-container">
+    <!-- LEFT SIDE: CONFIGURATION CARD -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Configuration</h3>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label for="genMode">Scan Mode</label>
+          <select id="genMode">
+            <option value="auto3">Auto 3-Letter (a-z)</option>
+            <option value="auto4" selected>Auto 4-Letter (a-z)</option>
+            <option value="auto4num">Auto 4-Alphanumeric (a-z0-9)</option>
+            <option value="manual">Manual Input List</option>
+          </select>
         </div>
-        <div class="panel-body">
-          <div class="form-group">
-            <label for="genMode">Input / Generation Mode</label>
-            <select id="genMode">
-              <option value="manual">Manual Input List</option>
-              <option value="auto3">Auto 3-Letter (a-z)</option>
-              <option value="auto4" selected>Auto 4-Letter (a-z)</option>
-              <option value="auto4num">Auto 4-Alphanumeric (a-z0-9)</option>
-            </select>
+
+        <div class="form-group" id="identifiers-group" style="display: none;">
+          <label for="identifiers">Identifier Queue</label>
+          <textarea id="identifiers" placeholder="Enter identifiers here, one per line"></textarea>
+        </div>
+
+        <div class="slider-container">
+          <div class="slider-header">
+            <span>Interval Speed</span>
+            <span class="val" id="lblSpeed">1000ms</span>
           </div>
+          <input type="range" id="delaySlider" class="slider-input" min="0" max="2000" step="50" value="1000">
+        </div>
 
-          <div class="form-group" id="identifiers-group" style="display: none;">
-            <label for="identifiers">Identifiers (one per line)</label>
-            <textarea id="identifiers" placeholder="ab12&#10;cd34&#10;ef56"></textarea>
-          </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <label class="checkbox-group">
+            <input type="checkbox" id="autoRetry" checked>
+            Auto-retry 429 Rate Limits
+          </label>
+          <label class="checkbox-group">
+            <input type="checkbox" id="soundAlert" checked>
+            Play audio chime on success
+          </label>
+        </div>
 
-          <div class="form-group">
-            <label for="targetUrl">Target API Endpoint URL</label>
-            <input type="text" id="targetUrl" value="http://localhost:3000/api/mock-check/{id}">
-          </div>
-
-          <div class="form-group">
-            <label for="delay">Base Delay (ms)</label>
-            <input type="number" id="delay" value="1000" min="0">
-          </div>
-
-          <details style="margin-top: 10px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted);">
-            <summary style="font-weight: 600; text-transform: uppercase; outline: none; user-select: none;">
-              Advanced Settings
-            </summary>
-            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); cursor: default;">
-              <div class="form-group">
-                <label for="method">Method</label>
-                <select id="method">
-                  <option value="GET" selected>GET</option>
-                  <option value="POST">POST</option>
-                  <option value="PUT">PUT</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="headers">Headers (JSON)</label>
-                <textarea id="headers" placeholder='{ "Content-Type": "application/json" }'></textarea>
-              </div>
-
-              <div class="form-group">
-                <label for="requestBody">Request Body ({id} placeholder)</label>
-                <textarea id="requestBody" placeholder='{ "username": "{id}" }'></textarea>
-              </div>
+        <!-- COLLAPSIBLE ADVANCED SETTINGS -->
+        <details style="margin-top: 10px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted);">
+          <summary style="font-weight: 700; text-transform: uppercase; outline: none; user-select: none;">
+            Advanced Options
+          </summary>
+          <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); cursor: default;">
+            <div class="form-group">
+              <label for="targetUrl">Target Request URL</label>
+              <input type="text" id="targetUrl" value="http://localhost:3000/api/mock-check/{id}">
             </div>
-          </details>
+            
+            <div class="form-group">
+              <label for="method">HTTP Method</label>
+              <select id="method">
+                <option value="GET" selected>GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+              </select>
+            </div>
 
-          <div class="row-2" style="margin-top: auto;">
-            <button id="btnReset" class="btn btn-secondary">Reset Stats</button>
+            <div class="form-group">
+              <label for="headers">Custom Headers (JSON)</label>
+              <textarea id="headers" placeholder='{ "Content-Type": "application/json" }'></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="requestBody">Request Body Payload</label>
+              <textarea id="requestBody" placeholder='{ "username": "{id}" }'></textarea>
+            </div>
+          </div>
+        </details>
+
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+          <button id="btnStart" class="btn btn-glow">Start Checking</button>
+          <button id="btnStop" class="btn btn-danger" style="display: none;">Stop Checking</button>
+          <button id="btnReset" class="btn btn-border">Clear Dashboard</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE: ACTIVE SCANNING CONSOLE -->
+    <div class="main-grid">
+      <!-- TOP STATUS COUNTERS -->
+      <div class="stats-row">
+        <div class="stat-card scanned">
+          <span class="stat-lbl">Processed</span>
+          <div class="stat-num-row">
+            <span class="stat-num" id="statScanned">0 / 0</span>
+            <span class="stat-pct" id="pctScanned">0%</span>
+          </div>
+        </div>
+        <div class="stat-card available">
+          <span class="stat-lbl">Available</span>
+          <div class="stat-num-row">
+            <span class="stat-num" id="statAvailable">0</span>
+            <span class="stat-pct" id="pctAvailable">0%</span>
+          </div>
+        </div>
+        <div class="stat-card taken">
+          <span class="stat-lbl">Taken</span>
+          <div class="stat-num-row">
+            <span class="stat-num" id="statTaken">0</span>
+            <span class="stat-pct" id="pctTaken">0%</span>
+          </div>
+        </div>
+        <div class="stat-card rate-limited">
+          <span class="stat-lbl">Limited (429)</span>
+          <div class="stat-num-row">
+            <span class="stat-num" id="statLimited">0</span>
+            <span class="stat-pct" id="pctLimited">0%</span>
+          </div>
+        </div>
+        <div class="stat-card failed">
+          <span class="stat-lbl">Failed</span>
+          <div class="stat-num-row">
+            <span class="stat-num" id="statFailed">0</span>
+            <span class="stat-pct" id="pctFailed">0%</span>
           </div>
         </div>
       </div>
 
-      <!-- COLUMN 2: TABBED RESULTS & PROGRESS TIMELINE -->
-      <div class="glass panel-card">
-        <!-- TABS HEADER -->
-        <div class="tabs-header">
-          <button class="tab-btn active" id="tab-available">
-            Available Identifiers
-            <span class="tab-badge" id="badgeAvailable">0</span>
-          </button>
-          <button class="tab-btn" id="tab-taken">
-            Taken / Checked
-            <span class="tab-badge" id="badgeTaken">0</span>
-          </button>
-        </div>
+      <!-- RESULTS AND LIVE CONSOLE -->
+      <div class="card results-layout">
+        <!-- Result Panel (Left half of results card) -->
+        <div style="display: flex; flex-direction: column; height: 100%; border-right: 1px solid var(--border-color);">
+          <div class="tab-header">
+            <button class="tab-btn active" id="tab-available">
+              Available
+              <span class="tab-badge" id="badgeAvailable">0</span>
+            </button>
+            <button class="tab-btn" id="tab-taken">
+              Taken
+              <span class="tab-badge" id="badgeTaken">0</span>
+            </button>
+          </div>
 
-        <div class="results-body">
-          <!-- List Display -->
           <div class="results-list" id="results-display-list">
-            <!-- Empty state defaults -->
-            <div class="empty-state" id="list-empty-state">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-              <div>No available identifiers found yet. Start the checker to begin.</div>
+            <div class="empty-prompt" id="list-empty-state">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              <div>No results recorded yet. Configure and start.</div>
             </div>
           </div>
-          
-          <div style="padding: 10px 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
-            <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.75rem;">Copy list</button>
+
+          <div style="padding: 12px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+            <button id="btnExport" class="btn btn-border" style="width: auto; padding: 6px 12px; font-size: 0.75rem;">Copy list</button>
           </div>
         </div>
 
-        <!-- PROGRESS CHART FOOTER BOX -->
-        <div class="panel-header" style="border-top: 1px solid var(--border-color);">
-          <h3>Progress Overview</h3>
-        </div>
-        <div style="padding: 15px; height: 160px;">
-          <canvas id="progressChart"></canvas>
-        </div>
-      </div>
-
-      <!-- COLUMN 3: LIVE FEED & DONUT GRAPH -->
-      <div class="glass panel-card">
-        <div class="panel-header">
-          <h3>Live Activity</h3>
-          <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 4px 8px; font-size: 0.7rem;">Clear</button>
-        </div>
-        <div class="panel-body" style="padding-bottom: 10px;">
-          <div id="logContent" class="activity-feed"></div>
-        </div>
-
-        <div class="panel-header" style="border-top: 1px solid var(--border-color);">
-          <h3>Statistics Breakdown</h3>
-        </div>
-        <div style="padding: 15px; height: 160px; display: flex; align-items: center; justify-content: center;">
-          <canvas id="donutChart" style="max-height: 100%; max-width: 100%;"></canvas>
+        <!-- Terminal Console Panel (Right half of results card) -->
+        <div style="display: flex; flex-direction: column; height: 100%;">
+          <div class="card-header">
+            <h3>Live Activity</h3>
+            <button id="btnClearLogs" class="btn btn-border" style="width: auto; padding: 4px 8px; font-size: 0.7rem; border-radius: 4px;">Clear Console</button>
+          </div>
+          <div id="logContent" class="console-box"></div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- BOTTOM STATUS METRICS BAR -->
-    <footer>
-      <div class="status-indicator">
-        <div class="status-dot" id="systemStatusDot"></div>
-        <span id="systemStatusText">System Status: Online</span>
-      </div>
+  <!-- STATUS FOOTER BAR -->
+  <footer>
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <span>Est. Remaining (ETA): <span class="footer-val" id="lblETA">00:00:00</span></span>
+    </div>
 
-      <div class="footer-metrics">
-        <div class="footer-metric">Last Check: <span id="lblLastCheck">Never</span></div>
-        <div class="footer-metric">Duration: <span id="lblDuration">00:00:00</span></div>
-        <div class="footer-metric">Requests/Min: <span id="lblReqMin">0</span></div>
-        <div class="footer-metric">Total Requests: <span id="lblTotalReq">0</span></div>
-      </div>
-    </footer>
-  </main>
+    <div class="footer-metrics-group">
+      <div>Duration: <span class="footer-val" id="lblDuration">00:00:00</span></div>
+      <div>Reqs/Min: <span class="footer-val" id="lblReqMin">0</span></div>
+      <div>Total Hits: <span class="footer-val" id="lblTotalHits">0</span></div>
+      <div>Last Check: <span class="footer-val" id="lblLastCheck">Never</span></div>
+    </div>
+  </footer>
 
   <script src="app.js"></script>
 </body>
