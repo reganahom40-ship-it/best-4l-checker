@@ -20,6 +20,7 @@ let totalRequests = 0;
 let activeResultTab = 'available';
 
 // DOM Elements
+const elApiPreset = document.getElementById('apiPreset');
 const elGenMode = document.getElementById('genMode');
 const elIdentifiersGroup = document.getElementById('identifiers-group');
 const elIdentifiers = document.getElementById('identifiers');
@@ -67,6 +68,30 @@ const elSysStatusText = document.getElementById('sysStatusText');
 
 const elTabAvailable = document.getElementById('tab-available');
 const elTabTaken = document.getElementById('tab-taken');
+
+// Preset Switcher
+elApiPreset.addEventListener('change', () => {
+  const preset = elApiPreset.value;
+  if (preset === 'discord') {
+    elTargetUrl.value = 'https://discord.com/api/v9/users/@me/pomelo-attempt';
+    elMethod.value = 'POST';
+    elHeaders.value = '{\n  "Authorization": "YOUR_DISCORD_TOKEN",\n  "Content-Type": "application/json"\n}';
+    elRequestBody.value = '{\n  "username": "{id}"\n}';
+    log('Loaded Discord Pomelo Preset. Enter your Discord Token in Custom Headers.', 'warn');
+  } else if (preset === 'github') {
+    elTargetUrl.value = 'https://api.github.com/users/{id}';
+    elMethod.value = 'GET';
+    elHeaders.value = '{\n  "User-Agent": "Snowflake-Checker"\n}';
+    elRequestBody.value = '';
+    log('Loaded GitHub Username Preset.', 'info');
+  } else if (preset === 'mock') {
+    elTargetUrl.value = window.location.origin + '/api/mock-check/{id}';
+    elMethod.value = 'GET';
+    elHeaders.value = '';
+    elRequestBody.value = '';
+    log('Loaded Local Mock Test Simulator.', 'info');
+  }
+});
 
 // Slider Label
 elDelaySlider.addEventListener('input', () => {
@@ -322,8 +347,12 @@ async function startChecking() {
     rawBody = elRequestBody.value.trim();
     if (rawBody) JSON.parse(rawBody);
   } catch (e) {
-    log(`JSON parser failed: ${e.message}`, 'error');
+    log(`JSON parser error: Check your headers/body syntax: ${e.message}`, 'error');
     return;
+  }
+
+  if (elApiPreset.value === 'discord' && headers.Authorization && headers.Authorization.includes('YOUR_DISCORD_TOKEN')) {
+    log('Warning: You are using the default placeholder Discord Token. Requests may return 401 Unauthorized until you provide your real user token.', 'warn');
   }
 
   totalCount = queue.length;
@@ -418,6 +447,12 @@ async function startChecking() {
         }
 
         const remoteStatus = resData.status;
+        let jsonPayload = null;
+        try {
+          if (resData.data) {
+            jsonPayload = typeof resData.data === 'string' ? JSON.parse(resData.data) : resData.data;
+          }
+        } catch (e) {}
 
         // HTTP 429 - Rate Limited
         if (remoteStatus === 429) {
@@ -428,12 +463,14 @@ async function startChecking() {
           if (resData.headers && resData.headers['retry-after']) {
             const parsed = parseInt(resData.headers['retry-after'], 10);
             if (!isNaN(parsed)) waitSec = parsed;
+          } else if (jsonPayload && jsonPayload.retry_after) {
+            waitSec = Math.ceil(jsonPayload.retry_after);
           }
 
-          log(`Rate limit reached on "${id}" (HTTP 429). Retry in ${waitSec}s`, 'warn');
+          log(`Rate limited on "${id}" (HTTP 429). Retry in ${waitSec}s`, 'warn');
 
           if (elAutoRetry.checked) {
-            log(`Cooling down for ${waitSec}s...`, 'warn');
+            log(`Backing off: Waiting ${waitSec} seconds...`, 'warn');
             for (let s = waitSec; s > 0; s--) {
               if (!isRunning) break;
               await new Promise(r => setTimeout(r, 1000));
@@ -443,26 +480,61 @@ async function startChecking() {
             failedCount++;
             success = true;
           }
-        } 
-        // HTTP 200 - Available
+        }
+        // HTTP 401 - Unauthorized
+        else if (remoteStatus === 401) {
+          failedCount++;
+          log(`[AUTH ERROR] 401 Unauthorized on "${id}". Check your Authorization token in Custom Headers.`, 'error');
+          success = true;
+        }
+        // Discord Pomelo checks
+        else if (jsonPayload && typeof jsonPayload.taken === 'boolean') {
+          if (jsonPayload.taken === false) {
+            availableCount++;
+            availableList.push({ name: id, status: 'available', code: 200 });
+            log(`[AVAILABLE] "${id}" is FREE on Discord!`, 'success');
+            playSuccessSound();
+          } else {
+            takenCount++;
+            checkedList.push({ name: id, status: 'taken', code: 200 });
+            log(`[TAKEN] "${id}" is taken.`, 'info');
+          }
+          success = true;
+        }
+        // GitHub mode (404 = available)
+        else if (elApiPreset.value === 'github') {
+          if (remoteStatus === 404) {
+            availableCount++;
+            availableList.push({ name: id, status: 'available', code: 404 });
+            log(`[AVAILABLE] "${id}" is free on GitHub!`, 'success');
+            playSuccessSound();
+          } else if (remoteStatus === 200) {
+            takenCount++;
+            checkedList.push({ name: id, status: 'taken', code: 200 });
+            log(`[TAKEN] "${id}" is registered on GitHub.`, 'info');
+          } else {
+            failedCount++;
+            log(`Status ${remoteStatus} for "${id}"`, 'error');
+          }
+          success = true;
+        }
+        // Standard HTTP Code check
         else if (remoteStatus === 200) {
           availableCount++;
           availableList.push({ name: id, status: 'available', code: 200 });
-          log(`AVAILABLE: "${id}" discovered!`, 'success');
+          log(`[AVAILABLE] "${id}" returned HTTP 200`, 'success');
           playSuccessSound();
           success = true;
         } 
-        // HTTP 409, 403, 400 - Taken
-        else if ([400, 403, 409].includes(remoteStatus)) {
+        else if ([400, 403, 404, 409].includes(remoteStatus)) {
           takenCount++;
           checkedList.push({ name: id, status: 'taken', code: remoteStatus });
-          log(`Taken: "${id}" (${remoteStatus})`, 'info');
+          log(`[TAKEN] "${id}" (${remoteStatus})`, 'info');
           success = true;
         } 
-        // Other HTTP Failures
         else {
           failedCount++;
-          log(`Code ${remoteStatus} for "${id}"`, 'error');
+          log(`Status code ${remoteStatus} for "${id}"`, 'error');
           success = true;
         }
 
@@ -505,6 +577,7 @@ function stopChecking() {
 
 // Toggle form inputs
 function toggleInputs(disabled) {
+  elApiPreset.disabled = disabled;
   elGenMode.disabled = disabled;
   elIdentifiers.disabled = disabled;
   elDelaySlider.disabled = disabled;
@@ -561,7 +634,6 @@ elGenMode.addEventListener('change', () => {
 // Initialize
 window.addEventListener('DOMContentLoaded', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
-  elTargetUrl.value = window.location.origin + '/api/mock-check/{id}';
   renderList();
-  log('Snowflake v3.0 core online. Ready to scan.');
+  log('Snowflake v3.0 core online. Select platform preset and begin.');
 });

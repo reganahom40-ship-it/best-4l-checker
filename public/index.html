@@ -125,19 +125,9 @@
       padding: 24px 28px;
       display: flex;
       flex-direction: column;
-      gap: 22px;
+      gap: 18px;
       flex: 1;
       overflow-y: auto;
-    }
-
-    /* SECTION LABELS */
-    .section-label {
-      font-size: 0.7rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      margin-bottom: 4px;
     }
 
     /* FORM CONTROLS */
@@ -148,7 +138,7 @@
     }
 
     .field label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
@@ -199,7 +189,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
@@ -321,7 +311,7 @@
     }
 
     summary {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
@@ -889,6 +879,16 @@
       
       <div class="sidebar-content">
         <div class="field">
+          <label for="apiPreset">Platform Preset</label>
+          <select id="apiPreset">
+            <option value="discord" selected>Discord Pomelo (@username)</option>
+            <option value="github">GitHub Users</option>
+            <option value="mock">Local Simulator (Test Mode)</option>
+            <option value="custom">Custom Endpoint</option>
+          </select>
+        </div>
+
+        <div class="field">
           <label for="genMode">Scan Mode</label>
           <select id="genMode">
             <option value="auto4" selected>Auto 4-Letter (a-z)</option>
@@ -929,31 +929,31 @@
           </label>
         </div>
 
-        <details>
-          <summary>Advanced Endpoint Settings</summary>
+        <details id="advancedDetails" open>
+          <summary>Endpoint & Authorization</summary>
           <div class="details-body">
             <div class="field">
               <label for="targetUrl">Target Request URL</label>
-              <input type="text" id="targetUrl" value="http://localhost:3000/api/mock-check/{id}">
+              <input type="text" id="targetUrl" value="https://discord.com/api/v9/users/@me/pomelo-attempt">
             </div>
             
             <div class="field">
               <label for="method">HTTP Method</label>
               <select id="method">
-                <option value="GET" selected>GET</option>
-                <option value="POST">POST</option>
+                <option value="POST" selected>POST</option>
+                <option value="GET">GET</option>
                 <option value="PUT">PUT</option>
               </select>
             </div>
 
             <div class="field">
-              <label for="headers">Custom Headers (JSON)</label>
-              <textarea id="headers" placeholder='{ "Content-Type": "application/json" }'></textarea>
+              <label for="headers">Custom Headers (Enter Token)</label>
+              <textarea id="headers" placeholder='{ "Authorization": "YOUR_DISCORD_USER_TOKEN", "Content-Type": "application/json" }'>{ "Authorization": "YOUR_DISCORD_TOKEN", "Content-Type": "application/json" }</textarea>
             </div>
 
             <div class="field">
               <label for="requestBody">Request Body Template</label>
-              <textarea id="requestBody" placeholder='{ "username": "{id}" }'></textarea>
+              <textarea id="requestBody" placeholder='{ "username": "{id}" }'>{ "username": "{id}" }</textarea>
             </div>
           </div>
         </details>
