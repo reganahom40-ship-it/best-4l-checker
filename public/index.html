@@ -3,124 +3,343 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Identifier Availability Dashboard</title>
+  <title>API Identifier Checker v2.0</title>
+  <!-- Chart.js CDN for live graphing -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg-primary: #121214;
-      --bg-secondary: #1a1a1e;
-      --bg-tertiary: #252529;
-      --accent: #5865f2;
-      --accent-hover: #4752c4;
-      --text-main: #e3e5e8;
-      --text-muted: #949ba4;
-      --success: #23a55a;
-      --warning: #f0b232;
-      --danger: #f23f43;
-      --border: #35363c;
+      --bg-dark: #0f0c1b;
+      --bg-surface: rgba(26, 22, 37, 0.65);
+      --bg-surface-light: rgba(37, 32, 51, 0.8);
+      --border-color: rgba(255, 255, 255, 0.06);
+      --border-glow: rgba(139, 92, 246, 0.2);
+      
+      --primary: #8b5cf6;
+      --primary-hover: #7c3aed;
+      --accent: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      
+      --font-mono: "Fira Code", Monaco, Consolas, "Liberation Mono", monospace;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      background-color: var(--bg-primary);
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
       color: var(--text-main);
       display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* GLASSMORPHISM BASE */
+    .glass {
+      background: var(--bg-surface);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* SIDEBAR */
+    aside {
+      width: 240px;
+      display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      border-right: 1px solid var(--border-color);
       padding: 20px;
+      flex-shrink: 0;
+      background: rgba(15, 12, 27, 0.95);
     }
 
-    header {
-      margin-bottom: 20px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 15px;
-    }
-
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-main);
+    .logo-container {
       display: flex;
       align-items: center;
       gap: 10px;
+      margin-bottom: 30px;
+      padding-left: 5px;
     }
 
-    h1 span {
-      background: var(--bg-tertiary);
-      font-size: 0.8rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-      color: var(--accent);
-      border: 1px solid var(--border);
-    }
-
-    .subtitle {
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
       font-size: 0.9rem;
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+    }
+
+    .logo-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-version {
+      font-size: 0.65rem;
+      background: rgba(139, 92, 246, 0.2);
+      color: var(--primary);
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      list-style: none;
+    }
+
+    .menu-item button {
+      width: 100%;
+      background: none;
+      border: none;
       color: var(--text-muted);
-      margin-top: 5px;
-    }
-
-    .container {
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 20px;
-      flex: 1;
-    }
-
-    @media (max-width: 900px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel {
-      background: var(--bg-secondary);
+      padding: 10px 14px;
       border-radius: 8px;
-      border: 1px solid var(--border);
-      padding: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: left;
       display: flex;
-      flex-direction: column;
-      gap: 15px;
-      overflow-y: auto;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .menu-item.active button {
+      color: var(--text-main);
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      box-shadow: 0 0 10px rgba(139, 92, 246, 0.1);
     }
 
-    label {
+    .menu-item button:hover:not(.active button) {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .menu-item svg {
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+    }
+
+    .menu-item.active svg {
+      opacity: 1;
+      color: var(--primary);
+    }
+
+    /* MAIN CONTAINER */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* TOP HEADER & STATS */
+    header {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .header-info h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .header-info p {
       font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface-light);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .toggle-container input {
+      cursor: pointer;
+    }
+
+    /* STATS GRID */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+      padding: 20px 24px;
+      flex-shrink: 0;
+    }
+
+    .stat-card {
+      padding: 15px 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      width: 100%;
+      background: var(--border-color);
+    }
+
+    .stat-card.scanned::after { background: var(--text-main); }
+    .stat-card.available::after { background: var(--success); }
+    .stat-card.taken::after { background: var(--text-muted); }
+    .stat-card.rate-limited::after { background: var(--warning); }
+    .stat-card.failed::after { background: var(--danger); }
+
+    .stat-card .label {
+      font-size: 0.75rem;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    input, textarea, select {
-      background: var(--bg-primary);
-      border: 1px solid var(--border);
-      border-radius: 4px;
+    .stat-card .value-wrapper {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .stat-card .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .stat-card .percentage {
+      font-size: 0.8rem;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    /* CONTENT LAYOUT GRID */
+    .content-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      gap: 20px;
+      padding: 0 24px 20px 24px;
+      overflow: hidden;
+    }
+
+    .panel-card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-header h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .panel-body {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    /* CONFIGURATION PANEL */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+      background: rgba(15, 12, 27, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
       color: var(--text-main);
       padding: 8px 12px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       outline: none;
-      transition: border-color 0.2s;
+      transition: all 0.2s ease;
     }
 
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--accent);
+    .form-group input:focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 8px rgba(139, 92, 246, 0.15);
     }
 
-    textarea {
+    .form-group textarea {
       resize: vertical;
-      min-height: 100px;
+      min-height: 80px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
     }
 
     .row-2 {
@@ -129,276 +348,482 @@
       gap: 10px;
     }
 
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    button {
-      flex: 1;
-      padding: 10px 15px;
-      border-radius: 4px;
+    .btn {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 6px;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
       border: none;
-      transition: background-color 0.2s, opacity 0.2s;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
     .btn-primary {
-      background-color: var(--accent);
+      background: linear-gradient(135deg, var(--primary), var(--accent));
       color: white;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
     }
 
-    .btn-primary:hover {
-      background-color: var(--accent-hover);
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 15px rgba(139, 92, 246, 0.35);
     }
 
-    .btn-secondary {
-      background-color: var(--bg-tertiary);
-      color: var(--text-main);
-      border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover {
-      background-color: var(--border);
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .btn-danger {
-      background-color: var(--danger);
+      background: var(--danger);
       color: white;
     }
 
-    .btn-danger:hover {
+    .btn-danger:hover:not(:disabled) {
       opacity: 0.9;
     }
 
-    /* Right Dashboard Column */
-    .dashboard {
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+      border-color: var(--text-muted);
+    }
+
+    /* TABS & RESULTS CONTAINER */
+    .tabs-header {
+      background: rgba(15, 12, 27, 0.4);
       display: flex;
-      flex-direction: column;
-      gap: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 10px;
     }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-    }
-
-    .stat-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 15px;
-      text-align: center;
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 12px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
+      align-items: center;
+      gap: 6px;
     }
 
-    .stat-val {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-top: 5px;
+    .tab-btn.active {
+      color: var(--primary);
     }
 
-    .stat-card.scanned { color: var(--text-main); }
-    .stat-card.available { color: var(--success); border-left: 4px solid var(--success); }
-    .stat-card.taken { color: var(--text-muted); }
-    .stat-card.rate-limited { color: var(--warning); border-left: 4px solid var(--warning); }
-    .stat-card.failed { color: var(--danger); }
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      height: 2px;
+      width: 100%;
+      background: var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+    }
 
-    .results-panel {
+    .tab-badge {
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    .tab-btn.active .tab-badge {
+      background: rgba(139, 92, 246, 0.2);
+      color: var(--primary);
+    }
+
+    .results-body {
       flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      min-height: 250px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-    @media (max-width: 768px) {
-      .results-panel {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .result-box {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+    .results-list {
+      flex: 1;
+      overflow-y: auto;
       padding: 15px;
       display: flex;
       flex-direction: column;
+      gap: 8px;
     }
 
-    .result-box-header {
+    .result-item {
+      background: rgba(15, 12, 27, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
-
-    .result-list {
-      flex: 1;
-      background: var(--bg-primary);
-      border-radius: 4px;
-      padding: 10px;
-      font-family: monospace;
+      font-family: var(--font-mono);
       font-size: 0.85rem;
-      overflow-y: auto;
-      max-height: 300px;
-      white-space: pre-wrap;
+      animation: slideIn 0.2s ease-out;
     }
 
-    .log-panel {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 15px;
+    .result-item.available {
+      border-left: 3px solid var(--success);
+    }
+
+    .result-item.taken {
+      border-left: 3px solid var(--border-color);
+      opacity: 0.8;
+    }
+
+    .result-tag {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .result-tag.available {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    .result-tag.taken {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+
+    .empty-state {
       display: flex;
       flex-direction: column;
-      height: 200px;
-    }
-
-    .log-content {
-      flex: 1;
-      background: var(--bg-primary);
-      border-radius: 4px;
-      padding: 10px;
-      font-family: monospace;
-      font-size: 0.8rem;
-      overflow-y: auto;
-      color: #00ff66;
-    }
-
-    .log-entry {
-      margin-bottom: 4px;
-    }
-
-    .log-time {
+      align-items: center;
+      justify-content: center;
+      height: 100%;
       color: var(--text-muted);
-      margin-right: 8px;
+      text-align: center;
+      padding: 30px;
+      gap: 12px;
     }
 
-    .log-err {
-      color: var(--danger);
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      opacity: 0.3;
     }
 
-    .log-warn {
-      color: var(--warning);
+    /* CHART BOX */
+    .chart-container {
+      height: 160px;
+      position: relative;
+    }
+
+    /* SYSTEM LOGS & ACTIVITY */
+    .activity-feed {
+      flex: 1;
+      background: rgba(15, 12, 27, 0.8);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 12px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .log-row {
+      line-height: 1.4;
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-row .time {
+      color: var(--text-muted);
+    }
+
+    .log-row .status-200 { color: var(--success); }
+    .log-row .status-429 { color: var(--warning); }
+    .log-row .status-other { color: var(--danger); }
+
+    /* FOOTER STATUS BAR */
+    footer {
+      height: 40px;
+      background: rgba(15, 12, 27, 0.95);
+      border-top: 1px solid var(--border-color);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-dot.offline {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .footer-metrics {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .footer-metric span {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* ANIMATIONS */
+    @keyframes slideIn {
+      from { transform: translateY(5px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>API Identifier Availability Checker <span>v1.0.0</span></h1>
-    <div class="subtitle">A compliant bulk checker for verifying identifier availability against custom endpoints.</div>
-  </header>
 
-  <div class="container">
-    <!-- Left panel: Configuration -->
-    <div class="panel">
-      <div class="form-group">
-        <label for="identifiers">Identifiers to Check (One per line)</label>
-        <textarea id="identifiers" placeholder="ab12&#10;cd34&#10;ef56"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="targetUrl">Target Request URL ({id} placeholder)</label>
-        <input type="text" id="targetUrl" value="http://localhost:3000/api/mock-check/{id}">
-      </div>
-
-      <div class="row-2">
-        <div class="form-group">
-          <label for="method">HTTP Method</label>
-          <select id="method">
-            <option value="GET">GET</option>
-            <option value="POST">POST</option>
-            <option value="PUT">PUT</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="delay">Base Delay (ms)</label>
-          <input type="number" id="delay" value="1000" min="0" step="100">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="headers">Custom Headers (JSON)</label>
-        <textarea id="headers" placeholder='{ "Content-Type": "application/json" }'></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="requestBody">Request Body ({id} placeholder, optional)</label>
-        <textarea id="requestBody" placeholder='{ "username": "{id}" }'></textarea>
-      </div>
-
-      <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
-        <input type="checkbox" id="autoRetry" checked style="width: auto;">
-        <label for="autoRetry" style="cursor: pointer; text-transform: none;">Auto-retry on Rate Limit (429)</label>
-      </div>
-
-      <div class="btn-group">
-        <button id="btnStart" class="btn-primary">Start Checking</button>
-        <button id="btnStop" class="btn-danger" disabled>Stop</button>
-      </div>
-      <button id="btnReset" class="btn-secondary">Reset Stats</button>
+  <!-- LEFT SIDEBAR -->
+  <aside>
+    <div class="logo-container">
+      <div class="logo-icon">C</div>
+      <div class="logo-title">API Checker</div>
+      <div class="logo-version">v2.0</div>
     </div>
 
-    <!-- Right panel: Dashboard & Results -->
-    <div class="dashboard">
-      <div class="stats-grid">
-        <div class="stat-card scanned">
-          <label>Scanned / Total</label>
-          <div class="stat-val" id="statScanned">0 / 0</div>
-        </div>
-        <div class="stat-card available">
-          <label>Available</label>
-          <div class="stat-val" id="statAvailable">0</div>
-        </div>
-        <div class="stat-card taken">
-          <label>Taken / Registered</label>
-          <div class="stat-val" id="statTaken">0</div>
-        </div>
-        <div class="stat-card rate-limited">
-          <label>Rate Limited (429)</label>
-          <div class="stat-val" id="statLimited">0</div>
-        </div>
-        <div class="stat-card failed">
-          <label>Failed / Errors</label>
-          <div class="stat-val" id="statFailed">0</div>
-        </div>
+    <ul class="menu-list">
+      <li class="menu-item active" id="menu-dashboard">
+        <button>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path></svg>
+          Dashboard
+        </button>
+      </li>
+      <li class="menu-item" id="menu-logs">
+        <button>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Logs & History
+        </button>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- MAIN WINDOW -->
+  <main>
+    <!-- TOP HEADER -->
+    <header>
+      <div class="header-info">
+        <h2>Dashboard Overview</h2>
+        <p>Real-time API identifier scanning and availability dashboard.</p>
       </div>
 
-      <div class="results-panel">
-        <div class="result-box">
-          <div class="result-box-header">
-            <h3>Available Identifiers</h3>
-            <button id="btnExport" class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; flex: none;">Copy List</button>
-          </div>
-          <div id="listAvailable" class="result-list"></div>
+      <div class="header-actions">
+        <div class="toggle-container">
+          <input type="checkbox" id="autoRetry" checked>
+          <label for="autoRetry">Auto-retry 429</label>
         </div>
+        <button id="btnStart" class="btn btn-primary" style="width: auto; padding: 8px 16px;">
+          <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Start Checking
+        </button>
+        <button id="btnStop" class="btn btn-danger" style="width: auto; padding: 8px 16px; display: none;">
+          Stop
+        </button>
+      </div>
+    </header>
 
-        <div class="result-box">
-          <div class="result-box-header">
-            <h3>Taken / Checked</h3>
-            <button id="btnClearChecked" class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; flex: none;">Clear</button>
-          </div>
-          <div id="listTaken" class="result-list"></div>
+    <!-- STATS OVERVIEW ROW -->
+    <div class="stats-row">
+      <div class="glass stat-card scanned">
+        <span class="label">Scanned / Total</span>
+        <div class="value-wrapper">
+          <span class="value" id="statScanned">0 / 0</span>
+          <span class="percentage" id="pctScanned">0%</span>
         </div>
       </div>
-
-      <div class="log-panel">
-        <label>System Live Logs</label>
-        <div id="logContent" class="log-content"></div>
+      <div class="glass stat-card available">
+        <span class="label">Available</span>
+        <div class="value-wrapper">
+          <span class="value" id="statAvailable">0</span>
+          <span class="percentage" id="pctAvailable">0%</span>
+        </div>
+      </div>
+      <div class="glass stat-card taken">
+        <span class="label">Taken / Registered</span>
+        <div class="value-wrapper">
+          <span class="value" id="statTaken">0</span>
+          <span class="percentage" id="pctTaken">0%</span>
+        </div>
+      </div>
+      <div class="glass stat-card rate-limited">
+        <span class="label">Rate Limited</span>
+        <div class="value-wrapper">
+          <span class="value" id="statLimited">0</span>
+          <span class="percentage" id="pctLimited">0%</span>
+        </div>
+      </div>
+      <div class="glass stat-card failed">
+        <span class="label">Errors / Failed</span>
+        <div class="value-wrapper">
+          <span class="value" id="statFailed">0</span>
+          <span class="percentage" id="pctFailed">0%</span>
+        </div>
       </div>
     </div>
-  </div>
+
+    <!-- MAIN DASHBOARD CONTENT GRID -->
+    <div class="content-grid">
+      <!-- COLUMN 1: CONFIGURATION -->
+      <div class="glass panel-card">
+        <div class="panel-header">
+          <h3>Configuration</h3>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label for="identifiers">Identifiers (one per line)</label>
+            <textarea id="identifiers" placeholder="ab12&#10;cd34&#10;ef56"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="targetUrl">Target API Endpoint URL</label>
+            <input type="text" id="targetUrl" value="http://localhost:3000/api/mock-check/{id}">
+          </div>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label for="method">Method</label>
+              <select id="method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="delay">Base Delay (ms)</label>
+              <input type="number" id="delay" value="1000" min="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="headers">Headers (JSON)</label>
+            <textarea id="headers" placeholder='{ "Content-Type": "application/json" }'></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="requestBody">Request Body ({id} placeholder)</label>
+            <textarea id="requestBody" placeholder='{ "username": "{id}" }'></textarea>
+          </div>
+
+          <div class="row-2" style="margin-top: auto;">
+            <button id="btnReset" class="btn btn-secondary">Reset Stats</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMN 2: TABBED RESULTS & PROGRESS TIMELINE -->
+      <div class="glass panel-card">
+        <!-- TABS HEADER -->
+        <div class="tabs-header">
+          <button class="tab-btn active" id="tab-available">
+            Available Identifiers
+            <span class="tab-badge" id="badgeAvailable">0</span>
+          </button>
+          <button class="tab-btn" id="tab-taken">
+            Taken / Checked
+            <span class="tab-badge" id="badgeTaken">0</span>
+          </button>
+        </div>
+
+        <div class="results-body">
+          <!-- List Display -->
+          <div class="results-list" id="results-display-list">
+            <!-- Empty state defaults -->
+            <div class="empty-state" id="list-empty-state">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+              <div>No available identifiers found yet. Start the checker to begin.</div>
+            </div>
+          </div>
+          
+          <div style="padding: 10px 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+            <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 0.75rem;">Copy list</button>
+          </div>
+        </div>
+
+        <!-- PROGRESS CHART FOOTER BOX -->
+        <div class="panel-header" style="border-top: 1px solid var(--border-color);">
+          <h3>Progress Overview</h3>
+        </div>
+        <div style="padding: 15px; height: 160px;">
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: LIVE FEED & DONUT GRAPH -->
+      <div class="glass panel-card">
+        <div class="panel-header">
+          <h3>Live Activity</h3>
+          <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 4px 8px; font-size: 0.7rem;">Clear</button>
+        </div>
+        <div class="panel-body" style="padding-bottom: 10px;">
+          <div id="logContent" class="activity-feed"></div>
+        </div>
+
+        <div class="panel-header" style="border-top: 1px solid var(--border-color);">
+          <h3>Statistics Breakdown</h3>
+        </div>
+        <div style="padding: 15px; height: 160px; display: flex; align-items: center; justify-content: center;">
+          <canvas id="donutChart" style="max-height: 100%; max-width: 100%;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM STATUS METRICS BAR -->
+    <footer>
+      <div class="status-indicator">
+        <div class="status-dot" id="systemStatusDot"></div>
+        <span id="systemStatusText">System Status: Online</span>
+      </div>
+
+      <div class="footer-metrics">
+        <div class="footer-metric">Last Check: <span id="lblLastCheck">Never</span></div>
+        <div class="footer-metric">Duration: <span id="lblDuration">00:00:00</span></div>
+        <div class="footer-metric">Requests/Min: <span id="lblReqMin">0</span></div>
+        <div class="footer-metric">Total Requests: <span id="lblTotalReq">0</span></div>
+      </div>
+    </footer>
+  </main>
 
   <script src="app.js"></script>
 </body>
