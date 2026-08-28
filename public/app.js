@@ -24,6 +24,8 @@ let donutChart = null;
 let activeResultTab = 'available'; // 'available' or 'taken'
 
 // DOM Elements
+const elGenMode = document.getElementById('genMode');
+const elIdentifiersGroup = document.getElementById('identifiers-group');
 const elIdentifiers = document.getElementById('identifiers');
 const elTargetUrl = document.getElementById('targetUrl');
 const elMethod = document.getElementById('method');
@@ -276,14 +278,61 @@ function resetStats() {
   log('Dashboard reset completed.');
 }
 
+function generateCombinations(mode) {
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const alphanum = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const list = [];
+
+  if (mode === 'auto3') {
+    for (let i = 0; i < letters.length; i++) {
+      for (let j = 0; j < letters.length; j++) {
+        for (let k = 0; k < letters.length; k++) {
+          list.push(letters[i] + letters[j] + letters[k]);
+        }
+      }
+    }
+  } else if (mode === 'auto4') {
+    for (let i = 0; i < letters.length; i++) {
+      for (let j = 0; j < letters.length; j++) {
+        for (let k = 0; k < letters.length; k++) {
+          for (let l = 0; l < letters.length; l++) {
+            list.push(letters[i] + letters[j] + letters[k] + letters[l]);
+          }
+        }
+      }
+    }
+  } else if (mode === 'auto4num') {
+    for (let i = 0; i < alphanum.length; i++) {
+      for (let j = 0; j < alphanum.length; j++) {
+        for (let k = 0; k < alphanum.length; k++) {
+          for (let l = 0; l < alphanum.length; l++) {
+            list.push(alphanum[i] + alphanum[j] + alphanum[k] + alphanum[l]);
+          }
+        }
+      }
+    }
+  }
+  return list;
+}
+
 // Main check function loop
 async function startChecking() {
   if (isRunning) return;
 
-  const rawText = elIdentifiers.value.trim();
-  if (!rawText) {
-    alert('Please enter at least one identifier.');
-    return;
+  const mode = elGenMode.value;
+  if (mode === 'manual') {
+    const rawText = elIdentifiers.value.trim();
+    if (!rawText) {
+      alert('Please enter at least one identifier.');
+      return;
+    }
+    queue = rawText.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+  } else {
+    log(`Generating combinations for mode: ${mode}...`);
+    queue = generateCombinations(mode);
+    log(`Successfully generated ${queue.length} combinations.`);
   }
 
   let headers = {};
@@ -296,10 +345,6 @@ async function startChecking() {
     log(`JSON parser failed: ${e.message}`, 'error');
     return;
   }
-
-  queue = rawText.split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0);
 
   totalCount = queue.length;
   scannedCount = 0;
@@ -460,6 +505,7 @@ function stopChecking() {
 
 // Toggle inputs block
 function toggleInputs(disabled) {
+  elGenMode.disabled = disabled;
   elIdentifiers.disabled = disabled;
   elTargetUrl.disabled = disabled;
   elMethod.disabled = disabled;
@@ -522,5 +568,15 @@ elMenuLogs.addEventListener('click', () => {
 window.addEventListener('DOMContentLoaded', () => {
   initCharts();
   renderList();
+  
+  // Toggle manual list textarea visibility based on mode
+  elGenMode.addEventListener('change', () => {
+    if (elGenMode.value === 'manual') {
+      elIdentifiersGroup.style.display = 'flex';
+    } else {
+      elIdentifiersGroup.style.display = 'none';
+    }
+  });
+
   log('API Checker Dashboard initialized and ready.');
 });

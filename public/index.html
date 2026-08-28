@@ -711,6 +711,16 @@
         </div>
         <div class="panel-body">
           <div class="form-group">
+            <label for="genMode">Input / Generation Mode</label>
+            <select id="genMode">
+              <option value="manual">Manual Input List</option>
+              <option value="auto3">Auto 3-Letter (a-z)</option>
+              <option value="auto4" selected>Auto 4-Letter (a-z)</option>
+              <option value="auto4num">Auto 4-Alphanumeric (a-z0-9)</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="identifiers-group" style="display: none;">
             <label for="identifiers">Identifiers (one per line)</label>
             <textarea id="identifiers" placeholder="ab12&#10;cd34&#10;ef56"></textarea>
           </div>
