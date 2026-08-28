@@ -1,5 +1,5 @@
 // ==========================================
-// SNOWFLAKE v4.0 PRO — REQUEST ARCHITECTURE
+// SNOWFLAKE v4.5 PRO — APPLICATION SCRIPT
 // ==========================================
 
 // Global State
@@ -15,6 +15,7 @@ let failedCount = 0;
 
 let availableList = [];
 let checkedList = [];
+let allDiscoveredRecords = [];
 
 // Latency & Metrics Tracking
 let totalLatencyMs = 0;
@@ -23,11 +24,16 @@ let startTime = null;
 let durationInterval = null;
 let totalRequests = 0;
 let activeWorkersCount = 0;
+let peakVelocityRPM = 0;
 
 // Tab State
 let activeResultTab = 'available';
+let currentActiveView = 'dashboard';
 
-// DOM Elements
+// Chart.js instance
+let donutChart = null;
+
+// DOM Elements - Core
 const elApiPreset = document.getElementById('apiPreset');
 const elGenMode = document.getElementById('genMode');
 const elIdentifiersGroup = document.getElementById('identifiers-group');
@@ -40,6 +46,8 @@ const elConcurrencySlider = document.getElementById('concurrencySlider');
 const elLblConcurrency = document.getElementById('lblConcurrency');
 const elCredentialPoolInput = document.getElementById('credentialPoolInput');
 const elProxyListInput = document.getElementById('proxyListInput');
+const elCredentialHubInput = document.getElementById('credentialHubInput');
+const elProxyHubInput = document.getElementById('proxyHubInput');
 const elRequestBody = document.getElementById('requestBody');
 const elAutoRetry = document.getElementById('autoRetry');
 const elSoundAlert = document.getElementById('soundAlert');
@@ -72,6 +80,7 @@ const elBadgeTaken = document.getElementById('badgeTaken');
 
 const elResultsDisplayList = document.getElementById('results-display-list');
 const elLogContent = document.getElementById('logContent');
+const elFullLogContent = document.getElementById('fullLogContent');
 const elCredentialStatusList = document.getElementById('credentialStatusList');
 const elLblActiveCredsCount = document.getElementById('lblActiveCredsCount');
 const elVerificationBanner = document.getElementById('verificationBanner');
@@ -89,8 +98,74 @@ const elSysStatusText = document.getElementById('sysStatusText');
 const elTabAvailable = document.getElementById('tab-available');
 const elTabTaken = document.getElementById('tab-taken');
 
+// Explorer & Analytics Elements
+const elExplorerSearch = document.getElementById('explorerSearch');
+const elExplorerTableBody = document.getElementById('explorerTableBody');
+const elBtnExportCSV = document.getElementById('btnExportCSV');
+const elBtnExportJSON = document.getElementById('btnExportJSON');
+const elStatPeakVelocity = document.getElementById('statPeakVelocity');
+const elStatAnalyticsAvgLatency = document.getElementById('statAnalyticsAvgLatency');
+const elStatAnalyticsRetries = document.getElementById('statAnalyticsRetries');
+const elStatHitRate = document.getElementById('statHitRate');
+const elBtnDownloadLogs = document.getElementById('btnDownloadLogs');
+const elBtnClearFullLogs = document.getElementById('btnClearFullLogs');
+const elBtnValidateTokens = document.getElementById('btnValidateTokens');
+
+const elHeaderViewTitle = document.getElementById('headerViewTitle');
+const elHeaderViewDesc = document.getElementById('headerViewDesc');
+
 // ==========================================
-// 1. CREDENTIAL POOL MANAGER
+// 1. SIDEBAR SPA ROUTER
+// ==========================================
+const viewMetadata = {
+  dashboard: {
+    title: 'Dashboard & Live Checker',
+    desc: 'Multi-credential request scheduler with adaptive rate-limit backpressure'
+  },
+  explorer: {
+    title: 'Discovered Hits Explorer',
+    desc: 'Search, filter, inspect, and export all discovered identifiers'
+  },
+  analytics: {
+    title: 'Engine Analytics & Charts',
+    desc: 'Response code distribution, latency profiling, and velocity trends'
+  },
+  credentials: {
+    title: 'Credential & Proxy Hub',
+    desc: 'Manage authorized API token pools and network proxy routes'
+  },
+  logs: {
+    title: 'Audit Console & Log Stream',
+    desc: 'Full-screen chronological event stream and diagnostic logging'
+  }
+};
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', (e) => {
+    e.preventDefault();
+    const viewName = item.getAttribute('data-view');
+    if (!viewName) return;
+
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+
+    document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+    const targetSection = document.getElementById(`view-${viewName}`);
+    if (targetSection) targetSection.classList.add('active');
+
+    currentActiveView = viewName;
+    if (viewMetadata[viewName]) {
+      elHeaderViewTitle.textContent = viewMetadata[viewName].title;
+      elHeaderViewDesc.textContent = viewMetadata[viewName].desc;
+    }
+
+    if (viewName === 'explorer') renderExplorerTable();
+    if (viewName === 'analytics') updateAnalyticsCharts();
+  });
+});
+
+// ==========================================
+// 2. CREDENTIAL POOL MANAGER
 // ==========================================
 class CredentialPool {
   constructor() {
@@ -136,7 +211,6 @@ class CredentialPool {
     const readyCreds = this.credentials.filter(c => c.cooldownUntil <= now);
     
     if (readyCreds.length === 0) {
-      // All in cooldown: find the one that will be ready soonest
       let soonest = this.credentials[0];
       for (const c of this.credentials) {
         if (c.cooldownUntil < soonest.cooldownUntil) soonest = c;
@@ -145,7 +219,6 @@ class CredentialPool {
       return { credential: null, waitMs: waitMs };
     }
 
-    // Round-robin selection among ready credentials
     this.currentIndex = (this.currentIndex + 1) % readyCreds.length;
     const selected = readyCreds[this.currentIndex];
     selected.requestsCount++;
@@ -203,8 +276,19 @@ class CredentialPool {
 
 const credentialPool = new CredentialPool();
 
+// Sync between inputs
+elCredentialPoolInput.addEventListener('input', () => {
+  elCredentialHubInput.value = elCredentialPoolInput.value;
+  credentialPool.loadFromInput(elCredentialPoolInput.value);
+});
+
+elCredentialHubInput.addEventListener('input', () => {
+  elCredentialPoolInput.value = elCredentialHubInput.value;
+  credentialPool.loadFromInput(elCredentialHubInput.value);
+});
+
 // ==========================================
-// 2. PROXY POOL MANAGER
+// 3. PROXY POOL MANAGER
 // ==========================================
 class ProxyPool {
   constructor() {
@@ -227,8 +311,18 @@ class ProxyPool {
 
 const proxyPool = new ProxyPool();
 
+elProxyListInput.addEventListener('input', () => {
+  elProxyHubInput.value = elProxyListInput.value;
+  proxyPool.loadFromInput(elProxyListInput.value);
+});
+
+elProxyHubInput.addEventListener('input', () => {
+  elProxyListInput.value = elProxyHubInput.value;
+  proxyPool.loadFromInput(elProxyHubInput.value);
+});
+
 // ==========================================
-// 3. UI CONTROLS & LISTENERS
+// 4. UI CONTROLS & LISTENERS
 // ==========================================
 elDelaySlider.addEventListener('input', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
@@ -237,14 +331,6 @@ elDelaySlider.addEventListener('input', () => {
 elConcurrencySlider.addEventListener('input', () => {
   const val = elConcurrencySlider.value;
   elLblConcurrency.textContent = `${val} Worker${val > 1 ? 's' : ''}`;
-});
-
-elCredentialPoolInput.addEventListener('input', () => {
-  credentialPool.loadFromInput(elCredentialPoolInput.value);
-});
-
-elProxyListInput.addEventListener('input', () => {
-  proxyPool.loadFromInput(elProxyListInput.value);
 });
 
 elBtnDismissVerification.addEventListener('click', () => {
@@ -257,7 +343,7 @@ elApiPreset.addEventListener('change', () => {
     elTargetUrl.value = 'https://discord.com/api/v9/users/@me/pomelo-attempt';
     elMethod.value = 'POST';
     elRequestBody.value = '{\n  "username": "{id}"\n}';
-    log('Loaded Discord Pomelo Preset. Enter your authorized Discord token in the Credential Pool.', 'warn');
+    log('Loaded Discord Pomelo Preset. Enter your authorized Discord token in Credential Pool.', 'warn');
   } else if (preset === 'github') {
     elTargetUrl.value = 'https://api.github.com/users/{id}';
     elMethod.value = 'GET';
@@ -271,7 +357,7 @@ elApiPreset.addEventListener('change', () => {
   }
 });
 
-// Chime Alert via Web Audio API
+// Chime Alert
 function playSuccessSound() {
   if (!elSoundAlert.checked) return;
   try {
@@ -283,20 +369,22 @@ function playSuccessSound() {
     gain.connect(ctx.destination);
     
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
     gain.gain.setValueAtTime(0.08, ctx.currentTime);
     
     osc.start();
-    osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08); // A5
+    osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
     
     osc.stop(ctx.currentTime + 0.3);
   } catch (err) {}
 }
 
-// Log message to activity terminal
+// Log message to activity terminal & full audit log
 function log(msg, type = 'info') {
   const time = new Date().toLocaleTimeString();
+  
+  // 1. Mini Console
   const row = document.createElement('div');
   row.className = 'log-item';
 
@@ -327,6 +415,13 @@ function log(msg, type = 'info') {
 
   elLogContent.appendChild(row);
   elLogContent.scrollTop = elLogContent.scrollHeight;
+
+  // 2. Full Audit Console Clone
+  if (elFullLogContent) {
+    const fullRow = row.cloneNode(true);
+    elFullLogContent.appendChild(fullRow);
+    elFullLogContent.scrollTop = elFullLogContent.scrollHeight;
+  }
 }
 
 // Update dashboard statistics
@@ -352,9 +447,11 @@ function updateStatsUI() {
   elStatVerification.textContent = verificationCount;
   elPctVerification.textContent = `${Math.round((verificationCount / total) * 100)}%`;
 
+  let avgMs = 0;
   if (latencySamples > 0) {
-    const avgMs = Math.round(totalLatencyMs / latencySamples);
+    avgMs = Math.round(totalLatencyMs / latencySamples);
     elStatAvgLatency.textContent = `${avgMs}ms`;
+    if (elStatAnalyticsAvgLatency) elStatAnalyticsAvgLatency.textContent = `${avgMs}ms`;
   } else {
     elStatAvgLatency.textContent = '0ms';
   }
@@ -363,6 +460,12 @@ function updateStatsUI() {
   elBadgeTaken.textContent = takenCount;
   elTotalHits.textContent = totalRequests;
   elActiveWorkers.textContent = activeWorkersCount;
+
+  if (elStatAnalyticsRetries) elStatAnalyticsRetries.textContent = rateLimitedCount;
+  if (elStatHitRate) {
+    const rate = scannedCount > 0 ? ((availableCount / scannedCount) * 100).toFixed(1) : '0.0';
+    elStatHitRate.textContent = `${rate}%`;
+  }
 }
 
 // Update duration, RPM, and ETA
@@ -375,8 +478,14 @@ function updateMetrics() {
   elDuration.textContent = `${hours}:${minutes}:${seconds}`;
 
   const elapsedMinutes = diff / 60000;
+  let currentRPM = 0;
   if (elapsedMinutes > 0.05) {
-    elReqMin.textContent = `${Math.round(totalRequests / elapsedMinutes)} RPM`;
+    currentRPM = Math.round(totalRequests / elapsedMinutes);
+    elReqMin.textContent = `${currentRPM} RPM`;
+    if (currentRPM > peakVelocityRPM) {
+      peakVelocityRPM = currentRPM;
+      if (elStatPeakVelocity) elStatPeakVelocity.textContent = `${peakVelocityRPM} RPM`;
+    }
   } else {
     elReqMin.textContent = '0 RPM';
   }
@@ -402,7 +511,7 @@ function updateMetrics() {
   credentialPool.renderUI();
 }
 
-// Render Results List
+// Render Results List (Mini Panel)
 function renderList() {
   elResultsDisplayList.textContent = '';
   const currentList = activeResultTab === 'available' ? availableList : checkedList;
@@ -445,6 +554,77 @@ function renderList() {
   });
 }
 
+// Render Explorer Table (Full View)
+function renderExplorerTable() {
+  if (!elExplorerTableBody) return;
+  elExplorerTableBody.innerHTML = '';
+
+  const query = (elExplorerSearch.value || '').trim().toLowerCase();
+  const filtered = allDiscoveredRecords.filter(r => !query || r.name.toLowerCase().includes(query) || r.status.toLowerCase().includes(query));
+
+  if (filtered.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No matching records found.</td>`;
+    elExplorerTableBody.appendChild(tr);
+    return;
+  }
+
+  filtered.forEach((rec, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color: var(--text-muted);">${idx + 1}</td>
+      <td style="font-weight: 700; color: ${rec.status === 'available' ? 'var(--cyan)' : 'var(--text-main)'};">${rec.name}</td>
+      <td><span class="row-pill ${rec.status}">${rec.status.toUpperCase()}</span></td>
+      <td>${rec.code || 200}</td>
+      <td style="color: var(--text-dim); font-size: 0.75rem;">${rec.timestamp}</td>
+      <td>
+        <button class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 0.68rem;" onclick="navigator.clipboard.writeText('${rec.name}'); alert('Copied ${rec.name}');">Copy</button>
+      </td>
+    `;
+    elExplorerTableBody.appendChild(tr);
+  });
+}
+
+if (elExplorerSearch) {
+  elExplorerSearch.addEventListener('input', renderExplorerTable);
+}
+
+// Chart.js Donut Chart
+function updateAnalyticsCharts() {
+  const canvas = document.getElementById('analyticsDonutChart');
+  if (!canvas) return;
+
+  const dataValues = [availableCount, takenCount, rateLimitedCount, verificationCount + failedCount];
+
+  if (donutChart) {
+    donutChart.data.datasets[0].data = dataValues;
+    donutChart.update();
+  } else {
+    donutChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: ['Available', 'Taken', '429 Rate Limits', 'Errors/Verification'],
+        datasets: [{
+          data: dataValues,
+          backgroundColor: ['#10b981', '#374151', '#f59e0b', '#f43f5e'],
+          borderColor: '#0b0b10',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans', size: 11 } }
+          }
+        }
+      }
+    });
+  }
+}
+
 // Reset stats completely
 function resetStats() {
   scannedCount = 0;
@@ -456,8 +636,10 @@ function resetStats() {
   totalRequests = 0;
   totalLatencyMs = 0;
   latencySamples = 0;
+  peakVelocityRPM = 0;
   availableList = [];
   checkedList = [];
+  allDiscoveredRecords = [];
   startTime = null;
   elDuration.textContent = '00:00:00';
   elReqMin.textContent = '0 RPM';
@@ -474,18 +656,21 @@ function resetStats() {
 
   updateStatsUI();
   renderList();
+  renderExplorerTable();
+  updateAnalyticsCharts();
   credentialPool.renderUI();
-  log('Scheduler and statistics reset.');
+  log('Scheduler and explorer records cleared.');
 }
 
-// Combinations Generator
+// ==========================================
+// 5. COMBINATIONS GENERATOR
+// ==========================================
 function generateCombinations(mode) {
   const letters = 'abcdefghijklmnopqrstuvwxyz';
   const alphanum = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const validChars = 'abcdefghijklmnopqrstuvwxyz0123456789._';
   let list = [];
 
-  // Helper: Fisher-Yates Shuffle
   function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -494,30 +679,23 @@ function generateCombinations(mode) {
     return array;
   }
 
-  // 1. Random 4L Mixed (a-z, 0-9, ., _)
   if (mode === 'rand4special') {
     const set = new Set();
-    // Generate 50,000 unique randomized 4-char combinations with special chars
     while (set.size < 50000) {
-      // Must start with letter or digit (not dot/underscore)
       const c1 = alphanum[Math.floor(Math.random() * alphanum.length)];
       const c2 = validChars[Math.floor(Math.random() * validChars.length)];
       const c3 = validChars[Math.floor(Math.random() * validChars.length)];
-      // Must not end with dot
       let c4 = validChars[Math.floor(Math.random() * validChars.length)];
       while (c4 === '.') {
         c4 = validChars[Math.floor(Math.random() * validChars.length)];
       }
-      
       const candidate = `${c1}${c2}${c3}${c4}`;
-      // Prevent consecutive dots
       if (!candidate.includes('..')) {
         set.add(candidate);
       }
     }
     list = Array.from(set);
   }
-  // 2. Random 4-Letter (a-z)
   else if (mode === 'rand4') {
     for (let i = 0; i < letters.length; i++) {
       for (let j = 0; j < letters.length; j++) {
@@ -530,7 +708,6 @@ function generateCombinations(mode) {
     }
     shuffle(list);
   }
-  // 3. Random 3L Mixed (a-z, 0-9, ., _)
   else if (mode === 'rand3special') {
     const set = new Set();
     while (set.size < 15000) {
@@ -547,7 +724,6 @@ function generateCombinations(mode) {
     }
     list = Array.from(set);
   }
-  // 4. Random 3-Letter (a-z)
   else if (mode === 'rand3') {
     for (let i = 0; i < letters.length; i++) {
       for (let j = 0; j < letters.length; j++) {
@@ -558,7 +734,6 @@ function generateCombinations(mode) {
     }
     shuffle(list);
   }
-  // 5. Sequential 4-Letter
   else if (mode === 'auto4') {
     for (let i = 0; i < letters.length; i++) {
       for (let j = 0; j < letters.length; j++) {
@@ -570,7 +745,6 @@ function generateCombinations(mode) {
       }
     }
   }
-  // 6. Sequential 3-Letter
   else if (mode === 'auto3') {
     for (let i = 0; i < letters.length; i++) {
       for (let j = 0; j < letters.length; j++) {
@@ -580,7 +754,6 @@ function generateCombinations(mode) {
       }
     }
   }
-  // 7. Sequential 4-Alphanumeric
   else if (mode === 'auto4num') {
     for (let i = 0; i < alphanum.length; i++) {
       for (let j = 0; j < alphanum.length; j++) {
@@ -596,7 +769,7 @@ function generateCombinations(mode) {
 }
 
 // ==========================================
-// 4. RATE-LIMIT SCHEDULER & WORKER POOL
+// 6. RATE-LIMIT SCHEDULER & WORKER POOL
 // ==========================================
 async function runWorker(workerId) {
   activeWorkersCount++;
@@ -605,10 +778,8 @@ async function runWorker(workerId) {
   const rawBody = elRequestBody.value.trim();
 
   while (isRunning && queue.length > 0) {
-    // 1. Acquire Credential from Pool
     let credSelection = credentialPool.getAvailableCredential();
     if (!credSelection.credential) {
-      // All credentials on rate limit cooldown
       const waitSec = Math.ceil(credSelection.waitMs / 1000);
       log(`[WORKER #${workerId}] All credentials in cooldown. Pausing worker for ${waitSec}s...`, 'warn');
       await new Promise(r => setTimeout(r, Math.min(credSelection.waitMs, 5000)));
@@ -622,10 +793,7 @@ async function runWorker(workerId) {
     const targetUrl = elTargetUrl.value.replace('{id}', encodeURIComponent(id));
     const proxy = proxyPool.getNextProxy();
 
-    // Prepare Request Headers
-    const headers = {
-      'Content-Type': 'application/json'
-    };
+    const headers = { 'Content-Type': 'application/json' };
     if (cred.token) {
       headers['Authorization'] = cred.token;
     }
@@ -695,7 +863,6 @@ async function runWorker(workerId) {
         }
       }
 
-      // Record Latency
       const latency = Date.now() - requestStartTime;
       totalLatencyMs += latency;
       latencySamples++;
@@ -707,6 +874,8 @@ async function runWorker(workerId) {
           jsonPayload = typeof resData.data === 'string' ? JSON.parse(resData.data) : resData.data;
         }
       } catch (e) {}
+
+      const timestamp = new Date().toLocaleTimeString();
 
       // A. HTTP 429 — Rate Limit Detected
       if (remoteStatus === 429) {
@@ -722,60 +891,64 @@ async function runWorker(workerId) {
 
         log(`[429 RATE LIMIT] Token "${cred.masked}" rate-limited on "${id}". Cooldown: ${waitSec}s`, 'warn');
         credentialPool.setCooldown(cred.id, waitSec);
-
-        // Put identifier back to front of queue to avoid missing it
         queue.unshift(id);
       }
-      // B. Verification / CAPTCHA Challenge (403 / verification payload)
+      // B. Verification Challenge
       else if (remoteStatus === 403 || (jsonPayload && (jsonPayload.captcha_key || jsonPayload.captcha_sitekey))) {
         verificationCount++;
-        log(`[VERIFICATION REQUIRED] Remote server requested verification for token "${cred.masked}". Pausing job.`, 'error');
+        log(`[VERIFICATION REQUIRED] Remote server requested verification challenge for "${id}". Pausing scheduler.`, 'error');
         elVerificationBanner.classList.add('active');
         stopChecking();
         break;
       }
-      // C. HTTP 401 — Unauthorized Token
+      // C. HTTP 401 — Unauthorized
       else if (remoteStatus === 401) {
         failedCount++;
         log(`[AUTH ERROR] 401 Unauthorized for token "${cred.masked}". Check token validity.`, 'error');
       }
-      // D. Discord Pomelo Response Evaluation
+      // D. Discord Pomelo
       else if (jsonPayload && typeof jsonPayload.taken === 'boolean') {
         if (jsonPayload.taken === false) {
           availableCount++;
           availableList.push({ name: id, status: 'available', code: 200 });
-          log(`[AVAILABLE] "${id}" is free on Discord!`, 'success');
+          allDiscoveredRecords.push({ name: id, status: 'available', code: 200, timestamp: timestamp });
+          log(`[AVAILABLE] "${id}" is AVAILABLE!`, 'success');
           playSuccessSound();
         } else {
           takenCount++;
           checkedList.push({ name: id, status: 'taken', code: 200 });
+          allDiscoveredRecords.push({ name: id, status: 'taken', code: 200, timestamp: timestamp });
           log(`[TAKEN] "${id}" is taken.`, 'info');
         }
       }
-      // E. GitHub Endpoint (404 = available)
+      // E. GitHub
       else if (elApiPreset.value === 'github') {
         if (remoteStatus === 404) {
           availableCount++;
           availableList.push({ name: id, status: 'available', code: 404 });
+          allDiscoveredRecords.push({ name: id, status: 'available', code: 404, timestamp: timestamp });
           log(`[AVAILABLE] "${id}" is free on GitHub!`, 'success');
           playSuccessSound();
         } else if (remoteStatus === 200) {
           takenCount++;
           checkedList.push({ name: id, status: 'taken', code: 200 });
+          allDiscoveredRecords.push({ name: id, status: 'taken', code: 200, timestamp: timestamp });
           log(`[TAKEN] "${id}" is registered on GitHub.`, 'info');
         } else {
           failedCount++;
         }
       }
-      // F. Standard HTTP Status Check
+      // F. Standard HTTP
       else if (remoteStatus === 200) {
         availableCount++;
         availableList.push({ name: id, status: 'available', code: 200 });
+        allDiscoveredRecords.push({ name: id, status: 'available', code: 200, timestamp: timestamp });
         log(`[AVAILABLE] "${id}" returned HTTP 200.`, 'success');
         playSuccessSound();
       } else if ([400, 404, 409].includes(remoteStatus)) {
         takenCount++;
         checkedList.push({ name: id, status: 'taken', code: remoteStatus });
+        allDiscoveredRecords.push({ name: id, status: 'taken', code: remoteStatus, timestamp: timestamp });
         log(`[TAKEN] "${id}" (${remoteStatus})`, 'info');
       } else {
         failedCount++;
@@ -790,8 +963,9 @@ async function runWorker(workerId) {
     scannedCount++;
     updateStatsUI();
     renderList();
+    if (currentActiveView === 'explorer') renderExplorerTable();
+    if (currentActiveView === 'analytics') updateAnalyticsCharts();
 
-    // Respect user-configured delay between checks
     if (isRunning && queue.length > 0) {
       const ms = parseInt(elDelaySlider.value, 10);
       if (ms > 0) await new Promise(r => setTimeout(r, ms));
@@ -803,7 +977,7 @@ async function runWorker(workerId) {
 
   if (activeWorkersCount === 0 && isRunning) {
     stopChecking();
-    log('Scheduler completed processing all queue targets.');
+    log('Scheduler completed queue processing.');
   }
 }
 
@@ -822,12 +996,11 @@ async function startChecking() {
       .map(line => line.trim())
       .filter(line => line.length > 0);
   } else {
-    log(`Generating combinations for mode: ${mode}...`);
+    log(`Generating target combinations for: ${mode}...`);
     queue = generateCombinations(mode);
-    log(`Prepared ${queue.length} targets for execution.`);
+    log(`Prepared ${queue.length} target combinations.`);
   }
 
-  // Load Credentials and Proxies
   credentialPool.loadFromInput(elCredentialPoolInput.value);
   proxyPool.loadFromInput(elProxyListInput.value);
 
@@ -850,7 +1023,7 @@ async function startChecking() {
   durationInterval = setInterval(updateMetrics, 1000);
 
   const concurrency = parseInt(elConcurrencySlider.value, 10);
-  log(`Scheduler dispatched with ${concurrency} concurrent worker(s)...`);
+  log(`Scheduler running with ${concurrency} concurrent worker(s)...`);
 
   for (let i = 1; i <= concurrency; i++) {
     runWorker(i);
@@ -918,9 +1091,73 @@ elBtnExport.addEventListener('click', () => {
   log(`Exported ${currentList.length} ${activeResultTab} records to clipboard.`);
 });
 
+// CSV Export
+if (elBtnExportCSV) {
+  elBtnExportCSV.addEventListener('click', () => {
+    if (allDiscoveredRecords.length === 0) {
+      alert('No records to export.');
+      return;
+    }
+    let csv = 'Identifier,Status,HTTP Code,Timestamp\n';
+    allDiscoveredRecords.forEach(r => {
+      csv += `"${r.name}","${r.status}",${r.code},"${r.timestamp}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `snowflake_hits_${Date.now()}.csv`;
+    a.click();
+  });
+}
+
+// JSON Export
+if (elBtnExportJSON) {
+  elBtnExportJSON.addEventListener('click', () => {
+    if (allDiscoveredRecords.length === 0) {
+      alert('No records to export.');
+      return;
+    }
+    const jsonStr = JSON.stringify(allDiscoveredRecords, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `snowflake_hits_${Date.now()}.json`;
+    a.click();
+  });
+}
+
+// Download raw logs
+if (elBtnDownloadLogs) {
+  elBtnDownloadLogs.addEventListener('click', () => {
+    const logsText = elFullLogContent.innerText;
+    const blob = new Blob([logsText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `snowflake_audit_${Date.now()}.log`;
+    a.click();
+  });
+}
+
+if (elBtnClearFullLogs) {
+  elBtnClearFullLogs.addEventListener('click', () => {
+    if (elFullLogContent) elFullLogContent.innerHTML = '';
+  });
+}
+
 elBtnClearLogs.addEventListener('click', () => {
   elLogContent.textContent = '';
 });
+
+// Validate tokens button
+if (elBtnValidateTokens) {
+  elBtnValidateTokens.addEventListener('click', () => {
+    credentialPool.loadFromInput(elCredentialHubInput.value);
+    alert(`Loaded ${credentialPool.credentials.length} credential(s) into active rotation.`);
+  });
+}
 
 // Select change
 elGenMode.addEventListener('change', () => {
@@ -935,8 +1172,10 @@ elGenMode.addEventListener('change', () => {
 window.addEventListener('DOMContentLoaded', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
   elLblConcurrency.textContent = `${elConcurrencySlider.value} Worker`;
+  elCredentialHubInput.value = elCredentialPoolInput.value;
+  elProxyHubInput.value = elProxyListInput.value;
   credentialPool.loadFromInput(elCredentialPoolInput.value);
   proxyPool.loadFromInput(elProxyListInput.value);
   renderList();
-  log('Snowflake v4.0 PRO Scheduler initialized and ready.');
+  log('Snowflake v4.5 PRO Multi-View Dashboard online.');
 });

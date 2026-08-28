@@ -3,36 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snowflake — Multi-Credential API Availability Testing Dashboard</title>
+  <title>Snowflake — Multi-Credential Availability Engine</title>
   
   <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for real-time analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     :root {
-      --bg-base: #060609;
-      --bg-sidebar: rgba(12, 12, 18, 0.85);
-      --bg-card: rgba(18, 18, 26, 0.65);
-      --bg-card-hover: rgba(24, 24, 35, 0.85);
-      --bg-input: #0b0b10;
+      --bg-base: #050508;
+      --bg-sidebar: rgba(10, 10, 15, 0.88);
+      --bg-card: rgba(16, 16, 24, 0.7);
+      --bg-card-hover: rgba(22, 22, 32, 0.9);
+      --bg-input: #09090e;
       
       --border-subtle: rgba(255, 255, 255, 0.07);
       --border-focus: #00f5ff;
       --border-hover: rgba(255, 255, 255, 0.15);
       
       --cyan: #00f5ff;
-      --cyan-glow: rgba(0, 245, 255, 0.2);
+      --cyan-glow: rgba(0, 245, 255, 0.25);
       --purple: #8b5cf6;
-      --purple-glow: rgba(139, 92, 246, 0.2);
+      --purple-glow: rgba(139, 92, 246, 0.25);
       --blue: #3b82f6;
       --emerald: #10b981;
-      --emerald-glow: rgba(16, 185, 129, 0.2);
+      --emerald-glow: rgba(16, 185, 129, 0.25);
       --amber: #f59e0b;
-      --amber-glow: rgba(245, 158, 11, 0.2);
+      --amber-glow: rgba(245, 158, 11, 0.25);
       --rose: #f43f5e;
-      --rose-glow: rgba(244, 63, 94, 0.2);
+      --rose-glow: rgba(244, 63, 94, 0.25);
       
       --text-main: #ffffff;
       --text-dim: #9ca3af;
@@ -52,7 +55,7 @@
     body {
       background-color: var(--bg-base);
       background-image: 
-        radial-gradient(ellipse 90% 60% at 50% -20%, rgba(139, 92, 246, 0.08), transparent 70%),
+        radial-gradient(ellipse 90% 60% at 50% -20%, rgba(139, 92, 246, 0.09), transparent 70%),
         radial-gradient(circle at 95% 85%, rgba(0, 245, 255, 0.05), transparent 50%);
       color: var(--text-main);
       display: flex;
@@ -68,9 +71,9 @@
       overflow: hidden;
     }
 
-    /* LEFT SIDEBAR */
+    /* LEFT SIDEBAR NAVIGATION */
     aside {
-      width: 280px;
+      width: 270px;
       background: var(--bg-sidebar);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
@@ -129,7 +132,7 @@
       padding: 16px 14px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 6px;
       flex: 1;
       overflow-y: auto;
     }
@@ -147,15 +150,16 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-radius: 8px;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 600;
       color: var(--text-dim);
       cursor: pointer;
       transition: all 0.15s ease;
       text-decoration: none;
       border: 1px solid transparent;
+      user-select: none;
     }
 
     .nav-item:hover {
@@ -165,14 +169,14 @@
 
     .nav-item.active {
       color: #ffffff;
-      background: linear-gradient(135deg, rgba(0, 245, 255, 0.12), rgba(139, 92, 246, 0.08));
-      border-color: rgba(0, 245, 255, 0.25);
+      background: linear-gradient(135deg, rgba(0, 245, 255, 0.14), rgba(139, 92, 246, 0.09));
+      border-color: rgba(0, 245, 255, 0.3);
       box-shadow: 0 4px 14px rgba(0, 245, 255, 0.08);
     }
 
     .nav-item svg {
-      width: 16px;
-      height: 16px;
+      width: 17px;
+      height: 17px;
       stroke: currentColor;
     }
 
@@ -186,7 +190,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 140px;
+      max-height: 130px;
       overflow-y: auto;
       margin-top: 8px;
     }
@@ -285,12 +289,6 @@
       animation: pulse 1.2s infinite;
     }
 
-    .status-dot.paused {
-      background: var(--amber);
-      box-shadow: 0 0 14px var(--amber);
-      animation: pulse 0.8s infinite;
-    }
-
     /* CAPTCHA / VERIFICATION ALERT BANNER */
     .verification-banner {
       display: none;
@@ -308,14 +306,18 @@
       display: flex;
     }
 
-    /* VIEWPORT CONTENT */
-    .viewport-content {
+    /* VIEW SECTIONS (SPA ROUTER) */
+    .view-section {
+      display: none;
       flex: 1;
       padding: 22px 32px;
       overflow-y: auto;
-      display: flex;
       flex-direction: column;
       gap: 20px;
+    }
+
+    .view-section.active {
+      display: flex;
     }
 
     /* METRICS GRID */
@@ -353,20 +355,9 @@
       background: var(--bg-card-hover);
     }
 
-    .metric-card.available {
-      border-top: 2px solid var(--emerald);
-      box-shadow: 0 6px 20px -6px var(--emerald-glow);
-    }
-
-    .metric-card.limited {
-      border-top: 2px solid var(--amber);
-      box-shadow: 0 6px 20px -6px var(--amber-glow);
-    }
-
-    .metric-card.failed {
-      border-top: 2px solid var(--rose);
-      box-shadow: 0 6px 20px -6px var(--rose-glow);
-    }
+    .metric-card.available { border-top: 2px solid var(--emerald); box-shadow: 0 6px 20px -6px var(--emerald-glow); }
+    .metric-card.limited { border-top: 2px solid var(--amber); box-shadow: 0 6px 20px -6px var(--amber-glow); }
+    .metric-card.failed { border-top: 2px solid var(--rose); box-shadow: 0 6px 20px -6px var(--rose-glow); }
 
     .metric-header {
       display: flex;
@@ -1025,6 +1016,33 @@
     .highlight-cyan { color: var(--cyan); font-weight: 800; font-family: var(--font-mono); }
     .val-white { color: var(--text-main); font-weight: 700; }
 
+    /* EXPLORER & ANALYTICS VIEWS */
+    .explorer-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.8rem;
+    }
+
+    .explorer-table th {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .explorer-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-family: var(--font-mono);
+    }
+
+    .explorer-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
   </style>
@@ -1032,37 +1050,45 @@
 <body>
 
   <div class="app-layout">
-    <!-- LEFT SIDEBAR -->
+    <!-- LEFT SIDEBAR NAVIGATION -->
     <aside>
       <div class="brand-container">
         <div class="brand">
           <div class="brand-icon">❄</div>
           <div class="brand-text">Snowflake</div>
         </div>
-        <div class="badge-v">v4.0 PRO</div>
+        <div class="badge-v">v4.5 PRO</div>
       </div>
 
       <nav class="nav-menu">
-        <span class="nav-label">Navigation</span>
-        <a href="#dashboard" class="nav-item active">
+        <span class="nav-label">Workspace Views</span>
+        <a class="nav-item active" data-view="dashboard">
           <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-          <span>Dashboard</span>
+          <span>Dashboard & Checker</span>
         </a>
-        <a href="#results" class="nav-item">
+        <a class="nav-item" data-view="explorer">
           <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-          <span>Discovered Hits</span>
+          <span>Hits Explorer</span>
         </a>
-        <a href="#logs" class="nav-item">
+        <a class="nav-item" data-view="analytics">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          <span>Analytics & Charts</span>
+        </a>
+        <a class="nav-item" data-view="credentials">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+          <span>Credential Pool</span>
+        </a>
+        <a class="nav-item" data-view="logs">
           <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          <span>Live Console</span>
+          <span>Audit Console</span>
         </a>
       </nav>
 
       <!-- CREDENTIAL POOL STATUS -->
       <div class="sidebar-section">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span class="nav-label" style="padding: 0;">Credential Pool (<span id="lblActiveCredsCount">1</span>)</span>
-          <span style="font-size: 0.65rem; color: var(--cyan); font-weight: 700;" id="lblSchedulerState">Active</span>
+          <span class="nav-label" style="padding: 0;">Active Tokens (<span id="lblActiveCredsCount">1</span>)</span>
+          <span style="font-size: 0.65rem; color: var(--cyan); font-weight: 700;" id="lblSchedulerState">Scheduler: Ready</span>
         </div>
         <div class="credential-status-list" id="credentialStatusList">
           <!-- Dynamically populated -->
@@ -1073,11 +1099,11 @@
         <div class="system-health-card" style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px 12px;">
           <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
             <span>Rate Limiter</span>
-            <span>Exponential</span>
+            <span>Adaptive</span>
           </div>
           <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 600; color: var(--emerald); margin-top: 4px;">
             <div class="pulse-dot"></div>
-            <span>Adaptive Backoff Active</span>
+            <span>Auto-backoff Enabled</span>
           </div>
         </div>
       </div>
@@ -1088,8 +1114,8 @@
       <!-- HEADER -->
       <header>
         <div class="header-info">
-          <h1>API Identifier Availability Checker</h1>
-          <p>Multi-credential request scheduler with adaptive rate-limit backpressure</p>
+          <h1 id="headerViewTitle">Dashboard & Live Checker</h1>
+          <p id="headerViewDesc">Multi-credential request scheduler with adaptive rate-limit backpressure</p>
         </div>
 
         <div class="header-actions">
@@ -1109,8 +1135,10 @@
         <button id="btnDismissVerification" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.7rem; color: #fef08a; border-color: rgba(245,158,11,0.4);">Acknowledge</button>
       </div>
 
-      <!-- VIEWPORT CONTENT -->
-      <div class="viewport-content">
+      <!-- ========================================== -->
+      <!-- VIEW 1: DASHBOARD & CHECKER (DEFAULT)      -->
+      <!-- ========================================== -->
+      <div class="view-section active" id="view-dashboard">
         <!-- 6 METRICS TILES -->
         <div class="metrics-grid">
           <div class="metric-card">
@@ -1198,7 +1226,7 @@
             <div class="panel-header">
               <span class="panel-title">
                 <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                Scheduler Configuration
+                Scanner Settings
               </span>
             </div>
 
@@ -1277,7 +1305,7 @@
 
               <!-- ADVANCED ACCORDION -->
               <details id="advancedDetails">
-                <summary>Advanced Routing & Proxy</summary>
+                <summary>Endpoint Parameters</summary>
                 <div class="details-content">
                   <div class="field">
                     <label for="targetUrl">Target Request URL</label>
@@ -1294,7 +1322,7 @@
                   </div>
 
                   <div class="field">
-                    <label for="proxyListInput">Authorized Upstream Proxy Pool (Optional)</label>
+                    <label for="proxyListInput">Authorized Upstream Proxy Pool</label>
                     <textarea id="proxyListInput" placeholder="http://proxy-host:port (one per line)"></textarea>
                   </div>
 
@@ -1351,6 +1379,137 @@
             
             <div id="logContent" class="terminal-logs"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 2: HITS EXPLORER & SEARCH             -->
+      <!-- ========================================== -->
+      <div class="view-section" id="view-explorer">
+        <div class="panel" style="flex: 1;">
+          <div class="panel-header">
+            <span class="panel-title">Discovered Identifiers Explorer</span>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="explorerSearch" placeholder="Search discovered hits..." style="width: 220px; padding: 6px 12px; font-size: 0.75rem;">
+              <button id="btnExportCSV" class="btn btn-secondary" style="width: auto; padding: 6px 14px;">Export CSV</button>
+              <button id="btnExportJSON" class="btn btn-secondary" style="width: auto; padding: 6px 14px;">Export JSON</button>
+            </div>
+          </div>
+          <div class="panel-body" style="padding: 0; overflow-y: auto;">
+            <table class="explorer-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Identifier</th>
+                  <th>Status</th>
+                  <th>HTTP Code</th>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="explorerTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 3: ANALYTICS & CHARTS                 -->
+      <!-- ========================================== -->
+      <div class="view-section" id="view-analytics">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 400px;">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Response Code Distribution</span>
+            </div>
+            <div class="panel-body" style="display: flex; align-items: center; justify-content: center; padding: 24px;">
+              <div style="width: 280px; height: 280px;">
+                <canvas id="analyticsDonutChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Engine Summary & Performance</span>
+            </div>
+            <div class="panel-body" style="gap: 16px; justify-content: center;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px;">
+                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Peak Velocity</span>
+                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--cyan); margin-top: 4px;" id="statPeakVelocity">0 RPM</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px;">
+                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Average Latency</span>
+                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--purple); margin-top: 4px;" id="statAnalyticsAvgLatency">0ms</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px;">
+                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Total Retries / Backoffs</span>
+                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--amber); margin-top: 4px;" id="statAnalyticsRetries">0</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px;">
+                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Availability Hit Rate</span>
+                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--emerald); margin-top: 4px;" id="statHitRate">0.0%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 4: CREDENTIAL & PROXY HUB             -->
+      <!-- ========================================== -->
+      <div class="view-section" id="view-credentials">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Authorized Tokens Pool</span>
+              <button id="btnValidateTokens" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.7rem;">Validate</button>
+            </div>
+            <div class="panel-body">
+              <div class="field">
+                <label>Manage Tokens (One per line)</label>
+                <textarea id="credentialHubInput" style="min-height: 180px; font-size: 0.8rem;"></textarea>
+              </div>
+              <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
+                Tokens are masked in all client logs and UI displays. When multiple credentials are provided, the scheduler rotates requests across them to balance volume.
+              </p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Authorized Proxy Pool</span>
+            </div>
+            <div class="panel-body">
+              <div class="field">
+                <label>Upstream Proxies (One per line)</label>
+                <textarea id="proxyHubInput" style="min-height: 180px; font-size: 0.8rem;" placeholder="http://user:pass@host:port&#10;http://ip:port"></textarea>
+              </div>
+              <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
+                Upstream proxies are used exclusively for network routing when permitted by the destination service.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 5: FULL AUDIT CONSOLE & LOGS          -->
+      <!-- ========================================== -->
+      <div class="view-section" id="view-logs">
+        <div class="panel terminal-panel" style="flex: 1;">
+          <div class="terminal-header">
+            <span class="terminal-title-text">audit-trail@full-logs: ~</span>
+            <div style="display: flex; gap: 10px;">
+              <button id="btnDownloadLogs" class="btn btn-secondary" style="width: auto; padding: 4px 12px; font-size: 0.7rem;">Download .log</button>
+              <button id="btnClearFullLogs" class="btn btn-secondary" style="width: auto; padding: 4px 12px; font-size: 0.7rem;">Clear</button>
+            </div>
+          </div>
+          <div id="fullLogContent" class="terminal-logs" style="font-size: 0.82rem; padding: 20px;"></div>
         </div>
       </div>
 
