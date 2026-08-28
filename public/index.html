@@ -3,34 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snowflake — Next-Gen Identifier Scanner</title>
+  <title>Snowflake — API Identifier Availability Testing Dashboard</title>
   
-  <!-- Premium Fonts -->
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
+  <!-- Chart.js for real-time analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
-      --bg-base: #030305;
-      --bg-panel: rgba(13, 13, 18, 0.75);
-      --bg-panel-solid: #0d0d12;
-      --bg-card: rgba(20, 20, 26, 0.6);
-      --bg-input: #0a0a0f;
-      --border-subtle: rgba(255, 255, 255, 0.06);
-      --border-hover: rgba(255, 255, 255, 0.12);
+      --bg-base: #060609;
+      --bg-sidebar: rgba(12, 12, 18, 0.85);
+      --bg-card: rgba(18, 18, 26, 0.65);
+      --bg-card-hover: rgba(24, 24, 35, 0.85);
+      --bg-input: #0b0b10;
+      
+      --border-subtle: rgba(255, 255, 255, 0.07);
+      --border-focus: #00f5ff;
+      --border-hover: rgba(255, 255, 255, 0.15);
       
       --cyan: #00f5ff;
-      --cyan-glow: rgba(0, 245, 255, 0.15);
+      --cyan-glow: rgba(0, 245, 255, 0.2);
+      --purple: #8b5cf6;
+      --purple-glow: rgba(139, 92, 246, 0.2);
       --blue: #3b82f6;
       --emerald: #10b981;
-      --emerald-glow: rgba(16, 185, 129, 0.15);
+      --emerald-glow: rgba(16, 185, 129, 0.2);
       --amber: #f59e0b;
       --rose: #f43f5e;
       
       --text-main: #ffffff;
-      --text-dim: #9496a1;
-      --text-muted: #525462;
+      --text-dim: #9ca3af;
+      --text-muted: #6b7280;
       
       --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -46,8 +53,8 @@
     body {
       background-color: var(--bg-base);
       background-image: 
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 245, 255, 0.07), transparent 70%),
-        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.04), transparent 50%);
+        radial-gradient(ellipse 90% 60% at 50% -20%, rgba(139, 92, 246, 0.08), transparent 70%),
+        radial-gradient(circle at 95% 85%, rgba(0, 245, 255, 0.05), transparent 50%);
       color: var(--text-main);
       display: flex;
       height: 100vh;
@@ -55,29 +62,29 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* APP LAYOUT */
-    .app {
+    /* APP LAYOUT WRAPPER */
+    .app-layout {
       display: flex;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
     }
 
-    /* SIDEBAR */
+    /* LEFT SIDEBAR NAVIGATION */
     aside {
-      width: 340px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      width: 260px;
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       border-right: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      z-index: 10;
+      z-index: 20;
     }
 
-    .brand-box {
-      padding: 24px 28px;
+    .brand-container {
+      padding: 24px;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
@@ -90,17 +97,17 @@
       gap: 12px;
     }
 
-    .snowflake-icon {
+    .brand-icon {
       font-size: 1.6rem;
       color: var(--cyan);
       display: inline-block;
       animation: spin 20s linear infinite;
       user-select: none;
-      filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.4));
+      filter: drop-shadow(0 0 12px var(--cyan-glow));
     }
 
-    .brand-title {
-      font-size: 1.15rem;
+    .brand-text {
+      font-size: 1.1rem;
       font-weight: 800;
       letter-spacing: 0.5px;
       background: linear-gradient(135deg, #ffffff 40%, var(--cyan));
@@ -109,49 +116,421 @@
       text-transform: uppercase;
     }
 
-    .version-pill {
+    .badge-v {
       font-size: 0.65rem;
       font-family: var(--font-mono);
       font-weight: 700;
       background: rgba(0, 245, 255, 0.08);
       color: var(--cyan);
-      border: 1px solid rgba(0, 245, 255, 0.2);
-      padding: 3px 8px;
+      border: 1px solid rgba(0, 245, 255, 0.25);
+      padding: 2px 7px;
       border-radius: 20px;
-      letter-spacing: 0.5px;
     }
 
-    .sidebar-content {
-      padding: 24px 28px;
+    /* NAVIGATION MENU */
+    .nav-menu {
+      padding: 20px 16px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 6px;
       flex: 1;
       overflow-y: auto;
     }
 
-    /* FORM CONTROLS */
-    .field {
+    .nav-label {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      padding: 10px 12px 4px 12px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-item.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, rgba(0, 245, 255, 0.12), rgba(139, 92, 246, 0.08));
+      border-color: rgba(0, 245, 255, 0.25);
+      box-shadow: 0 4px 14px rgba(0, 245, 255, 0.08);
+    }
+
+    .nav-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+    }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .system-health-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
-    .field label {
-      font-size: 0.72rem;
+    .health-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.7rem;
       font-weight: 700;
-      color: var(--text-dim);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    select, input[type="text"], input[type="number"], textarea {
+    .health-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--emerald);
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+    }
+
+    /* MAIN CONTENT VIEWPORT */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* TOP HEADER BAR */
+    header {
+      height: 68px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .header-info h1 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .header-info p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      padding: 7px 16px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+    }
+
+    .status-dot.scanning {
+      background: var(--cyan);
+      box-shadow: 0 0 14px var(--cyan);
+      animation: pulse 1.2s infinite;
+    }
+
+    /* SCROLLABLE VIEWPORT CONTENT */
+    .viewport-content {
+      flex: 1;
+      padding: 24px 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* 1. TOP METRICS TILES ROW */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 1100px) {
+      .metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.6);
+      transition: all 0.2s ease;
+    }
+
+    .metric-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      background: var(--bg-card-hover);
+    }
+
+    .metric-card.available {
+      border-top: 2px solid var(--emerald);
+      box-shadow: 0 6px 20px -6px var(--emerald-glow);
+    }
+
+    .metric-card.limited {
+      border-top: 2px solid var(--amber);
+    }
+
+    .metric-card.failed {
+      border-top: 2px solid var(--rose);
+    }
+
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .metric-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .metric-icon {
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .metric-body {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .metric-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .metric-pct-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .metric-card.available .metric-pct-tag {
+      color: var(--emerald);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .metric-card.limited .metric-pct-tag {
+      color: var(--amber);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    /* 2. PROGRESS BAR BANNER */
+    .progress-bar-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: #13131c;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    /* 3. MAIN WORKSPACE GRID */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr 1fr;
+      gap: 20px;
+      min-height: 520px;
+    }
+
+    @media (max-width: 1280px) {
+      .main-grid {
+        grid-template-columns: 340px 1fr;
+      }
+      .terminal-panel {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+      .terminal-panel {
+        grid-column: span 1;
+      }
+    }
+
+    /* CARD PANELS */
+    .panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.015);
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-body {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    /* FORM FIELDS */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select, input[type="text"], textarea {
       background: var(--bg-input);
       border: 1px solid var(--border-subtle);
       border-radius: 8px;
       color: var(--text-main);
-      padding: 12px 14px;
-      font-size: 0.85rem;
+      padding: 10px 12px;
+      font-size: 0.82rem;
       font-weight: 500;
       outline: none;
       transition: all 0.2s ease;
@@ -159,10 +538,10 @@
 
     select {
       appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg fill='%239496a1' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+      background-image: url("data:image/svg+xml;utf8,<svg fill='%239ca3af' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
       background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 40px;
+      background-position: right 12px center;
+      padding-right: 36px;
       cursor: pointer;
     }
 
@@ -173,16 +552,16 @@
 
     textarea {
       resize: vertical;
-      min-height: 80px;
+      min-height: 70px;
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
     }
 
-    /* RANGE SLIDER */
+    /* SPEED SLIDER */
     .slider-box {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .slider-header {
@@ -191,55 +570,50 @@
       align-items: center;
       font-size: 0.72rem;
       font-weight: 700;
-      color: var(--text-dim);
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .slider-header .value-tag {
+    .slider-header .val {
       color: var(--cyan);
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
-      background: rgba(0, 245, 255, 0.06);
-      padding: 2px 8px;
-      border-radius: 4px;
-      border: 1px solid rgba(0, 245, 255, 0.15);
     }
 
     .range-slider {
       -webkit-appearance: none;
       width: 100%;
-      height: 6px;
+      height: 5px;
       border-radius: 3px;
-      background: #181820;
+      background: #181824;
       outline: none;
     }
 
     .range-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       background: #ffffff;
       cursor: pointer;
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
       transition: all 0.15s ease;
     }
 
     .range-slider::-webkit-slider-thumb:hover {
       transform: scale(1.2);
       background: var(--cyan);
-      box-shadow: 0 0 14px var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
     }
 
-    /* TOGGLE SWITCHES */
-    .toggle-item {
+    /* TOGGLES */
+    .toggle-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 4px 0;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--text-dim);
       cursor: pointer;
@@ -249,8 +623,8 @@
     .switch {
       position: relative;
       display: inline-block;
-      width: 38px;
-      height: 20px;
+      width: 36px;
+      height: 19px;
       flex-shrink: 0;
     }
 
@@ -267,7 +641,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #181820;
+      background-color: #1a1a24;
       border: 1px solid var(--border-subtle);
       border-radius: 20px;
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -276,8 +650,8 @@
     .switch-track:before {
       position: absolute;
       content: "";
-      height: 12px;
-      width: 12px;
+      height: 11px;
+      width: 11px;
       left: 3px;
       bottom: 3px;
       background-color: var(--text-muted);
@@ -291,7 +665,7 @@
     }
 
     input:checked + .switch-track:before {
-      transform: translateX(18px);
+      transform: translateX(17px);
       background-color: var(--cyan);
       box-shadow: 0 0 8px var(--cyan);
     }
@@ -301,13 +675,13 @@
       background: rgba(255, 255, 255, 0.015);
       border: 1px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 12px 14px;
-      transition: all 0.2s ease;
+      padding: 10px 12px;
+      font-size: 0.8rem;
     }
 
     details[open] {
-      border-color: var(--border-hover);
       background: rgba(255, 255, 255, 0.025);
+      border-color: var(--border-hover);
     }
 
     summary {
@@ -335,29 +709,29 @@
       color: var(--cyan);
     }
 
-    .details-body {
+    .details-content {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      margin-top: 14px;
-      padding-top: 14px;
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 12px;
       border-top: 1px solid var(--border-subtle);
     }
 
-    /* ACTION BUTTONS */
+    /* BUTTONS */
     .btn-group {
       margin-top: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      padding-top: 12px;
+      gap: 8px;
+      padding-top: 8px;
     }
 
     .btn {
       width: 100%;
-      padding: 13px 20px;
+      padding: 12px 18px;
       border-radius: 8px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 800;
       letter-spacing: 0.5px;
       text-transform: uppercase;
@@ -371,9 +745,9 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #ffffff, #e0e0e8);
+      background: linear-gradient(135deg, #ffffff, #e5e7eb);
       color: #000000;
-      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 18px rgba(255, 255, 255, 0.15);
     }
 
     .btn-primary:hover:not(:disabled) {
@@ -385,7 +759,7 @@
     .btn-danger {
       background: linear-gradient(135deg, var(--rose), #e11d48);
       color: #ffffff;
-      box-shadow: 0 4px 20px rgba(244, 63, 94, 0.25);
+      box-shadow: 0 4px 18px rgba(244, 63, 94, 0.25);
     }
 
     .btn-danger:hover {
@@ -397,8 +771,8 @@
       background: transparent;
       border: 1px solid var(--border-subtle);
       color: var(--text-dim);
-      padding: 10px 16px;
-      font-size: 0.75rem;
+      padding: 8px 14px;
+      font-size: 0.72rem;
       border-radius: 6px;
     }
 
@@ -408,206 +782,34 @@
       background: rgba(255, 255, 255, 0.03);
     }
 
-    /* MAIN VIEWPORT */
-    main {
-      flex: 1;
+    /* RESULTS LIST PANEL */
+    .tabs-nav {
       display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    /* TOP BAR */
-    header {
-      height: 70px;
       border-bottom: 1px solid var(--border-subtle);
-      background: var(--bg-panel);
-      backdrop-filter: blur(20px);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 32px;
+      background: rgba(255, 255, 255, 0.01);
       flex-shrink: 0;
-    }
-
-    .header-title h2 {
-      font-size: 1.05rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .header-title p {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-subtle);
-      padding: 7px 16px;
-      border-radius: 30px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-dim);
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--emerald);
-      box-shadow: 0 0 10px var(--emerald);
-    }
-
-    .status-dot.scanning {
-      background: var(--cyan);
-      box-shadow: 0 0 14px var(--cyan);
-      animation: pulse 1.2s infinite;
-    }
-
-    /* CONTENT WRAPPER */
-    .content-view {
-      flex: 1;
-      padding: 24px 32px;
-      display: grid;
-      grid-template-rows: auto 1fr;
-      gap: 20px;
-      overflow: hidden;
-    }
-
-    /* STATS METRIC TILES */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-    }
-
-    .stat-tile {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.2s ease;
-    }
-
-    .stat-tile:hover {
-      border-color: var(--border-hover);
-      transform: translateY(-1px);
-    }
-
-    .stat-tile.available {
-      border-top: 2px solid var(--emerald);
-      box-shadow: 0 4px 20px -5px var(--emerald-glow);
-    }
-
-    .stat-tile.limited {
-      border-top: 2px solid var(--amber);
-    }
-
-    .stat-tile.failed {
-      border-top: 2px solid var(--rose);
-    }
-
-    .stat-label {
-      font-size: 0.65rem;
-      font-weight: 800;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .stat-data {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-
-    .stat-number {
-      font-size: 1.45rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-
-    .stat-percent {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-    }
-
-    .stat-tile.available .stat-percent { color: var(--emerald); }
-    .stat-tile.limited .stat-percent { color: var(--amber); }
-
-    /* SPLIT MAIN PANELS */
-    .grid-panels {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      overflow: hidden;
-    }
-
-    @media (max-width: 900px) {
-      .grid-panels {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* CARD CONTAINERS */
-    .panel-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    }
-
-    /* TABS */
-    .tabs-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border-subtle);
-      background: rgba(255, 255, 255, 0.015);
-      padding: 0 16px;
-      flex-shrink: 0;
-    }
-
-    .tabs-group {
-      display: flex;
+      padding: 0 8px;
     }
 
     .tab-btn {
       background: none;
       border: none;
-      color: var(--text-dim);
-      padding: 16px 20px;
-      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 14px 16px;
+      font-size: 0.78rem;
       font-weight: 700;
       cursor: pointer;
       position: relative;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.6px;
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .tab-btn:hover {
-      color: var(--text-main);
+      color: var(--text-dim);
     }
 
     .tab-btn.active {
@@ -625,24 +827,22 @@
       box-shadow: 0 0 12px var(--cyan);
     }
 
-    .count-badge {
-      font-size: 0.65rem;
+    .tab-badge {
+      font-size: 0.62rem;
       background: rgba(255, 255, 255, 0.05);
       color: var(--text-dim);
-      padding: 2px 7px;
+      padding: 1px 6px;
       border-radius: 4px;
       font-family: var(--font-mono);
-      font-weight: 700;
     }
 
-    .tab-btn.active .count-badge {
-      background: rgba(0, 245, 255, 0.1);
+    .tab-btn.active .tab-badge {
+      background: rgba(0, 245, 255, 0.12);
       color: var(--cyan);
       border: 1px solid rgba(0, 245, 255, 0.2);
     }
 
-    /* LIST ITEMS */
-    .results-scroll {
+    .results-list-container {
       flex: 1;
       overflow-y: auto;
       padding: 16px;
@@ -651,43 +851,43 @@
       gap: 8px;
     }
 
-    .item-card {
+    .result-row {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       transition: all 0.15s ease;
     }
 
-    .item-card:hover {
+    .result-row:hover {
       background: rgba(255, 255, 255, 0.04);
       border-color: var(--border-hover);
       transform: translateX(2px);
     }
 
-    .item-card.available {
+    .result-row.available {
       border-left: 3px solid var(--emerald);
+      box-shadow: inset 4px 0 0 rgba(16, 185, 129, 0.02);
     }
 
-    .item-card.taken {
+    .result-row.taken {
       border-left: 3px solid var(--border-subtle);
       opacity: 0.65;
     }
 
-    .item-identifier {
+    .row-identifier {
       font-family: var(--font-mono);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .item-dot {
+    .row-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
@@ -695,65 +895,58 @@
       box-shadow: 0 0 8px var(--emerald);
     }
 
-    .item-card.taken .item-dot {
+    .result-row.taken .row-dot {
       background: var(--text-muted);
       box-shadow: none;
     }
 
-    .item-pill {
+    .row-pill {
       font-size: 0.65rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 4px;
       font-family: var(--font-mono);
     }
 
-    .item-pill.available {
+    .row-pill.available {
       background: rgba(16, 185, 129, 0.12);
       color: var(--emerald);
       border: 1px solid rgba(16, 185, 129, 0.25);
     }
 
-    .item-pill.taken {
+    .row-pill.taken {
       background: rgba(255, 255, 255, 0.04);
       color: var(--text-dim);
       border: 1px solid var(--border-subtle);
     }
 
-    .empty-prompt {
+    .empty-state {
       height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       color: var(--text-muted);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       text-align: center;
-      padding: 40px;
-      gap: 14px;
+      padding: 40px 20px;
+      gap: 12px;
     }
 
-    .empty-prompt svg {
-      width: 48px;
-      height: 48px;
+    .empty-state svg {
+      width: 42px;
+      height: 42px;
       opacity: 0.15;
     }
 
-    /* TERMINAL CONSOLE */
-    .terminal-window {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background: #020204;
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+    /* TERMINAL CONSOLE PANEL */
+    .terminal-panel {
+      background: #030306;
     }
 
-    .terminal-topbar {
+    .terminal-header {
       height: 44px;
       background: rgba(255, 255, 255, 0.02);
       border-bottom: 1px solid var(--border-subtle);
@@ -767,7 +960,7 @@
 
     .window-dots {
       display: flex;
-      gap: 7px;
+      gap: 6px;
     }
 
     .w-dot {
@@ -780,36 +973,36 @@
     .w-dot.yellow { background: #ffbd2e; }
     .w-dot.green { background: #27c93f; }
 
-    .terminal-heading {
-      font-size: 0.75rem;
+    .terminal-title-text {
+      font-size: 0.72rem;
       font-family: var(--font-mono);
       color: var(--text-muted);
       font-weight: 600;
     }
 
-    .terminal-body {
+    .terminal-logs {
       flex: 1;
-      padding: 18px 20px;
+      padding: 16px 18px;
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-    .log-entry {
-      line-height: 1.6;
+    .log-item {
+      line-height: 1.5;
       display: flex;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .log-entry .time {
+    .log-item .time {
       color: var(--text-muted);
       user-select: none;
     }
 
-    .log-entry .tag {
+    .log-item .tag {
       font-weight: 700;
       padding: 0 4px;
       border-radius: 2px;
@@ -822,7 +1015,7 @@
 
     /* FOOTER STATUS BAR */
     footer {
-      height: 48px;
+      height: 44px;
       border-top: 1px solid var(--border-subtle);
       padding: 0 32px;
       display: flex;
@@ -830,28 +1023,28 @@
       justify-content: space-between;
       font-size: 0.75rem;
       color: var(--text-dim);
-      background: var(--bg-panel);
+      background: var(--bg-sidebar);
       flex-shrink: 0;
     }
 
-    .footer-metrics-group {
+    .footer-metrics {
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 24px;
     }
 
-    .footer-cyan {
+    .highlight-cyan {
       color: var(--cyan);
       font-weight: 800;
       font-family: var(--font-mono);
     }
 
-    .footer-white {
+    .val-white {
       color: var(--text-main);
       font-weight: 700;
     }
 
-    /* ANIMATIONS */
+    /* KEYFRAME ANIMATIONS */
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -866,102 +1059,53 @@
 </head>
 <body>
 
-  <div class="app">
-    <!-- LEFT CONTROL SIDEBAR -->
+  <div class="app-layout">
+    <!-- LEFT NAVIGATION SIDEBAR -->
     <aside>
-      <div class="brand-box">
+      <div class="brand-container">
         <div class="brand">
-          <div class="snowflake-icon">❄</div>
-          <div class="brand-title">Snowflake</div>
+          <div class="brand-icon">❄</div>
+          <div class="brand-text">Snowflake</div>
         </div>
-        <div class="version-pill">v3.0 PRO</div>
+        <div class="badge-v">v3.5 PRO</div>
       </div>
-      
-      <div class="sidebar-content">
-        <div class="field">
-          <label for="apiPreset">Platform Preset</label>
-          <select id="apiPreset">
-            <option value="discord" selected>Discord Pomelo (@username)</option>
-            <option value="github">GitHub Users</option>
-            <option value="mock">Local Simulator (Test Mode)</option>
-            <option value="custom">Custom Endpoint</option>
-          </select>
-        </div>
 
-        <div class="field">
-          <label for="genMode">Scan Mode</label>
-          <select id="genMode">
-            <option value="auto4" selected>Auto 4-Letter (a-z)</option>
-            <option value="auto3">Auto 3-Letter (a-z)</option>
-            <option value="auto4num">Auto 4-Alphanumeric (a-z0-9)</option>
-            <option value="manual">Manual Custom List</option>
-          </select>
-        </div>
+      <nav class="nav-menu">
+        <span class="nav-label">Core Navigation</span>
+        <a href="#dashboard" class="nav-item active" id="navDashboard">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#checker" class="nav-item" id="navChecker">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          <span>Live Checker</span>
+        </a>
+        <a href="#results" class="nav-item" id="navResults">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+          <span>Discovered Hits</span>
+        </a>
+        <a href="#logs" class="nav-item" id="navLogs">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <span>Terminal Logs</span>
+        </a>
 
-        <div class="field" id="identifiers-group" style="display: none;">
-          <label for="identifiers">Custom Queue</label>
-          <textarea id="identifiers" placeholder="Enter identifiers, one per line"></textarea>
-        </div>
+        <span class="nav-label" style="margin-top: 14px;">Settings & API</span>
+        <a href="#presets" class="nav-item" id="navPresets">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <span>API Config</span>
+        </a>
+      </nav>
 
-        <div class="slider-box">
-          <div class="slider-header">
-            <span>Interval Speed</span>
-            <span class="value-tag" id="lblSpeed">1000ms</span>
+      <div class="sidebar-footer">
+        <div class="system-health-card">
+          <div class="health-header">
+            <span>Engine Status</span>
+            <span>REST v9</span>
           </div>
-          <input type="range" id="delaySlider" class="range-slider" min="0" max="2000" step="50" value="1000">
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
-          <label class="toggle-item">
-            <span>Auto-retry 429 limits</span>
-            <span class="switch">
-              <input type="checkbox" id="autoRetry" checked>
-              <span class="switch-track"></span>
-            </span>
-          </label>
-
-          <label class="toggle-item">
-            <span>Audio chime on hits</span>
-            <span class="switch">
-              <input type="checkbox" id="soundAlert" checked>
-              <span class="switch-track"></span>
-            </span>
-          </label>
-        </div>
-
-        <details id="advancedDetails" open>
-          <summary>Endpoint & Authorization</summary>
-          <div class="details-body">
-            <div class="field">
-              <label for="targetUrl">Target Request URL</label>
-              <input type="text" id="targetUrl" value="https://discord.com/api/v9/users/@me/pomelo-attempt">
-            </div>
-            
-            <div class="field">
-              <label for="method">HTTP Method</label>
-              <select id="method">
-                <option value="POST" selected>POST</option>
-                <option value="GET">GET</option>
-                <option value="PUT">PUT</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="headers">Custom Headers (Enter Token)</label>
-              <textarea id="headers" placeholder='{ "Authorization": "YOUR_DISCORD_USER_TOKEN", "Content-Type": "application/json" }'>{ "Authorization": "YOUR_DISCORD_TOKEN", "Content-Type": "application/json" }</textarea>
-            </div>
-
-            <div class="field">
-              <label for="requestBody">Request Body Template</label>
-              <textarea id="requestBody" placeholder='{ "username": "{id}" }'>{ "username": "{id}" }</textarea>
-            </div>
+          <div class="health-status">
+            <div class="pulse-dot"></div>
+            <span>Connected to Cloud</span>
           </div>
-        </details>
-
-        <div class="btn-group">
-          <button id="btnStart" class="btn btn-primary">Start Scanning</button>
-          <button id="btnStop" class="btn btn-danger" style="display: none;">Stop Scanning</button>
-          <button id="btnReset" class="btn btn-secondary">Clear Dashboard</button>
         </div>
       </div>
     </aside>
@@ -970,116 +1114,242 @@
     <main>
       <!-- HEADER NAVBAR -->
       <header>
-        <div class="header-title">
-          <h2>Dashboard Overview</h2>
-          <p>Real-time high velocity identifier availability scanner</p>
+        <div class="header-info">
+          <h1>API Identifier Availability Checker</h1>
+          <p>Real-time distributed testing suite with automated rate limit handling</p>
         </div>
 
-        <div class="status-badge">
-          <div class="status-dot" id="sysDot"></div>
-          <span id="sysStatusText">Status: Idle</span>
+        <div class="header-actions">
+          <div class="status-pill">
+            <div class="status-dot" id="sysDot"></div>
+            <span id="sysStatusText">System: Idle</span>
+          </div>
         </div>
       </header>
 
-      <!-- VIEW CONTENT GRID -->
-      <div class="content-view">
-        <!-- TOP 5 STAT METRIC TILES -->
-        <div class="stats-row">
-          <div class="stat-tile">
-            <span class="stat-label">Processed</span>
-            <div class="stat-data">
-              <span class="stat-number" id="statScanned">0 / 0</span>
-              <span class="stat-percent" id="pctScanned">0%</span>
+      <!-- VIEWPORT CONTENT -->
+      <div class="viewport-content">
+        <!-- 1. METRICS CARDS ROW -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">Processed / Total</span>
+              <span class="metric-icon">📊</span>
             </div>
-          </div>
-          
-          <div class="stat-tile available">
-            <span class="stat-label">Available Hits</span>
-            <div class="stat-data">
-              <span class="stat-number" id="statAvailable" style="color: var(--emerald);">0</span>
-              <span class="stat-percent" id="pctAvailable">0%</span>
+            <div class="metric-body">
+              <span class="metric-value" id="statScanned">0 / 0</span>
+              <span class="metric-pct-tag" id="pctScanned">0%</span>
             </div>
           </div>
 
-          <div class="stat-tile">
-            <span class="stat-label">Taken</span>
-            <div class="stat-data">
-              <span class="stat-number" id="statTaken">0</span>
-              <span class="stat-percent" id="pctTaken">0%</span>
+          <div class="metric-card available">
+            <div class="metric-header">
+              <span class="metric-label">Available Hits</span>
+              <span class="metric-icon">✨</span>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="statAvailable" style="color: var(--emerald);">0</span>
+              <span class="metric-pct-tag" id="pctAvailable">0%</span>
             </div>
           </div>
 
-          <div class="stat-tile limited">
-            <span class="stat-label">Rate Limited (429)</span>
-            <div class="stat-data">
-              <span class="stat-number" id="statLimited" style="color: var(--amber);">0</span>
-              <span class="stat-percent" id="pctLimited">0%</span>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-label">Taken / Registered</span>
+              <span class="metric-icon">🔒</span>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="statTaken">0</span>
+              <span class="metric-pct-tag" id="pctTaken">0%</span>
             </div>
           </div>
 
-          <div class="stat-tile failed">
-            <span class="stat-label">Errors / Failed</span>
-            <div class="stat-data">
-              <span class="stat-number" id="statFailed" style="color: var(--rose);">0</span>
-              <span class="stat-percent" id="pctFailed">0%</span>
+          <div class="metric-card limited">
+            <div class="metric-header">
+              <span class="metric-label">Rate Limited (429)</span>
+              <span class="metric-icon">⏳</span>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="statLimited" style="color: var(--amber);">0</span>
+              <span class="metric-pct-tag" id="pctLimited">0%</span>
+            </div>
+          </div>
+
+          <div class="metric-card failed">
+            <div class="metric-header">
+              <span class="metric-label">Errors / Failed</span>
+              <span class="metric-icon">⚠️</span>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="statFailed" style="color: var(--rose);">0</span>
+              <span class="metric-pct-tag" id="pctFailed">0%</span>
             </div>
           </div>
         </div>
 
-        <!-- MAIN SPLIT WORKSPACE -->
-        <div class="grid-panels">
-          <!-- LEFT: TABBED RESULTS LIST CARD -->
-          <div class="panel-card">
-            <div class="tabs-bar">
-              <div class="tabs-group">
-                <button class="tab-btn active" id="tab-available">
-                  Available Hits
-                  <span class="count-badge" id="badgeAvailable">0</span>
-                </button>
-                <button class="tab-btn" id="tab-taken">
-                  Taken / Checked
-                  <span class="count-badge" id="badgeTaken">0</span>
-                </button>
-              </div>
-              <button id="btnExport" class="btn btn-secondary">Export .txt</button>
+        <!-- 2. ANIMATED PROGRESS TRACKER -->
+        <div class="progress-bar-wrapper">
+          <div class="progress-header">
+            <span>Overall Scan Progress</span>
+            <span id="lblProgressPct" style="font-family: var(--font-mono); font-weight: 700; color: var(--cyan);">0% Complete</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <!-- 3. MAIN WORKSPACE 3-PANEL GRID -->
+        <div class="main-grid">
+          <!-- PANEL 1: CONFIGURATION & SCANNER CONTROLS -->
+          <div class="panel" id="section-config">
+            <div class="panel-header">
+              <span class="panel-title">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                Scanner Settings
+              </span>
             </div>
 
-            <div class="results-scroll" id="results-display-list">
-              <div class="empty-prompt" id="list-empty-state">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <div>No hits recorded yet. Select scan mode and start.</div>
+            <div class="panel-body">
+              <div class="field">
+                <label for="apiPreset">Target Platform Preset</label>
+                <select id="apiPreset">
+                  <option value="discord" selected>Discord Pomelo (@username)</option>
+                  <option value="github">GitHub Users</option>
+                  <option value="mock">Local Simulator (Test Mode)</option>
+                  <option value="custom">Custom Endpoint</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="genMode">Combination Mode</label>
+                <select id="genMode">
+                  <option value="auto4" selected>Auto 4-Letter (a-z)</option>
+                  <option value="auto3">Auto 3-Letter (a-z)</option>
+                  <option value="auto4num">Auto 4-Alphanumeric (a-z0-9)</option>
+                  <option value="manual">Manual Custom Queue</option>
+                </select>
+              </div>
+
+              <div class="field" id="identifiers-group" style="display: none;">
+                <label for="identifiers">Custom Queue List</label>
+                <textarea id="identifiers" placeholder="Enter identifiers, one per line"></textarea>
+              </div>
+
+              <div class="slider-box">
+                <div class="slider-header">
+                  <span>Request Delay</span>
+                  <span class="val" id="lblSpeed">1000ms</span>
+                </div>
+                <input type="range" id="delaySlider" class="range-slider" min="0" max="2000" step="50" value="1000">
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 2px;">
+                <label class="toggle-row">
+                  <span>Auto-backoff 429 rate limits</span>
+                  <span class="switch">
+                    <input type="checkbox" id="autoRetry" checked>
+                    <span class="switch-track"></span>
+                  </span>
+                </label>
+
+                <label class="toggle-row">
+                  <span>Audio chime on hits</span>
+                  <span class="switch">
+                    <input type="checkbox" id="soundAlert" checked>
+                    <span class="switch-track"></span>
+                  </span>
+                </label>
+              </div>
+
+              <details id="advancedDetails">
+                <summary>Endpoint & Authorization</summary>
+                <div class="details-content">
+                  <div class="field">
+                    <label for="targetUrl">Target API URL</label>
+                    <input type="text" id="targetUrl" value="https://discord.com/api/v9/users/@me/pomelo-attempt">
+                  </div>
+                  
+                  <div class="field">
+                    <label for="method">HTTP Method</label>
+                    <select id="method">
+                      <option value="POST" selected>POST</option>
+                      <option value="GET">GET</option>
+                      <option value="PUT">PUT</option>
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label for="headers">Custom Headers (JSON)</label>
+                    <textarea id="headers" placeholder='{ "Authorization": "YOUR_TOKEN", "Content-Type": "application/json" }'>{ "Authorization": "YOUR_DISCORD_TOKEN", "Content-Type": "application/json" }</textarea>
+                  </div>
+
+                  <div class="field">
+                    <label for="requestBody">Request Body Template</label>
+                    <textarea id="requestBody" placeholder='{ "username": "{id}" }'>{ "username": "{id}" }</textarea>
+                  </div>
+                </div>
+              </details>
+
+              <div class="btn-group">
+                <button id="btnStart" class="btn btn-primary">Start Scanning</button>
+                <button id="btnStop" class="btn btn-danger" style="display: none;">Stop Scanning</button>
+                <button id="btnReset" class="btn btn-secondary">Clear Statistics</button>
               </div>
             </div>
           </div>
 
-          <!-- RIGHT: MACOS-STYLED ACTIVITY TERMINAL -->
-          <div class="terminal-window">
-            <div class="terminal-topbar">
+          <!-- PANEL 2: DISCOVERED HITS & RESULTS LIST -->
+          <div class="panel" id="section-results">
+            <div class="panel-header" style="padding: 0 16px;">
+              <div class="tabs-nav">
+                <button class="tab-btn active" id="tab-available">
+                  Available Hits
+                  <span class="tab-badge" id="badgeAvailable">0</span>
+                </button>
+                <button class="tab-btn" id="tab-taken">
+                  Taken / Checked
+                  <span class="tab-badge" id="badgeTaken">0</span>
+                </button>
+              </div>
+              <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 6px 12px;">Export .txt</button>
+            </div>
+
+            <div class="results-list-container" id="results-display-list">
+              <div class="empty-state" id="list-empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div>No records captured yet. Select scan mode and start.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 3: REAL-TIME ACTIVITY TERMINAL -->
+          <div class="panel terminal-panel" id="section-logs">
+            <div class="terminal-header">
               <div class="window-dots">
                 <div class="w-dot red"></div>
                 <div class="w-dot yellow"></div>
                 <div class="w-dot green"></div>
               </div>
-              <span class="terminal-heading">snowflake@live-activity: ~</span>
-              <button id="btnClearLogs" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.65rem;">Clear</button>
+              <span class="terminal-title-text">snowflake@live-stream: ~</span>
+              <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.65rem;">Clear</button>
             </div>
             
-            <div id="logContent" class="terminal-body"></div>
+            <div id="logContent" class="terminal-logs"></div>
           </div>
         </div>
       </div>
 
-      <!-- FOOTER STATUS METRICS -->
+      <!-- FOOTER STATUS BAR -->
       <footer>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <span>Est. Remaining (ETA): <span class="footer-cyan" id="lblETA">00:00:00</span></span>
+          <span>Estimated Remaining (ETA): <span class="highlight-cyan" id="lblETA">00:00:00</span></span>
         </div>
 
-        <div class="footer-metrics-group">
-          <div>Duration: <span class="footer-white" id="lblDuration">00:00:00</span></div>
-          <div>Reqs/Min: <span class="footer-white" id="lblReqMin">0</span></div>
-          <div>Total Hits: <span class="footer-white" id="lblTotalHits">0</span></div>
-          <div>Last Check: <span class="footer-white" id="lblLastCheck">Never</span></div>
+        <div class="footer-metrics">
+          <div>Duration: <span class="val-white" id="lblDuration">00:00:00</span></div>
+          <div>Velocity: <span class="val-white" id="lblReqMin">0</span> RPM</div>
+          <div>Total Requests: <span class="val-white" id="lblTotalHits">0</span></div>
+          <div>Last Check: <span class="val-white" id="lblLastCheck">Never</span></div>
         </div>
       </footer>
     </main>

@@ -51,6 +51,9 @@ const elPctTaken = document.getElementById('pctTaken');
 const elPctLimited = document.getElementById('pctLimited');
 const elPctFailed = document.getElementById('pctFailed');
 
+const elProgressFill = document.getElementById('progressFill');
+const elLblProgressPct = document.getElementById('lblProgressPct');
+
 const elBadgeAvailable = document.getElementById('badgeAvailable');
 const elBadgeTaken = document.getElementById('badgeTaken');
 
@@ -69,6 +72,14 @@ const elSysStatusText = document.getElementById('sysStatusText');
 const elTabAvailable = document.getElementById('tab-available');
 const elTabTaken = document.getElementById('tab-taken');
 
+// Sidebar Navigation Smooth Scroll / Selection
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', (e) => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+
 // Preset Switcher
 elApiPreset.addEventListener('change', () => {
   const preset = elApiPreset.value;
@@ -77,13 +88,13 @@ elApiPreset.addEventListener('change', () => {
     elMethod.value = 'POST';
     elHeaders.value = '{\n  "Authorization": "YOUR_DISCORD_TOKEN",\n  "Content-Type": "application/json"\n}';
     elRequestBody.value = '{\n  "username": "{id}"\n}';
-    log('Loaded Discord Pomelo Preset. Enter your Discord Token in Custom Headers.', 'warn');
+    log('Loaded Discord Pomelo Preset. Provide your token in Endpoint & Authorization.', 'warn');
   } else if (preset === 'github') {
     elTargetUrl.value = 'https://api.github.com/users/{id}';
     elMethod.value = 'GET';
     elHeaders.value = '{\n  "User-Agent": "Snowflake-Checker"\n}';
     elRequestBody.value = '';
-    log('Loaded GitHub Username Preset.', 'info');
+    log('Loaded GitHub Users Preset (404 = Available, 200 = Taken).', 'info');
   } else if (preset === 'mock') {
     elTargetUrl.value = window.location.origin + '/api/mock-check/{id}';
     elMethod.value = 'GET';
@@ -127,7 +138,7 @@ function playSuccessSound() {
 function log(msg, type = 'info') {
   const time = new Date().toLocaleTimeString();
   const row = document.createElement('div');
-  row.className = 'log-entry';
+  row.className = 'log-item';
 
   const spanTime = document.createElement('span');
   spanTime.className = 'time';
@@ -161,9 +172,13 @@ function log(msg, type = 'info') {
 // Update stats tiles
 function updateStatsUI() {
   const total = totalCount || 1;
-  
+  const pct = Math.round((scannedCount / total) * 100);
+
   elStatScanned.textContent = `${scannedCount} / ${totalCount}`;
-  elPctScanned.textContent = `${Math.round((scannedCount / total) * 100)}%`;
+  elPctScanned.textContent = `${pct}%`;
+
+  if (elProgressFill) elProgressFill.style.width = `${pct}%`;
+  if (elLblProgressPct) elLblProgressPct.textContent = `${pct}% Complete (${scannedCount}/${totalCount})`;
 
   elStatAvailable.textContent = availableCount;
   elPctAvailable.textContent = `${Math.round((availableCount / total) * 100)}%`;
@@ -217,18 +232,18 @@ function updateMetrics() {
   }
 }
 
-// Render Results List with individual copy options
+// Render Results List
 function renderList() {
   elResultsDisplayList.textContent = '';
   const currentList = activeResultTab === 'available' ? availableList : checkedList;
 
   if (currentList.length === 0) {
     const emptyPrompt = document.createElement('div');
-    emptyPrompt.className = 'empty-prompt';
+    emptyPrompt.className = 'empty-state';
     emptyPrompt.id = 'list-empty-state';
     emptyPrompt.innerHTML = `
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-      <div>No ${activeResultTab} records found yet.</div>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      <div>No ${activeResultTab} records captured yet.</div>
     `;
     elResultsDisplayList.appendChild(emptyPrompt);
     return;
@@ -236,13 +251,13 @@ function renderList() {
 
   currentList.forEach(item => {
     const card = document.createElement('div');
-    card.className = `item-card ${item.status}`;
+    card.className = `result-row ${item.status}`;
     
     const leftBox = document.createElement('div');
-    leftBox.className = 'item-identifier';
+    leftBox.className = 'row-identifier';
     
     const dot = document.createElement('div');
-    dot.className = 'item-dot';
+    dot.className = 'row-dot';
     leftBox.appendChild(dot);
     
     const nameSpan = document.createElement('span');
@@ -252,7 +267,7 @@ function renderList() {
     card.appendChild(leftBox);
 
     const rightPill = document.createElement('span');
-    rightPill.className = `item-pill ${item.status}`;
+    rightPill.className = `row-pill ${item.status}`;
     rightPill.textContent = item.status === 'available' ? 'AVAILABLE' : `TAKEN (${item.code})`;
     card.appendChild(rightPill);
 
@@ -279,7 +294,7 @@ function resetStats() {
 
   updateStatsUI();
   renderList();
-  log('Dashboard reset completed.');
+  log('Dashboard statistics cleared.');
 }
 
 // Combinations Generator
@@ -328,7 +343,7 @@ async function startChecking() {
   if (mode === 'manual') {
     const rawText = elIdentifiers.value.trim();
     if (!rawText) {
-      alert('Please enter at least one identifier.');
+      alert('Please enter at least one identifier in the custom queue.');
       return;
     }
     queue = rawText.split('\n')
@@ -337,7 +352,7 @@ async function startChecking() {
   } else {
     log(`Generating combinations for mode: ${mode}...`);
     queue = generateCombinations(mode);
-    log(`Successfully prepared ${queue.length} targets.`);
+    log(`Prepared ${queue.length} target combinations.`);
   }
 
   let headers = {};
@@ -347,12 +362,13 @@ async function startChecking() {
     rawBody = elRequestBody.value.trim();
     if (rawBody) JSON.parse(rawBody);
   } catch (e) {
-    log(`JSON parser error: Check your headers/body syntax: ${e.message}`, 'error');
+    log(`JSON Syntax Error in Headers/Body: ${e.message}`, 'error');
+    alert(`Invalid JSON format: ${e.message}`);
     return;
   }
 
   if (elApiPreset.value === 'discord' && headers.Authorization && headers.Authorization.includes('YOUR_DISCORD_TOKEN')) {
-    log('Warning: You are using the default placeholder Discord Token. Requests may return 401 Unauthorized until you provide your real user token.', 'warn');
+    log('Notice: Default placeholder token detected. Discord requests may return 401 Unauthorized.', 'warn');
   }
 
   totalCount = queue.length;
@@ -366,12 +382,12 @@ async function startChecking() {
   toggleInputs(true);
 
   elSysDot.className = 'status-dot scanning';
-  elSysStatusText.textContent = 'Status: Scanning...';
+  elSysStatusText.textContent = 'System: Scanning...';
 
   startTime = Date.now();
   durationInterval = setInterval(updateMetrics, 1000);
 
-  log(`Live scanner initiated for ${totalCount} targets...`);
+  log(`Live scanner running for ${totalCount} targets...`);
 
   while (isRunning && queue.length > 0) {
     const id = queue.shift();
@@ -442,7 +458,7 @@ async function startChecking() {
           resData = await response.json();
           
           if (!response.ok) {
-            throw new Error(resData.message || `Proxy error ${response.status}`);
+            throw new Error(resData.message || `Proxy server status ${response.status}`);
           }
         }
 
@@ -467,10 +483,10 @@ async function startChecking() {
             waitSec = Math.ceil(jsonPayload.retry_after);
           }
 
-          log(`Rate limited on "${id}" (HTTP 429). Retry in ${waitSec}s`, 'warn');
+          log(`Rate limit on "${id}" (429). Cooldown: ${waitSec}s`, 'warn');
 
           if (elAutoRetry.checked) {
-            log(`Backing off: Waiting ${waitSec} seconds...`, 'warn');
+            log(`Backing off: Pausing for ${waitSec} seconds...`, 'warn');
             for (let s = waitSec; s > 0; s--) {
               if (!isRunning) break;
               await new Promise(r => setTimeout(r, 1000));
@@ -484,7 +500,13 @@ async function startChecking() {
         // HTTP 401 - Unauthorized
         else if (remoteStatus === 401) {
           failedCount++;
-          log(`[AUTH ERROR] 401 Unauthorized on "${id}". Check your Authorization token in Custom Headers.`, 'error');
+          log(`[AUTH REQUIRED] 401 Unauthorized for "${id}". Valid token required in Custom Headers.`, 'error');
+          success = true;
+        }
+        // Check CAPTCHA requirement or challenge
+        else if (remoteStatus === 403 && jsonPayload && (jsonPayload.captcha_key || jsonPayload.captcha_sitekey)) {
+          failedCount++;
+          log(`[VERIFICATION REQUIRED] Remote server requested CAPTCHA verification for "${id}". Pausing.`, 'warn');
           success = true;
         }
         // Discord Pomelo checks
@@ -492,7 +514,7 @@ async function startChecking() {
           if (jsonPayload.taken === false) {
             availableCount++;
             availableList.push({ name: id, status: 'available', code: 200 });
-            log(`[AVAILABLE] "${id}" is FREE on Discord!`, 'success');
+            log(`[AVAILABLE] "${id}" is AVAILABLE!`, 'success');
             playSuccessSound();
           } else {
             takenCount++;
@@ -514,11 +536,11 @@ async function startChecking() {
             log(`[TAKEN] "${id}" is registered on GitHub.`, 'info');
           } else {
             failedCount++;
-            log(`Status ${remoteStatus} for "${id}"`, 'error');
+            log(`Status code ${remoteStatus} for "${id}"`, 'error');
           }
           success = true;
         }
-        // Standard HTTP Code check
+        // Standard HTTP status code check
         else if (remoteStatus === 200) {
           availableCount++;
           availableList.push({ name: id, status: 'available', code: 200 });
@@ -540,7 +562,7 @@ async function startChecking() {
 
       } catch (err) {
         failedCount++;
-        log(`Network error "${id}": ${err.message}`, 'error');
+        log(`Error querying "${id}": ${err.message}`, 'error');
         success = true;
       }
     }
@@ -556,7 +578,7 @@ async function startChecking() {
   }
 
   stopChecking();
-  log('Scan queue finished.');
+  log('Scan queue execution completed.');
 }
 
 // Stop checking
@@ -567,7 +589,7 @@ function stopChecking() {
   toggleInputs(false);
   
   elSysDot.className = 'status-dot';
-  elSysStatusText.textContent = 'Status: Idle';
+  elSysStatusText.textContent = 'System: Idle';
 
   if (durationInterval) {
     clearInterval(durationInterval);
@@ -615,7 +637,7 @@ elBtnExport.addEventListener('click', () => {
   }
   const txt = currentList.map(item => item.name).join('\n');
   navigator.clipboard.writeText(txt);
-  log(`Exported ${currentList.length} ${activeResultTab} items to clipboard.`);
+  log(`Exported ${currentList.length} ${activeResultTab} records to clipboard.`);
 });
 
 elBtnClearLogs.addEventListener('click', () => {
@@ -635,5 +657,5 @@ elGenMode.addEventListener('change', () => {
 window.addEventListener('DOMContentLoaded', () => {
   elLblSpeed.textContent = `${elDelaySlider.value}ms`;
   renderList();
-  log('Snowflake v3.0 core online. Select platform preset and begin.');
+  log('Snowflake v3.5 PRO ready. Select target platform and scan mode.');
 });
