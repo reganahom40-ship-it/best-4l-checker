@@ -468,15 +468,15 @@ function toggleInputs(disabled) {
 // Tab Toggles
 elTabAvailable.addEventListener('click', () => {
   activeResultTab = 'available';
-  elTabAvailable.className = 'tab-btn active';
-  elTabTaken.className = 'tab-btn';
+  elTabAvailable.className = 'tab-link active';
+  elTabTaken.className = 'tab-link';
   renderList();
 });
 
 elTabTaken.addEventListener('click', () => {
   activeResultTab = 'taken';
-  elTabAvailable.className = 'tab-btn';
-  elTabTaken.className = 'tab-btn active';
+  elTabAvailable.className = 'tab-link';
+  elTabTaken.className = 'tab-link active';
   renderList();
 });
 

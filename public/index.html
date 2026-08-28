@@ -4,147 +4,157 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Snowflake — API Checker</title>
-  <!-- Google Fonts (Plus Jakarta Sans & JetBrains Mono) -->
+  
+  <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Chart.js for premium analytics -->
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <style>
     :root {
       --bg-black: #000000;
-      --bg-panel: #09090b;
+      --bg-card: #09090b;
       --bg-input: #121214;
-      --border-color: #1f1f23;
+      --border-color: #1e1e24;
+      --border-focus: #00f0ff;
       
       --accent-cyan: #00f0ff;
       --accent-blue: #0066ff;
-      --accent-glow: rgba(0, 240, 255, 0.15);
+      --accent-glow: rgba(0, 240, 255, 0.08);
       
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
       
-      --text-main: #f4f4f5;
-      --text-muted: #71717a;
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #52525b;
       
-      --font-mono: 'JetBrains Mono', "Fira Code", Monaco, Consolas, monospace;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
     }
 
     body {
       background-color: var(--bg-black);
-      color: var(--text-main);
+      color: var(--text-primary);
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* TOP HEADER NAVBAR */
+    /* TOP HEADER BAR */
     nav {
-      height: 60px;
+      height: 64px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 30px;
-      background: var(--bg-panel);
+      padding: 0 32px;
+      background: var(--bg-card);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .brand-logo {
       color: var(--accent-cyan);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      animation: spinSlow 12s linear infinite;
+      font-size: 1.6rem;
+      animation: spinSlow 15s linear infinite;
+      user-select: none;
     }
 
-    .brand-title {
+    .brand-name {
       font-size: 1.1rem;
       font-weight: 800;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      background: linear-gradient(135deg, #ffffff, var(--accent-cyan));
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .brand-badge {
+    .brand-tag {
       font-size: 0.65rem;
-      border: 1px solid var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.06);
+      border: 1px solid rgba(0, 240, 255, 0.2);
       color: var(--accent-cyan);
-      padding: 1px 6px;
+      padding: 2px 8px;
       border-radius: 4px;
       font-weight: 700;
       letter-spacing: 0.5px;
-      box-shadow: 0 0 8px var(--accent-glow);
+      text-transform: uppercase;
     }
 
-    .system-status {
+    .status-indicator {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 20px;
       font-size: 0.8rem;
-      color: var(--text-muted);
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--text-secondary);
     }
 
     .status-dot {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: var(--success);
-      box-shadow: 0 0 8px var(--success);
+      box-shadow: 0 0 10px var(--success);
     }
 
     .status-dot.scanning {
       background: var(--accent-cyan);
-      box-shadow: 0 0 8px var(--accent-cyan);
-      animation: pulse 1.5s infinite;
+      box-shadow: 0 0 12px var(--accent-cyan);
+      animation: pulse 1.2s infinite;
     }
 
     /* DASHBOARD WRAPPER */
-    .dashboard-container {
+    .dashboard {
       flex: 1;
       display: grid;
-      grid-template-columns: 340px 1fr;
-      gap: 20px;
-      padding: 24px;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+      padding: 24px 32px 24px 32px;
       overflow: hidden;
     }
 
-    @media (max-width: 900px) {
-      .dashboard-container {
+    @media (max-width: 950px) {
+      .dashboard {
         grid-template-columns: 1fr;
       }
     }
 
-    /* CARDS */
+    /* CARD STRUCTURE */
     .card {
-      background: var(--bg-panel);
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
-      border-radius: 10px;
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
     }
 
     .card-header {
-      padding: 16px 20px;
+      padding: 18px 24px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
@@ -152,35 +162,35 @@
     }
 
     .card-header h3 {
-      font-size: 0.9rem;
-      font-weight: 700;
+      font-size: 0.8rem;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-main);
+      letter-spacing: 1px;
+      color: var(--text-secondary);
     }
 
     .card-body {
-      padding: 20px;
+      padding: 24px;
       flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
-    /* CONTROLS & INPUTS */
+    /* INPUTS & SELECTS */
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
     .form-group label {
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.7rem;
+      font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.8px;
     }
 
     .form-group select,
@@ -189,51 +199,125 @@
       background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      color: var(--text-main);
-      padding: 10px 12px;
+      color: var(--text-primary);
+      padding: 11px 14px;
       font-size: 0.85rem;
       outline: none;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .form-group select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg fill='%23a1a1aa' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
     }
 
     .form-group select:focus,
     .form-group input:focus,
     .form-group textarea:focus {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 8px var(--accent-glow);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-glow);
     }
 
     .form-group textarea {
       resize: vertical;
-      min-height: 80px;
+      min-height: 90px;
       font-family: var(--font-mono);
       font-size: 0.8rem;
     }
 
-    .slider-container {
+    /* CUSTOM SWITCH TOGGLE */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 0;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider-switch {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #1a1a1e;
+      transition: .2s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .slider-switch:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #71717a;
+      transition: .2s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+    }
+
+    input:checked + .slider-switch {
+      background-color: rgba(0, 240, 255, 0.1);
+      border-color: var(--accent-cyan);
+    }
+
+    input:checked + .slider-switch:before {
+      transform: translateX(18px);
+      background-color: var(--accent-cyan);
+    }
+
+    /* INTERVAL SPEED SLIDER */
+    .speed-slider {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .slider-header {
+    .speed-slider-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.7rem;
+      font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
+      letter-spacing: 0.8px;
     }
 
-    .slider-header span.val {
+    .speed-slider-header span.val {
       color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      font-weight: 600;
     }
 
     .slider-input {
       -webkit-appearance: none;
       width: 100%;
-      height: 6px;
-      border-radius: 3px;
+      height: 4px;
+      border-radius: 2px;
       background: var(--border-color);
       outline: none;
     }
@@ -241,193 +325,182 @@
     .slider-input::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      transition: transform 0.1s ease;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
       background: var(--accent-cyan);
-      cursor: pointer;
-      box-shadow: 0 0 8px var(--accent-cyan);
-    }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .checkbox-group input {
-      accent-color: var(--accent-cyan);
-      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-cyan);
     }
 
     /* BUTTONS */
     .btn {
       width: 100%;
-      padding: 12px 20px;
+      padding: 12px 24px;
       border-radius: 6px;
       font-weight: 700;
       font-size: 0.85rem;
       cursor: pointer;
       border: none;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
-    .btn-glow {
+    .btn-primary {
       background: #ffffff;
       color: #000000;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
     }
 
-    .btn-glow:hover:not(:disabled) {
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
       transform: translateY(-1px);
     }
 
-    .btn-glow:disabled {
-      opacity: 0.5;
+    .btn-primary:disabled {
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
     .btn-danger {
       background: var(--danger);
       color: white;
-      box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
     }
 
     .btn-danger:hover {
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+      transform: translateY(-1px);
     }
 
-    .btn-border {
+    .btn-secondary {
       background: transparent;
       border: 1px solid var(--border-color);
-      color: var(--text-muted);
+      color: var(--text-secondary);
     }
 
-    .btn-border:hover {
-      color: var(--text-main);
-      border-color: var(--text-muted);
+    .btn-secondary:hover {
+      color: var(--text-primary);
+      border-color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.02);
     }
 
-    /* RIGHT WORKSPACE GRID */
-    .main-grid {
+    /* RIGHT COLUMN LAYOUT */
+    .main-panel {
       display: grid;
       grid-template-rows: auto 1fr;
       gap: 20px;
       overflow: hidden;
     }
 
-    /* STATS HEADER ROW */
-    .stats-row {
+    /* TOP METRICS ROW */
+    .metrics-row {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 15px;
+      gap: 16px;
     }
 
-    .stat-card {
-      background: var(--bg-panel);
+    .metric-card {
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 14px 18px;
+      padding: 14px 20px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      position: relative;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 3px;
-    }
+    .metric-card.available { border-top: 2px solid var(--success); }
+    .metric-card.rate-limited { border-top: 2px solid var(--warning); }
+    .metric-card.failed { border-top: 2px solid var(--danger); }
 
-    .stat-card.scanned::before { background: var(--text-muted); }
-    .stat-card.available::before { background: var(--success); }
-    .stat-card.taken::before { background: var(--border-color); }
-    .stat-card.rate-limited::before { background: var(--warning); }
-    .stat-card.failed::before { background: var(--danger); }
-
-    .stat-lbl {
-      font-size: 0.7rem;
+    .metric-lbl {
+      font-size: 0.65rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
-    .stat-num-row {
+    .metric-data-row {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
     }
 
-    .stat-num {
+    .metric-val {
       font-size: 1.4rem;
       font-weight: 800;
+      letter-spacing: -0.5px;
     }
 
-    .stat-pct {
+    .metric-pct {
       font-size: 0.75rem;
       font-weight: 600;
       color: var(--text-muted);
     }
 
-    .stat-card.available .stat-pct { color: var(--success); }
-    .stat-card.rate-limited .stat-pct { color: var(--warning); }
+    .metric-card.available .metric-pct { color: var(--success); }
+    .metric-card.rate-limited .metric-pct { color: var(--warning); }
 
-    /* RESULTS & LOGS COLUMN LAYOUT */
-    .results-layout {
+    /* CONTENT DISPLAY PANELS (SPLIT GRID) */
+    .display-layout {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 24px;
       overflow: hidden;
     }
 
-    @media (max-width: 768px) {
-      .results-layout {
+    @media (max-width: 800px) {
+      .display-layout {
         grid-template-columns: 1fr;
       }
     }
 
-    /* RESULT LIST PANEL */
-    .tab-header {
+    /* TAB CONTROL & LISTS */
+    .tab-nav {
       display: flex;
       border-bottom: 1px solid var(--border-color);
       background: rgba(255, 255, 255, 0.01);
     }
 
-    .tab-btn {
+    .tab-link {
       background: none;
       border: none;
       color: var(--text-muted);
-      padding: 14px 20px;
+      padding: 16px 24px;
       font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
       position: relative;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
+      transition: color 0.2s ease;
     }
 
-    .tab-btn.active {
+    .tab-link:hover {
+      color: var(--text-secondary);
+    }
+
+    .tab-link.active {
       color: var(--accent-cyan);
     }
 
-    .tab-btn.active::after {
+    .tab-link.active::after {
       content: '';
       position: absolute;
       bottom: -1px;
@@ -438,35 +511,36 @@
       box-shadow: 0 0 10px var(--accent-cyan);
     }
 
-    .tab-badge {
+    .tab-num {
       font-size: 0.65rem;
       background: var(--border-color);
-      color: var(--text-muted);
+      color: var(--text-secondary);
       padding: 1px 6px;
       border-radius: 4px;
-      margin-left: 6px;
+      margin-left: 8px;
+      font-family: var(--font-mono);
     }
 
-    .tab-btn.active .tab-badge {
+    .tab-link.active .tab-num {
       background: rgba(0, 240, 255, 0.1);
       color: var(--accent-cyan);
       border: 1px solid rgba(0, 240, 255, 0.2);
     }
 
-    .results-list {
+    .list-container {
       flex: 1;
       overflow-y: auto;
-      padding: 15px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .result-row {
-      background: var(--bg-input);
+    .list-row {
+      background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 10px 14px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -474,35 +548,37 @@
       font-size: 0.85rem;
     }
 
-    .result-row.available {
+    .list-row.available {
       border-left: 3px solid var(--success);
+      box-shadow: inset 4px 0 0 rgba(16, 185, 129, 0.05);
     }
 
-    .result-row.taken {
+    .list-row.taken {
       border-left: 3px solid var(--border-color);
-      opacity: 0.7;
+      opacity: 0.6;
     }
 
-    .status-badge {
+    .badge {
       font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
       padding: 2px 6px;
       border-radius: 4px;
+      letter-spacing: 0.5px;
     }
 
-    .status-badge.available {
+    .badge.available {
       background: rgba(16, 185, 129, 0.1);
       color: var(--success);
       border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
-    .status-badge.taken {
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--text-muted);
+    .badge.taken {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
     }
 
-    .empty-prompt {
+    .empty-state {
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -512,106 +588,115 @@
       font-size: 0.85rem;
       text-align: center;
       padding: 40px;
-      gap: 12px;
+      gap: 15px;
     }
 
-    .empty-prompt svg {
-      width: 40px;
-      height: 40px;
-      opacity: 0.2;
+    .empty-state svg {
+      width: 44px;
+      height: 44px;
+      opacity: 0.15;
     }
 
-    /* LOG CONSOLE PANEL */
-    .console-box {
+    /* TERMINAL CONSOLE PANEL */
+    .terminal-console {
       flex: 1;
-      background: #040405;
+      background: #020203;
       border: 1px solid var(--border-color);
-      border-radius: 6px;
-      margin: 15px;
-      padding: 15px;
+      border-radius: 8px;
+      margin: 20px;
+      padding: 16px;
       font-family: var(--font-mono);
       font-size: 0.8rem;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
     }
 
-    .log-line {
-      line-height: 1.4;
+    .terminal-row {
+      line-height: 1.5;
       display: flex;
       gap: 10px;
     }
 
-    .log-line .timestamp {
+    .terminal-row .time {
       color: var(--text-muted);
+      user-select: none;
     }
 
-    .log-line .status-success { color: var(--success); }
-    .log-line .status-warn { color: var(--warning); }
-    .log-line .status-err { color: var(--danger); }
+    .terminal-row .c-success { color: var(--success); }
+    .terminal-row .c-warn { color: var(--warning); }
+    .terminal-row .c-err { color: var(--danger); }
 
-    /* FOOTER METRICS BAR */
+    /* FOOTER STATUS BAR */
     footer {
-      height: 40px;
+      height: 44px;
       border-top: 1px solid var(--border-color);
-      padding: 0 30px;
+      padding: 0 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 0.75rem;
-      color: var(--text-muted);
-      background: var(--bg-panel);
+      color: var(--text-secondary);
+      background: var(--bg-card);
       flex-shrink: 0;
     }
 
-    .footer-metrics-group {
+    .footer-metrics {
       display: flex;
       align-items: center;
       gap: 24px;
     }
 
+    .footer-highlight {
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
     .footer-val {
-      color: var(--text-main);
+      color: var(--text-primary);
       font-weight: 600;
     }
 
-    /* SYSTEM TRANSITIONS & ROTATIONS */
+    /* KEYFRAME ANIMATIONS */
     @keyframes spinSlow {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
 
     @keyframes pulse {
-      0% { opacity: 0.6; }
+      0% { opacity: 0.5; }
       50% { opacity: 1; }
-      100% { opacity: 0.6; }
+      100% { opacity: 0.5; }
     }
   </style>
 </head>
 <body>
 
-  <!-- NAVBAR -->
+  <!-- TOP HEADER -->
   <nav>
     <div class="brand">
       <div class="brand-logo">❄</div>
-      <div class="brand-title">Snowflake</div>
-      <div class="brand-badge">API Checker</div>
+      <div class="brand-name">Snowflake</div>
+      <div class="brand-tag">API Scanner</div>
     </div>
 
-    <div class="system-status">
+    <div class="status-indicator">
       <div class="status-dot" id="sysDot"></div>
-      <span id="sysStatusText">System Status: Idle</span>
+      <span id="sysStatusText">Status: Idle</span>
     </div>
   </nav>
 
-  <!-- DASHBOARD CONTAINER -->
-  <div class="dashboard-container">
-    <!-- LEFT SIDE: CONFIGURATION CARD -->
+  <!-- DASHBOARD WRAPPER -->
+  <div class="dashboard">
+    <!-- LEFT SIDEBAR PANEL -->
     <div class="card">
       <div class="card-header">
         <h3>Configuration</h3>
       </div>
+      
       <div class="card-body">
         <div class="form-group">
           <label for="genMode">Scan Mode</label>
@@ -624,35 +709,41 @@
         </div>
 
         <div class="form-group" id="identifiers-group" style="display: none;">
-          <label for="identifiers">Identifier Queue</label>
+          <label for="identifiers">Identifier List</label>
           <textarea id="identifiers" placeholder="Enter identifiers here, one per line"></textarea>
         </div>
 
-        <div class="slider-container">
-          <div class="slider-header">
-            <span>Interval Speed</span>
+        <div class="speed-slider">
+          <div class="speed-slider-header">
+            <span>Interval Delay</span>
             <span class="val" id="lblSpeed">1000ms</span>
           </div>
           <input type="range" id="delaySlider" class="slider-input" min="0" max="2000" step="50" value="1000">
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <label class="checkbox-group">
-            <input type="checkbox" id="autoRetry" checked>
-            Auto-retry 429 Rate Limits
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 5px;">
+          <label class="toggle-row">
+            <span>Auto-retry 429 rate limits</span>
+            <span class="switch">
+              <input type="checkbox" id="autoRetry" checked>
+              <span class="slider-switch"></span>
+            </span>
           </label>
-          <label class="checkbox-group">
-            <input type="checkbox" id="soundAlert" checked>
-            Play audio chime on success
+          <label class="toggle-row">
+            <span>Play chime on available</span>
+            <span class="switch">
+              <input type="checkbox" id="soundAlert" checked>
+              <span class="slider-switch"></span>
+            </span>
           </label>
         </div>
 
-        <!-- COLLAPSIBLE ADVANCED SETTINGS -->
-        <details style="margin-top: 10px; cursor: pointer; font-size: 0.85rem; color: var(--text-muted);">
-          <summary style="font-weight: 700; text-transform: uppercase; outline: none; user-select: none;">
+        <!-- COLLAPSIBLE ACCORDION FOR ADVANCED SETTINGS -->
+        <details style="margin-top: 10px; cursor: pointer; font-size: 0.85rem; color: var(--text-secondary);">
+          <summary style="font-weight: 700; text-transform: uppercase; outline: none; user-select: none; letter-spacing: 0.5px;">
             Advanced Options
           </summary>
-          <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); cursor: default;">
+          <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); cursor: default;">
             <div class="form-group">
               <label for="targetUrl">Target Request URL</label>
               <input type="text" id="targetUrl" value="http://localhost:3000/api/mock-check/{id}">
@@ -673,95 +764,100 @@
             </div>
 
             <div class="form-group">
-              <label for="requestBody">Request Body Payload</label>
+              <label for="requestBody">Request Body Template</label>
               <textarea id="requestBody" placeholder='{ "username": "{id}" }'></textarea>
             </div>
           </div>
         </details>
 
         <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
-          <button id="btnStart" class="btn btn-glow">Start Checking</button>
-          <button id="btnStop" class="btn btn-danger" style="display: none;">Stop Checking</button>
-          <button id="btnReset" class="btn btn-border">Clear Dashboard</button>
+          <button id="btnStart" class="btn btn-primary">Start Scanning</button>
+          <button id="btnStop" class="btn btn-danger" style="display: none;">Stop Scanning</button>
+          <button id="btnReset" class="btn btn-secondary">Clear Statistics</button>
         </div>
       </div>
     </div>
 
-    <!-- RIGHT SIDE: ACTIVE SCANNING CONSOLE -->
-    <div class="main-grid">
-      <!-- TOP STATUS COUNTERS -->
-      <div class="stats-row">
-        <div class="stat-card scanned">
-          <span class="stat-lbl">Processed</span>
-          <div class="stat-num-row">
-            <span class="stat-num" id="statScanned">0 / 0</span>
-            <span class="stat-pct" id="pctScanned">0%</span>
+    <!-- RIGHT DASHBOARD METRICS & CONSOLE -->
+    <div class="main-panel">
+      <!-- TOP STATUS METRICS -->
+      <div class="metrics-row">
+        <div class="metric-card scanned">
+          <span class="metric-lbl">Processed</span>
+          <div class="metric-data-row">
+            <span class="metric-val" id="statScanned">0 / 0</span>
+            <span class="metric-pct" id="pctScanned">0%</span>
           </div>
         </div>
-        <div class="stat-card available">
-          <span class="stat-lbl">Available</span>
-          <div class="stat-num-row">
-            <span class="stat-num" id="statAvailable">0</span>
-            <span class="stat-pct" id="pctAvailable">0%</span>
+        
+        <div class="metric-card available">
+          <span class="metric-lbl">Available</span>
+          <div class="metric-data-row">
+            <span class="metric-val" id="statAvailable">0</span>
+            <span class="metric-pct" id="pctAvailable">0%</span>
           </div>
         </div>
-        <div class="stat-card taken">
-          <span class="stat-lbl">Taken</span>
-          <div class="stat-num-row">
-            <span class="stat-num" id="statTaken">0</span>
-            <span class="stat-pct" id="pctTaken">0%</span>
+
+        <div class="metric-card taken">
+          <span class="metric-lbl">Taken</span>
+          <div class="metric-data-row">
+            <span class="metric-val" id="statTaken">0</span>
+            <span class="metric-pct" id="pctTaken">0%</span>
           </div>
         </div>
-        <div class="stat-card rate-limited">
-          <span class="stat-lbl">Limited (429)</span>
-          <div class="stat-num-row">
-            <span class="stat-num" id="statLimited">0</span>
-            <span class="stat-pct" id="pctLimited">0%</span>
+
+        <div class="metric-card rate-limited">
+          <span class="metric-lbl">Limited (429)</span>
+          <div class="metric-data-row">
+            <span class="metric-val" id="statLimited">0</span>
+            <span class="metric-pct" id="pctLimited">0%</span>
           </div>
         </div>
-        <div class="stat-card failed">
-          <span class="stat-lbl">Failed</span>
-          <div class="stat-num-row">
-            <span class="stat-num" id="statFailed">0</span>
-            <span class="stat-pct" id="pctFailed">0%</span>
+
+        <div class="metric-card failed">
+          <span class="metric-lbl">Failed</span>
+          <div class="metric-data-row">
+            <span class="metric-val" id="statFailed">0</span>
+            <span class="metric-pct" id="pctFailed">0%</span>
           </div>
         </div>
       </div>
 
-      <!-- RESULTS AND LIVE CONSOLE -->
-      <div class="card results-layout">
-        <!-- Result Panel (Left half of results card) -->
+      <!-- RESULTS SPLIT GRID -->
+      <div class="card display-layout">
+        <!-- Results Panel (Left Half) -->
         <div style="display: flex; flex-direction: column; height: 100%; border-right: 1px solid var(--border-color);">
-          <div class="tab-header">
-            <button class="tab-btn active" id="tab-available">
+          <div class="tab-nav">
+            <button class="tab-link active" id="tab-available">
               Available
-              <span class="tab-badge" id="badgeAvailable">0</span>
+              <span class="tab-num" id="badgeAvailable">0</span>
             </button>
-            <button class="tab-btn" id="tab-taken">
+            <button class="tab-link" id="tab-taken">
               Taken
-              <span class="tab-badge" id="badgeTaken">0</span>
+              <span class="tab-num" id="badgeTaken">0</span>
             </button>
           </div>
 
-          <div class="results-list" id="results-display-list">
-            <div class="empty-prompt" id="list-empty-state">
+          <div class="list-container" id="results-display-list">
+            <div class="empty-state" id="list-empty-state">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-              <div>No results recorded yet. Configure and start.</div>
+              <div>No results recorded. Select a mode and begin.</div>
             </div>
           </div>
 
-          <div style="padding: 12px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
-            <button id="btnExport" class="btn btn-border" style="width: auto; padding: 6px 12px; font-size: 0.75rem;">Copy list</button>
+          <div style="padding: 14px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+            <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 6px 14px; font-size: 0.75rem; border-radius: 4px;">Copy list</button>
           </div>
         </div>
 
-        <!-- Terminal Console Panel (Right half of results card) -->
+        <!-- Terminal Console Panel (Right Half) -->
         <div style="display: flex; flex-direction: column; height: 100%;">
           <div class="card-header">
-            <h3>Live Activity</h3>
-            <button id="btnClearLogs" class="btn btn-border" style="width: auto; padding: 4px 8px; font-size: 0.7rem; border-radius: 4px;">Clear Console</button>
+            <h3>Live Activity Log</h3>
+            <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.7rem; border-radius: 4px;">Clear Console</button>
           </div>
-          <div id="logContent" class="console-box"></div>
+          
+          <div id="logContent" class="terminal-console"></div>
         </div>
       </div>
     </div>
@@ -770,10 +866,10 @@
   <!-- STATUS FOOTER BAR -->
   <footer>
     <div style="display: flex; align-items: center; gap: 15px;">
-      <span>Est. Remaining (ETA): <span class="footer-val" id="lblETA">00:00:00</span></span>
+      <span>Est. Remaining (ETA): <span class="footer-highlight" id="lblETA">00:00:00</span></span>
     </div>
 
-    <div class="footer-metrics-group">
+    <div class="footer-metrics">
       <div>Duration: <span class="footer-val" id="lblDuration">00:00:00</span></div>
       <div>Reqs/Min: <span class="footer-val" id="lblReqMin">0</span></div>
       <div>Total Hits: <span class="footer-val" id="lblTotalHits">0</span></div>
