@@ -1,5 +1,5 @@
 // ==========================================
-// SNOWFLAKE v4.5 PRO — APPLICATION SCRIPT
+// SNOWFLAKE v5.0 BLUE — HIGH PERFORMANCE ENGINE
 // ==========================================
 
 // Global State
@@ -119,15 +119,15 @@ const elHeaderViewDesc = document.getElementById('headerViewDesc');
 // ==========================================
 const viewMetadata = {
   dashboard: {
-    title: 'Dashboard & Live Checker',
-    desc: 'Multi-credential request scheduler with adaptive rate-limit backpressure'
+    title: 'Live Availability Checker',
+    desc: 'Ultra-fast multi-worker queue scheduler with adaptive backoff'
   },
   explorer: {
     title: 'Discovered Hits Explorer',
     desc: 'Search, filter, inspect, and export all discovered identifiers'
   },
   analytics: {
-    title: 'Engine Analytics & Charts',
+    title: 'Engine Analytics & Velocity',
     desc: 'Response code distribution, latency profiling, and velocity trends'
   },
   credentials: {
@@ -353,7 +353,11 @@ elApiPreset.addEventListener('change', () => {
     elTargetUrl.value = window.location.origin + '/api/mock-check/{id}';
     elMethod.value = 'GET';
     elRequestBody.value = '';
-    log('Loaded Local Mock Test Simulator.', 'info');
+    elDelaySlider.value = 50;
+    elLblSpeed.textContent = '50ms';
+    elConcurrencySlider.value = 5;
+    elLblConcurrency.textContent = '5 Workers';
+    log('Loaded Local Mock High-Speed Simulator.', 'info');
   }
 });
 
@@ -384,7 +388,6 @@ function playSuccessSound() {
 function log(msg, type = 'info') {
   const time = new Date().toLocaleTimeString();
   
-  // 1. Mini Console
   const row = document.createElement('div');
   row.className = 'log-item';
 
@@ -416,7 +419,6 @@ function log(msg, type = 'info') {
   elLogContent.appendChild(row);
   elLogContent.scrollTop = elLogContent.scrollHeight;
 
-  // 2. Full Audit Console Clone
   if (elFullLogContent) {
     const fullRow = row.cloneNode(true);
     elFullLogContent.appendChild(fullRow);
@@ -444,8 +446,8 @@ function updateStatsUI() {
   elStatLimited.textContent = rateLimitedCount;
   elPctLimited.textContent = `${Math.round((rateLimitedCount / total) * 100)}%`;
 
-  elStatVerification.textContent = verificationCount;
-  elPctVerification.textContent = `${Math.round((verificationCount / total) * 100)}%`;
+  elStatVerification.textContent = verificationCount + failedCount;
+  elPctVerification.textContent = `${Math.round(((verificationCount + failedCount) / total) * 100)}%`;
 
   let avgMs = 0;
   if (latencySamples > 0) {
@@ -479,7 +481,7 @@ function updateMetrics() {
 
   const elapsedMinutes = diff / 60000;
   let currentRPM = 0;
-  if (elapsedMinutes > 0.05) {
+  if (elapsedMinutes > 0.03) {
     currentRPM = Math.round(totalRequests / elapsedMinutes);
     elReqMin.textContent = `${currentRPM} RPM`;
     if (currentRPM > peakVelocityRPM) {
@@ -564,7 +566,7 @@ function renderExplorerTable() {
 
   if (filtered.length === 0) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No matching records found.</td>`;
+    tr.innerHTML = `<td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No matching records found.</td>`;
     elExplorerTableBody.appendChild(tr);
     return;
   }
@@ -573,12 +575,12 @@ function renderExplorerTable() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color: var(--text-muted);">${idx + 1}</td>
-      <td style="font-weight: 700; color: ${rec.status === 'available' ? 'var(--cyan)' : 'var(--text-main)'};">${rec.name}</td>
+      <td style="font-weight: 700; color: ${rec.status === 'available' ? 'var(--blue-electric)' : 'var(--text-main)'};">${rec.name}</td>
       <td><span class="row-pill ${rec.status}">${rec.status.toUpperCase()}</span></td>
       <td>${rec.code || 200}</td>
-      <td style="color: var(--text-dim); font-size: 0.75rem;">${rec.timestamp}</td>
+      <td style="color: var(--text-dim); font-size: 0.72rem;">${rec.timestamp}</td>
       <td>
-        <button class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 0.68rem;" onclick="navigator.clipboard.writeText('${rec.name}'); alert('Copied ${rec.name}');">Copy</button>
+        <button class="btn btn-secondary" style="width: auto; padding: 2px 7px; font-size: 0.65rem;" onclick="navigator.clipboard.writeText('${rec.name}'); alert('Copied ${rec.name}');">Copy</button>
       </td>
     `;
     elExplorerTableBody.appendChild(tr);
@@ -606,8 +608,8 @@ function updateAnalyticsCharts() {
         labels: ['Available', 'Taken', '429 Rate Limits', 'Errors/Verification'],
         datasets: [{
           data: dataValues,
-          backgroundColor: ['#10b981', '#374151', '#f59e0b', '#f43f5e'],
-          borderColor: '#0b0b10',
+          backgroundColor: ['#10b981', '#1e293b', '#f59e0b', '#ef4444'],
+          borderColor: '#07080e',
           borderWidth: 2
         }]
       },
@@ -617,7 +619,7 @@ function updateAnalyticsCharts() {
         plugins: {
           legend: {
             position: 'bottom',
-            labels: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans', size: 11 } }
+            labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
           }
         }
       }
@@ -659,7 +661,7 @@ function resetStats() {
   renderExplorerTable();
   updateAnalyticsCharts();
   credentialPool.renderUI();
-  log('Scheduler and explorer records cleared.');
+  log('Stats and records cleared.');
 }
 
 // ==========================================
@@ -781,8 +783,8 @@ async function runWorker(workerId) {
     let credSelection = credentialPool.getAvailableCredential();
     if (!credSelection.credential) {
       const waitSec = Math.ceil(credSelection.waitMs / 1000);
-      log(`[WORKER #${workerId}] All credentials in cooldown. Pausing worker for ${waitSec}s...`, 'warn');
-      await new Promise(r => setTimeout(r, Math.min(credSelection.waitMs, 5000)));
+      log(`[WORKER #${workerId}] Tokens cooling down (${waitSec}s)...`, 'warn');
+      await new Promise(r => setTimeout(r, Math.min(credSelection.waitMs, 3000)));
       continue;
     }
 
@@ -889,14 +891,14 @@ async function runWorker(workerId) {
           waitSec = Math.ceil(jsonPayload.retry_after);
         }
 
-        log(`[429 RATE LIMIT] Token "${cred.masked}" rate-limited on "${id}". Cooldown: ${waitSec}s`, 'warn');
+        log(`[429] "${cred.masked}" rate-limited on "${id}". Sleeping ${waitSec}s`, 'warn');
         credentialPool.setCooldown(cred.id, waitSec);
         queue.unshift(id);
       }
       // B. Verification Challenge
       else if (remoteStatus === 403 || (jsonPayload && (jsonPayload.captcha_key || jsonPayload.captcha_sitekey))) {
         verificationCount++;
-        log(`[VERIFICATION REQUIRED] Remote server requested verification challenge for "${id}". Pausing scheduler.`, 'error');
+        log(`[VERIFICATION] Remote server challenge for "${id}". Pausing.`, 'error');
         elVerificationBanner.classList.add('active');
         stopChecking();
         break;
@@ -904,7 +906,7 @@ async function runWorker(workerId) {
       // C. HTTP 401 — Unauthorized
       else if (remoteStatus === 401) {
         failedCount++;
-        log(`[AUTH ERROR] 401 Unauthorized for token "${cred.masked}". Check token validity.`, 'error');
+        log(`[AUTH ERROR] 401 for "${cred.masked}". Check token.`, 'error');
       }
       // D. Discord Pomelo
       else if (jsonPayload && typeof jsonPayload.taken === 'boolean') {
@@ -912,13 +914,13 @@ async function runWorker(workerId) {
           availableCount++;
           availableList.push({ name: id, status: 'available', code: 200 });
           allDiscoveredRecords.push({ name: id, status: 'available', code: 200, timestamp: timestamp });
-          log(`[AVAILABLE] "${id}" is AVAILABLE!`, 'success');
+          log(`[HIT] "${id}" is AVAILABLE!`, 'success');
           playSuccessSound();
         } else {
           takenCount++;
           checkedList.push({ name: id, status: 'taken', code: 200 });
           allDiscoveredRecords.push({ name: id, status: 'taken', code: 200, timestamp: timestamp });
-          log(`[TAKEN] "${id}" is taken.`, 'info');
+          log(`[TAKEN] "${id}"`, 'info');
         }
       }
       // E. GitHub
@@ -927,13 +929,13 @@ async function runWorker(workerId) {
           availableCount++;
           availableList.push({ name: id, status: 'available', code: 404 });
           allDiscoveredRecords.push({ name: id, status: 'available', code: 404, timestamp: timestamp });
-          log(`[AVAILABLE] "${id}" is free on GitHub!`, 'success');
+          log(`[HIT] "${id}" free on GitHub!`, 'success');
           playSuccessSound();
         } else if (remoteStatus === 200) {
           takenCount++;
           checkedList.push({ name: id, status: 'taken', code: 200 });
           allDiscoveredRecords.push({ name: id, status: 'taken', code: 200, timestamp: timestamp });
-          log(`[TAKEN] "${id}" is registered on GitHub.`, 'info');
+          log(`[TAKEN] "${id}" on GitHub`, 'info');
         } else {
           failedCount++;
         }
@@ -943,7 +945,7 @@ async function runWorker(workerId) {
         availableCount++;
         availableList.push({ name: id, status: 'available', code: 200 });
         allDiscoveredRecords.push({ name: id, status: 'available', code: 200, timestamp: timestamp });
-        log(`[AVAILABLE] "${id}" returned HTTP 200.`, 'success');
+        log(`[HIT] "${id}" (200 OK)`, 'success');
         playSuccessSound();
       } else if ([400, 404, 409].includes(remoteStatus)) {
         takenCount++;
@@ -977,7 +979,7 @@ async function runWorker(workerId) {
 
   if (activeWorkersCount === 0 && isRunning) {
     stopChecking();
-    log('Scheduler completed queue processing.');
+    log('Queue processing completed.');
   }
 }
 
@@ -996,9 +998,9 @@ async function startChecking() {
       .map(line => line.trim())
       .filter(line => line.length > 0);
   } else {
-    log(`Generating target combinations for: ${mode}...`);
+    log(`Generating combinations (${mode})...`);
     queue = generateCombinations(mode);
-    log(`Prepared ${queue.length} target combinations.`);
+    log(`Prepared ${queue.length} targets.`);
   }
 
   credentialPool.loadFromInput(elCredentialPoolInput.value);
@@ -1023,7 +1025,7 @@ async function startChecking() {
   durationInterval = setInterval(updateMetrics, 1000);
 
   const concurrency = parseInt(elConcurrencySlider.value, 10);
-  log(`Scheduler running with ${concurrency} concurrent worker(s)...`);
+  log(`Dispatched ${concurrency} worker(s)...`);
 
   for (let i = 1; i <= concurrency; i++) {
     runWorker(i);
@@ -1088,7 +1090,7 @@ elBtnExport.addEventListener('click', () => {
   }
   const txt = currentList.map(item => item.name).join('\n');
   navigator.clipboard.writeText(txt);
-  log(`Exported ${currentList.length} ${activeResultTab} records to clipboard.`);
+  log(`Exported ${currentList.length} ${activeResultTab} records.`);
 });
 
 // CSV Export
@@ -1155,7 +1157,7 @@ elBtnClearLogs.addEventListener('click', () => {
 if (elBtnValidateTokens) {
   elBtnValidateTokens.addEventListener('click', () => {
     credentialPool.loadFromInput(elCredentialHubInput.value);
-    alert(`Loaded ${credentialPool.credentials.length} credential(s) into active rotation.`);
+    alert(`Loaded ${credentialPool.credentials.length} credential(s).`);
   });
 }
 
@@ -1203,7 +1205,6 @@ async function initDiscordOAuth() {
     }
   }
 
-  // Restore stored session
   const storedUser = localStorage.getItem('snowflake_discord_user');
   const storedToken = localStorage.getItem('snowflake_discord_token');
   if (storedUser && storedToken) {
@@ -1213,7 +1214,6 @@ async function initDiscordOAuth() {
     } catch (e) {}
   }
 
-  // Check localStorage for callback from non-popup redirect
   const oauthCreds = localStorage.getItem('snowflake_oauth_creds');
   if (oauthCreds) {
     try {
@@ -1268,7 +1268,6 @@ function applyDiscordUserSession(token, user) {
     }
   }
 
-  // Prepend or add authorized OAuth token to credential pool
   const currentTokens = elCredentialPoolInput.value.split('\n').filter(t => t.trim() && !t.includes('YOUR_DISCORD_TOKEN'));
   if (!currentTokens.includes(token)) {
     currentTokens.unshift(token);
@@ -1277,7 +1276,7 @@ function applyDiscordUserSession(token, user) {
     credentialPool.loadFromInput(elCredentialPoolInput.value);
   }
 
-  log(`Discord OAuth2 Authorized: Connected as @${user.username} (${user.id}). Token loaded into Credential Pool.`, 'success');
+  log(`Connected @${user.username}. Token ready in pool.`, 'success');
 }
 
 function disconnectDiscordSession() {
@@ -1286,14 +1285,13 @@ function disconnectDiscordSession() {
 
   if (elBtnDiscordOAuth) elBtnDiscordOAuth.style.display = 'flex';
   if (elDiscordUserBadge) elDiscordUserBadge.style.display = 'none';
-  log('Disconnected Discord OAuth2 session.', 'info');
+  log('Disconnected session.', 'info');
 }
 
 if (elBtnDiscordOAuth) elBtnDiscordOAuth.addEventListener('click', launchDiscordOAuthPopup);
 if (elBtnConnectOAuthHub) elBtnConnectOAuthHub.addEventListener('click', launchDiscordOAuthPopup);
 if (elBtnDisconnectDiscord) elBtnDisconnectDiscord.addEventListener('click', disconnectDiscordSession);
 
-// Listen for OAuth2 popup message
 window.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'DISCORD_OAUTH_SUCCESS') {
     applyDiscordUserSession(event.data.token, event.data.user);
@@ -1310,5 +1308,5 @@ window.addEventListener('DOMContentLoaded', () => {
   proxyPool.loadFromInput(elProxyListInput.value);
   initDiscordOAuth();
   renderList();
-  log('Snowflake v4.5 PRO Multi-View Dashboard with Discord OAuth2 online.');
+  log('Snowflake v5.0 BLUE Engine online.');
 });

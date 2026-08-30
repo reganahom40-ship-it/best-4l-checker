@@ -3,43 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snowflake — Multi-Credential Availability Engine</title>
+  <title>Snowflake — High-Performance API Testing Engine</title>
   
-  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Chart.js for real-time analytics -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     :root {
-      --bg-base: #050508;
-      --bg-sidebar: rgba(10, 10, 15, 0.88);
-      --bg-card: rgba(16, 16, 24, 0.7);
-      --bg-card-hover: rgba(22, 22, 32, 0.9);
-      --bg-input: #09090e;
+      --bg-base: #030306;
+      --bg-surface: rgba(10, 11, 18, 0.85);
+      --bg-card: rgba(13, 15, 26, 0.75);
+      --bg-card-hover: rgba(18, 22, 38, 0.9);
+      --bg-input: #07080e;
       
-      --border-subtle: rgba(255, 255, 255, 0.07);
-      --border-focus: #00f5ff;
-      --border-hover: rgba(255, 255, 255, 0.15);
+      --border-subtle: rgba(59, 130, 246, 0.15);
+      --border-glow: rgba(0, 210, 255, 0.35);
+      --border-focus: #00d2ff;
       
-      --cyan: #00f5ff;
-      --cyan-glow: rgba(0, 245, 255, 0.25);
-      --purple: #8b5cf6;
-      --purple-glow: rgba(139, 92, 246, 0.25);
-      --blue: #3b82f6;
+      --blue-primary: #2563eb;
+      --blue-electric: #00d2ff;
+      --blue-neon: #3b82f6;
+      --blue-glow: rgba(0, 210, 255, 0.25);
+      --blue-dark: #1d4ed8;
+      
       --emerald: #10b981;
       --emerald-glow: rgba(16, 185, 129, 0.25);
       --amber: #f59e0b;
       --amber-glow: rgba(245, 158, 11, 0.25);
-      --rose: #f43f5e;
-      --rose-glow: rgba(244, 63, 94, 0.25);
+      --rose: #ef4444;
+      --rose-glow: rgba(239, 68, 68, 0.25);
       
-      --text-main: #ffffff;
-      --text-dim: #9ca3af;
-      --text-muted: #6b7280;
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
+      --text-muted: #64748b;
       
       --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -55,8 +56,9 @@
     body {
       background-color: var(--bg-base);
       background-image: 
-        radial-gradient(ellipse 90% 60% at 50% -20%, rgba(139, 92, 246, 0.09), transparent 70%),
-        radial-gradient(circle at 95% 85%, rgba(0, 245, 255, 0.05), transparent 50%);
+        radial-gradient(circle at 50% -10%, rgba(37, 99, 235, 0.14), transparent 60%),
+        radial-gradient(circle at 95% 90%, rgba(0, 210, 255, 0.08), transparent 50%),
+        radial-gradient(circle at 5% 50%, rgba(29, 78, 216, 0.06), transparent 50%);
       color: var(--text-main);
       display: flex;
       height: 100vh;
@@ -71,10 +73,10 @@
       overflow: hidden;
     }
 
-    /* LEFT SIDEBAR NAVIGATION */
+    /* LEFT SIDEBAR */
     aside {
-      width: 270px;
-      background: var(--bg-sidebar);
+      width: 260px;
+      background: var(--bg-surface);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border-right: 1px solid var(--border-subtle);
@@ -85,7 +87,7 @@
     }
 
     .brand-container {
-      padding: 22px 24px;
+      padding: 20px 22px;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
@@ -95,23 +97,23 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .brand-icon {
-      font-size: 1.6rem;
-      color: var(--cyan);
+      font-size: 1.5rem;
+      color: var(--blue-electric);
       display: inline-block;
-      animation: spin 20s linear infinite;
+      animation: spin 25s linear infinite;
       user-select: none;
-      filter: drop-shadow(0 0 12px var(--cyan-glow));
+      filter: drop-shadow(0 0 10px var(--blue-glow));
     }
 
     .brand-text {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 800;
       letter-spacing: 0.5px;
-      background: linear-gradient(135deg, #ffffff 40%, var(--cyan));
+      background: linear-gradient(135deg, #ffffff 40%, var(--blue-electric));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       text-transform: uppercase;
@@ -121,18 +123,18 @@
       font-size: 0.65rem;
       font-family: var(--font-mono);
       font-weight: 700;
-      background: rgba(0, 245, 255, 0.08);
-      color: var(--cyan);
-      border: 1px solid rgba(0, 245, 255, 0.25);
+      background: rgba(0, 210, 255, 0.08);
+      color: var(--blue-electric);
+      border: 1px solid rgba(0, 210, 255, 0.3);
       padding: 2px 7px;
       border-radius: 20px;
     }
 
     .nav-menu {
-      padding: 16px 14px;
+      padding: 14px 12px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       flex: 1;
       overflow-y: auto;
     }
@@ -143,16 +145,16 @@
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--text-muted);
-      padding: 10px 12px 4px 12px;
+      padding: 10px 10px 4px 10px;
     }
 
     .nav-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 14px;
+      padding: 9px 12px;
       border-radius: 8px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-dim);
       cursor: pointer;
@@ -164,35 +166,36 @@
 
     .nav-item:hover {
       color: var(--text-main);
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(59, 130, 246, 0.06);
+      border-color: rgba(59, 130, 246, 0.15);
     }
 
     .nav-item.active {
       color: #ffffff;
-      background: linear-gradient(135deg, rgba(0, 245, 255, 0.14), rgba(139, 92, 246, 0.09));
-      border-color: rgba(0, 245, 255, 0.3);
-      box-shadow: 0 4px 14px rgba(0, 245, 255, 0.08);
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(0, 210, 255, 0.1));
+      border-color: rgba(0, 210, 255, 0.35);
+      box-shadow: 0 4px 14px rgba(0, 210, 255, 0.1);
     }
 
     .nav-item svg {
-      width: 17px;
-      height: 17px;
+      width: 16px;
+      height: 16px;
       stroke: currentColor;
     }
 
-    /* CREDENTIAL POOL MINI LIST IN SIDEBAR */
+    /* CREDENTIAL MINI STATUS */
     .sidebar-section {
-      padding: 14px 16px;
+      padding: 12px 14px;
       border-top: 1px solid var(--border-subtle);
     }
 
     .credential-status-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      max-height: 130px;
+      gap: 5px;
+      max-height: 110px;
       overflow-y: auto;
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
     .credential-badge-row {
@@ -202,9 +205,9 @@
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-subtle);
       border-radius: 6px;
-      padding: 6px 10px;
+      padding: 5px 8px;
       font-family: var(--font-mono);
-      font-size: 0.72rem;
+      font-size: 0.7rem;
     }
 
     .cred-status-dot {
@@ -212,6 +215,7 @@
       height: 6px;
       border-radius: 50%;
       background: var(--emerald);
+      box-shadow: 0 0 6px var(--emerald);
     }
 
     .cred-status-dot.cooldown {
@@ -229,14 +233,14 @@
     }
 
     header {
-      height: 68px;
+      height: 64px;
       border-bottom: 1px solid var(--border-subtle);
-      background: var(--bg-sidebar);
+      background: var(--bg-surface);
       backdrop-filter: blur(20px);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px;
+      padding: 0 28px;
       flex-shrink: 0;
       z-index: 10;
     }
@@ -246,6 +250,9 @@
       font-weight: 800;
       letter-spacing: 0.5px;
       text-transform: uppercase;
+      background: linear-gradient(135deg, #ffffff 60%, var(--blue-electric));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .header-info p {
@@ -257,18 +264,18 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
     .status-pill {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-subtle);
-      padding: 7px 16px;
+      padding: 6px 14px;
       border-radius: 30px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-dim);
       letter-spacing: 0.5px;
@@ -276,28 +283,28 @@
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--emerald);
-      box-shadow: 0 0 10px var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
     }
 
     .status-dot.scanning {
-      background: var(--cyan);
-      box-shadow: 0 0 14px var(--cyan);
+      background: var(--blue-electric);
+      box-shadow: 0 0 12px var(--blue-electric);
       animation: pulse 1.2s infinite;
     }
 
     /* CAPTCHA / VERIFICATION ALERT BANNER */
     .verification-banner {
       display: none;
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(244, 63, 94, 0.1));
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
       border-bottom: 1px solid rgba(245, 158, 11, 0.4);
-      padding: 12px 32px;
+      padding: 10px 28px;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: #fef08a;
       flex-shrink: 0;
     }
@@ -306,14 +313,14 @@
       display: flex;
     }
 
-    /* VIEW SECTIONS (SPA ROUTER) */
+    /* VIEW SECTIONS */
     .view-section {
       display: none;
       flex: 1;
-      padding: 22px 32px;
+      padding: 20px 28px;
       overflow-y: auto;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
     }
 
     .view-section.active {
@@ -324,7 +331,7 @@
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
-      gap: 14px;
+      gap: 12px;
     }
 
     @media (max-width: 1300px) {
@@ -338,19 +345,19 @@
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 14px 18px;
+      border-radius: 10px;
+      padding: 12px 16px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.7);
       transition: all 0.2s ease;
     }
 
     .metric-card:hover {
-      border-color: var(--border-hover);
+      border-color: var(--border-glow);
       transform: translateY(-2px);
       background: var(--bg-card-hover);
     }
@@ -380,18 +387,18 @@
     }
 
     .metric-value {
-      font-size: 1.35rem;
+      font-size: 1.3rem;
       font-weight: 800;
       letter-spacing: -0.5px;
     }
 
     .metric-pct-tag {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--text-muted);
       background: rgba(255, 255, 255, 0.03);
-      padding: 2px 6px;
+      padding: 2px 5px;
       border-radius: 4px;
     }
 
@@ -403,25 +410,25 @@
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       border-radius: 10px;
-      padding: 12px 18px;
+      padding: 10px 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .progress-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       color: var(--text-dim);
     }
 
     .progress-track {
       width: 100%;
-      height: 7px;
-      background: #13131c;
+      height: 6px;
+      background: #090b14;
       border-radius: 4px;
       overflow: hidden;
     }
@@ -429,23 +436,23 @@
     .progress-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      background: linear-gradient(90deg, var(--blue-primary), var(--blue-electric));
       border-radius: 4px;
-      transition: width 0.3s ease;
-      box-shadow: 0 0 12px var(--cyan-glow);
+      transition: width 0.25s ease;
+      box-shadow: 0 0 10px var(--blue-glow);
     }
 
     /* 3-PANEL GRID */
     .main-grid {
       display: grid;
-      grid-template-columns: 380px 1fr 1fr;
-      gap: 20px;
-      min-height: 520px;
+      grid-template-columns: 360px 1fr 1fr;
+      gap: 16px;
+      min-height: 500px;
     }
 
     @media (max-width: 1300px) {
       .main-grid {
-        grid-template-columns: 360px 1fr;
+        grid-template-columns: 340px 1fr;
       }
       .terminal-panel {
         grid-column: span 2;
@@ -467,15 +474,15 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border-subtle);
-      border-radius: 14px;
+      border-radius: 12px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
     }
 
     .panel-header {
-      padding: 14px 18px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
@@ -485,7 +492,7 @@
     }
 
     .panel-title {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.8px;
@@ -496,11 +503,11 @@
     }
 
     .panel-body {
-      padding: 18px;
+      padding: 16px;
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       overflow-y: auto;
     }
 
@@ -508,11 +515,11 @@
     .field {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
 
     .field label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -524,8 +531,8 @@
       border: 1px solid var(--border-subtle);
       border-radius: 8px;
       color: var(--text-main);
-      padding: 9px 12px;
-      font-size: 0.8rem;
+      padding: 8px 12px;
+      font-size: 0.78rem;
       font-weight: 500;
       outline: none;
       transition: all 0.2s ease;
@@ -533,37 +540,37 @@
 
     select {
       appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg fill='%239ca3af' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+      background-image: url("data:image/svg+xml;utf8,<svg fill='%2394a3b8' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
       background-repeat: no-repeat;
       background-position: right 10px center;
-      padding-right: 34px;
+      padding-right: 32px;
       cursor: pointer;
     }
 
     select:focus, input:focus, textarea:focus {
-      border-color: var(--cyan);
-      box-shadow: 0 0 0 3px var(--cyan-glow);
+      border-color: var(--blue-electric);
+      box-shadow: 0 0 0 3px var(--blue-glow);
     }
 
     textarea {
       resize: vertical;
-      min-height: 65px;
+      min-height: 60px;
       font-family: var(--font-mono);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
     }
 
     /* SLIDER & TOGGLES */
     .slider-box {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
 
     .slider-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -571,43 +578,41 @@
     }
 
     .slider-header .val {
-      color: var(--cyan);
+      color: var(--blue-electric);
       font-family: var(--font-mono);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
     }
 
     .range-slider {
       -webkit-appearance: none;
       width: 100%;
-      height: 5px;
+      height: 4px;
       border-radius: 3px;
-      background: #181824;
+      background: #0f1424;
       outline: none;
     }
 
     .range-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       border-radius: 50%;
-      background: #ffffff;
+      background: var(--blue-electric);
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 10px var(--blue-electric);
       transition: all 0.15s ease;
     }
 
     .range-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-      background: var(--cyan);
-      box-shadow: 0 0 12px var(--cyan);
+      transform: scale(1.25);
     }
 
     .toggle-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       color: var(--text-dim);
       cursor: pointer;
@@ -617,8 +622,8 @@
     .switch {
       position: relative;
       display: inline-block;
-      width: 34px;
-      height: 18px;
+      width: 32px;
+      height: 16px;
       flex-shrink: 0;
     }
 
@@ -631,11 +636,8 @@
     .switch-track {
       position: absolute;
       cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #1a1a24;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #0d111d;
       border: 1px solid var(--border-subtle);
       border-radius: 20px;
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -646,22 +648,22 @@
       content: "";
       height: 10px;
       width: 10px;
-      left: 3px;
-      bottom: 3px;
+      left: 2px;
+      bottom: 2px;
       background-color: var(--text-muted);
       border-radius: 50%;
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     input:checked + .switch-track {
-      background-color: rgba(0, 245, 255, 0.12);
-      border-color: var(--cyan);
+      background-color: rgba(0, 210, 255, 0.15);
+      border-color: var(--blue-electric);
     }
 
     input:checked + .switch-track:before {
       transform: translateX(16px);
-      background-color: var(--cyan);
-      box-shadow: 0 0 8px var(--cyan);
+      background-color: var(--blue-electric);
+      box-shadow: 0 0 8px var(--blue-electric);
     }
 
     /* DETAILS */
@@ -669,16 +671,16 @@
       background: rgba(255, 255, 255, 0.015);
       border: 1px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 8px 12px;
     }
 
     details[open] {
       background: rgba(255, 255, 255, 0.025);
-      border-color: var(--border-hover);
+      border-color: rgba(59, 130, 246, 0.3);
     }
 
     summary {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       color: var(--text-dim);
       text-transform: uppercase;
@@ -699,15 +701,15 @@
 
     details[open] summary::after {
       transform: rotate(90deg);
-      color: var(--cyan);
+      color: var(--blue-electric);
     }
 
     .details-content {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-top: 12px;
-      padding-top: 12px;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
       border-top: 1px solid var(--border-subtle);
     }
 
@@ -716,15 +718,15 @@
       margin-top: auto;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      padding-top: 6px;
+      gap: 6px;
+      padding-top: 4px;
     }
 
     .btn {
       width: 100%;
-      padding: 11px 16px;
+      padding: 10px 14px;
       border-radius: 8px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 800;
       letter-spacing: 0.5px;
       text-transform: uppercase;
@@ -738,25 +740,24 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #ffffff, #e5e7eb);
-      color: #000000;
-      box-shadow: 0 4px 18px rgba(255, 255, 255, 0.15);
+      background: linear-gradient(135deg, var(--blue-electric), var(--blue-primary));
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(0, 210, 255, 0.25);
     }
 
     .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, var(--cyan), #00c8e0);
-      box-shadow: 0 6px 25px rgba(0, 245, 255, 0.35);
+      box-shadow: 0 6px 24px rgba(0, 210, 255, 0.4);
       transform: translateY(-1px);
     }
 
     .btn-danger {
-      background: linear-gradient(135deg, var(--rose), #e11d48);
+      background: linear-gradient(135deg, var(--rose), #dc2626);
       color: #ffffff;
-      box-shadow: 0 4px 18px rgba(244, 63, 94, 0.25);
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
     }
 
     .btn-danger:hover {
-      box-shadow: 0 6px 25px rgba(244, 63, 94, 0.45);
+      box-shadow: 0 6px 22px rgba(239, 68, 68, 0.45);
       transform: translateY(-1px);
     }
 
@@ -764,15 +765,15 @@
       background: transparent;
       border: 1px solid var(--border-subtle);
       color: var(--text-dim);
-      padding: 8px 12px;
-      font-size: 0.72rem;
+      padding: 7px 12px;
+      font-size: 0.7rem;
       border-radius: 6px;
     }
 
     .btn-secondary:hover {
       color: var(--text-main);
-      border-color: var(--border-hover);
-      background: rgba(255, 255, 255, 0.03);
+      border-color: var(--border-glow);
+      background: rgba(59, 130, 246, 0.05);
     }
 
     /* RESULTS LIST */
@@ -781,15 +782,15 @@
       border-bottom: 1px solid var(--border-subtle);
       background: rgba(255, 255, 255, 0.01);
       flex-shrink: 0;
-      padding: 0 8px;
+      padding: 0 6px;
     }
 
     .tab-btn {
       background: none;
       border: none;
       color: var(--text-muted);
-      padding: 13px 16px;
-      font-size: 0.75rem;
+      padding: 11px 14px;
+      font-size: 0.72rem;
       font-weight: 700;
       cursor: pointer;
       position: relative;
@@ -802,7 +803,7 @@
     }
 
     .tab-btn:hover { color: var(--text-dim); }
-    .tab-btn.active { color: var(--cyan); }
+    .tab-btn.active { color: var(--blue-electric); }
 
     .tab-btn.active::after {
       content: '';
@@ -811,39 +812,39 @@
       left: 0;
       height: 2px;
       width: 100%;
-      background: var(--cyan);
-      box-shadow: 0 0 12px var(--cyan);
+      background: var(--blue-electric);
+      box-shadow: 0 0 10px var(--blue-electric);
     }
 
     .tab-badge {
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       background: rgba(255, 255, 255, 0.05);
       color: var(--text-dim);
-      padding: 1px 6px;
+      padding: 1px 5px;
       border-radius: 4px;
       font-family: var(--font-mono);
     }
 
     .tab-btn.active .tab-badge {
-      background: rgba(0, 245, 255, 0.12);
-      color: var(--cyan);
-      border: 1px solid rgba(0, 245, 255, 0.2);
+      background: rgba(0, 210, 255, 0.12);
+      color: var(--blue-electric);
+      border: 1px solid rgba(0, 210, 255, 0.25);
     }
 
     .results-list-container {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .result-row {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 10px 14px;
+      border-radius: 6px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -851,14 +852,14 @@
     }
 
     .result-row:hover {
-      background: rgba(255, 255, 255, 0.04);
-      border-color: var(--border-hover);
+      background: rgba(59, 130, 246, 0.05);
+      border-color: var(--border-glow);
       transform: translateX(2px);
     }
 
     .result-row.available {
       border-left: 3px solid var(--emerald);
-      box-shadow: inset 4px 0 0 rgba(16, 185, 129, 0.02);
+      box-shadow: inset 4px 0 0 rgba(16, 185, 129, 0.03);
     }
 
     .result-row.taken {
@@ -868,19 +869,19 @@
 
     .row-identifier {
       font-family: var(--font-mono);
-      font-size: 0.86rem;
+      font-size: 0.82rem;
       font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .row-dot {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
       background: var(--emerald);
-      box-shadow: 0 0 8px var(--emerald);
+      box-shadow: 0 0 6px var(--emerald);
     }
 
     .result-row.taken .row-dot {
@@ -889,11 +890,11 @@
     }
 
     .row-pill {
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       font-family: var(--font-mono);
     }
@@ -901,11 +902,11 @@
     .row-pill.available {
       background: rgba(16, 185, 129, 0.12);
       color: var(--emerald);
-      border: 1px solid rgba(16, 185, 129, 0.25);
+      border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
     .row-pill.taken {
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.03);
       color: var(--text-dim);
       border: 1px solid var(--border-subtle);
     }
@@ -917,52 +918,52 @@
       align-items: center;
       justify-content: center;
       color: var(--text-muted);
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       text-align: center;
-      padding: 40px 20px;
-      gap: 12px;
+      padding: 30px 16px;
+      gap: 10px;
     }
 
     .empty-state svg {
-      width: 42px;
-      height: 42px;
+      width: 36px;
+      height: 36px;
       opacity: 0.15;
     }
 
     /* TERMINAL */
     .terminal-panel {
-      background: #030306;
+      background: #020204;
     }
 
     .terminal-header {
-      height: 42px;
+      height: 38px;
       background: rgba(255, 255, 255, 0.02);
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
+      padding: 0 14px;
       flex-shrink: 0;
       user-select: none;
     }
 
     .window-dots {
       display: flex;
-      gap: 6px;
+      gap: 5px;
     }
 
     .w-dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
     }
 
-    .w-dot.red { background: #ff5f56; }
-    .w-dot.yellow { background: #ffbd2e; }
-    .w-dot.green { background: #27c93f; }
+    .w-dot.red { background: #ef4444; }
+    .w-dot.yellow { background: #f59e0b; }
+    .w-dot.green { background: #10b981; }
 
     .terminal-title-text {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-family: var(--font-mono);
       color: var(--text-muted);
       font-weight: 600;
@@ -970,23 +971,23 @@
 
     .terminal-logs {
       flex: 1;
-      padding: 16px 18px;
+      padding: 14px 16px;
       font-family: var(--font-mono);
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
 
     .log-item {
-      line-height: 1.5;
+      line-height: 1.4;
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
 
     .log-item .time { color: var(--text-muted); user-select: none; }
-    .log-item .tag { font-weight: 700; padding: 0 4px; border-radius: 2px; }
+    .log-item .tag { font-weight: 700; padding: 0 3px; border-radius: 2px; }
 
     .tag-hit { color: var(--emerald); }
     .tag-taken { color: var(--text-dim); }
@@ -995,25 +996,25 @@
 
     /* FOOTER */
     footer {
-      height: 44px;
+      height: 40px;
       border-top: 1px solid var(--border-subtle);
-      padding: 0 32px;
+      padding: 0 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--text-dim);
-      background: var(--bg-sidebar);
+      background: var(--bg-surface);
       flex-shrink: 0;
     }
 
     .footer-metrics {
       display: flex;
       align-items: center;
-      gap: 22px;
+      gap: 18px;
     }
 
-    .highlight-cyan { color: var(--cyan); font-weight: 800; font-family: var(--font-mono); }
+    .highlight-blue { color: var(--blue-electric); font-weight: 800; font-family: var(--font-mono); }
     .val-white { color: var(--text-main); font-weight: 700; }
 
     /* EXPLORER & ANALYTICS VIEWS */
@@ -1021,26 +1022,26 @@
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
     }
 
     .explorer-table th {
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border-subtle);
       color: var(--text-muted);
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       text-transform: uppercase;
       letter-spacing: 0.8px;
     }
 
     .explorer-table td {
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-bottom: 1px solid rgba(255,255,255,0.03);
       font-family: var(--font-mono);
     }
 
     .explorer-table tr:hover {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(59, 130, 246, 0.04);
     }
 
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -1050,33 +1051,33 @@
 <body>
 
   <div class="app-layout">
-    <!-- LEFT SIDEBAR NAVIGATION -->
+    <!-- LEFT SIDEBAR -->
     <aside>
       <div class="brand-container">
         <div class="brand">
           <div class="brand-icon">❄</div>
           <div class="brand-text">Snowflake</div>
         </div>
-        <div class="badge-v">v4.5 PRO</div>
+        <div class="badge-v">v5.0 BLUE</div>
       </div>
 
       <nav class="nav-menu">
         <span class="nav-label">Workspace Views</span>
         <a class="nav-item active" data-view="dashboard">
           <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-          <span>Dashboard & Checker</span>
+          <span>Live Checker</span>
         </a>
         <a class="nav-item" data-view="explorer">
           <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-          <span>Hits Explorer</span>
+          <span>Discovered Hits</span>
         </a>
         <a class="nav-item" data-view="analytics">
           <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-          <span>Analytics & Charts</span>
+          <span>Analytics & Velocity</span>
         </a>
         <a class="nav-item" data-view="credentials">
           <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-          <span>Credential Pool</span>
+          <span>Credential & Proxies</span>
         </a>
         <a class="nav-item" data-view="logs">
           <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -1084,11 +1085,11 @@
         </a>
       </nav>
 
-      <!-- CREDENTIAL POOL STATUS -->
+      <!-- CREDENTIAL MINI STATUS -->
       <div class="sidebar-section">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span class="nav-label" style="padding: 0;">Active Tokens (<span id="lblActiveCredsCount">1</span>)</span>
-          <span style="font-size: 0.65rem; color: var(--cyan); font-weight: 700;" id="lblSchedulerState">Scheduler: Ready</span>
+          <span class="nav-label" style="padding: 0;">Token Pool (<span id="lblActiveCredsCount">1</span>)</span>
+          <span style="font-size: 0.65rem; color: var(--blue-electric); font-weight: 700;" id="lblSchedulerState">Ready</span>
         </div>
         <div class="credential-status-list" id="credentialStatusList">
           <!-- Dynamically populated -->
@@ -1096,14 +1097,14 @@
       </div>
 
       <div class="sidebar-section" style="border-top: 1px solid var(--border-subtle);">
-        <div class="system-health-card" style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px 12px;">
-          <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
-            <span>Rate Limiter</span>
-            <span>Adaptive</span>
+        <div class="system-health-card" style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 8px 10px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+            <span>Engine Mode</span>
+            <span style="color: var(--blue-electric);">Adaptive 2.0</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 600; color: var(--emerald); margin-top: 4px;">
-            <div class="pulse-dot"></div>
-            <span>Auto-backoff Enabled</span>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 600; color: var(--emerald); margin-top: 4px;">
+            <div class="status-dot" style="width: 5px; height: 5px;"></div>
+            <span>Auto-Backpressure Ready</span>
           </div>
         </div>
       </div>
@@ -1114,20 +1115,20 @@
       <!-- HEADER -->
       <header>
         <div class="header-info">
-          <h1 id="headerViewTitle">Dashboard & Live Checker</h1>
-          <p id="headerViewDesc">Multi-credential request scheduler with adaptive rate-limit backpressure</p>
+          <h1 id="headerViewTitle">Live Availability Checker</h1>
+          <p id="headerViewDesc">Ultra-fast multi-worker queue scheduler with adaptive backoff</p>
         </div>
 
         <div class="header-actions">
           <div id="discordOAuthContainer" style="display: flex; align-items: center; gap: 8px;">
-            <button id="btnDiscordOAuth" class="btn" style="width: auto; background: #5865F2; color: #fff; padding: 7px 14px; font-size: 0.72rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(88,101,242,0.3);">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-              <span>Authorize Discord OAuth2</span>
+            <button id="btnDiscordOAuth" class="btn" style="width: auto; background: #5865F2; color: #fff; padding: 6px 12px; font-size: 0.7rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(88,101,242,0.25);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              <span>Connect Discord (OAuth2)</span>
             </button>
-            <div id="discordUserBadge" style="display: none; align-items: center; gap: 8px; background: rgba(88,101,242,0.15); border: 1px solid rgba(88,101,242,0.3); border-radius: 20px; padding: 4px 12px 4px 6px;">
-              <img id="discordAvatarImg" src="" style="width: 22px; height: 22px; border-radius: 50%; display: none;">
-              <span id="discordUsernameText" style="font-size: 0.72rem; font-weight: 700; color: #fff;">@username</span>
-              <button id="btnDisconnectDiscord" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.8rem; padding: 0 4px;" title="Disconnect">✕</button>
+            <div id="discordUserBadge" style="display: none; align-items: center; gap: 6px; background: rgba(88,101,242,0.15); border: 1px solid rgba(88,101,242,0.3); border-radius: 20px; padding: 3px 10px 3px 5px;">
+              <img id="discordAvatarImg" src="" style="width: 20px; height: 20px; border-radius: 50%; display: none;">
+              <span id="discordUsernameText" style="font-size: 0.7rem; font-weight: 700; color: #fff;">@username</span>
+              <button id="btnDisconnectDiscord" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.75rem; padding: 0 3px;" title="Disconnect">✕</button>
             </div>
           </div>
 
@@ -1138,13 +1139,13 @@
         </div>
       </header>
 
-      <!-- VERIFICATION / CAPTCHA ALERT BANNER -->
+      <!-- VERIFICATION BANNER -->
       <div class="verification-banner" id="verificationBanner">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 1.1rem;">⚠️</span>
-          <span><strong>Verification Required:</strong> Remote service responded with a verification challenge (CAPTCHA). Worker paused.</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1rem;">⚠️</span>
+          <span><strong>Verification Required:</strong> Remote server requested human challenge / verification. Scheduler paused.</span>
         </div>
-        <button id="btnDismissVerification" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.7rem; color: #fef08a; border-color: rgba(245,158,11,0.4);">Acknowledge</button>
+        <button id="btnDismissVerification" class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 0.68rem; color: #fef08a; border-color: rgba(245,158,11,0.4);">Acknowledge</button>
       </div>
 
       <!-- ========================================== -->
@@ -1199,7 +1200,7 @@
 
           <div class="metric-card failed">
             <div class="metric-header">
-              <span class="metric-label">Verification / 403</span>
+              <span class="metric-label">Failed / 403</span>
               <span>🛡️</span>
             </div>
             <div class="metric-body">
@@ -1210,11 +1211,11 @@
 
           <div class="metric-card">
             <div class="metric-header">
-              <span class="metric-label">Avg Response Time</span>
+              <span class="metric-label">Velocity / Latency</span>
               <span>⚡</span>
             </div>
             <div class="metric-body">
-              <span class="metric-value" id="statAvgLatency">0ms</span>
+              <span class="metric-value" id="statAvgLatency" style="color: var(--blue-electric);">0ms</span>
               <span class="metric-pct-tag" id="lblReqMin">0 RPM</span>
             </div>
           </div>
@@ -1223,8 +1224,8 @@
         <!-- PROGRESS BAR -->
         <div class="progress-bar-wrapper">
           <div class="progress-header">
-            <span>Overall Queue Progress</span>
-            <span id="lblProgressPct" style="font-family: var(--font-mono); font-weight: 700; color: var(--cyan);">0% Complete</span>
+            <span>Scan Progress</span>
+            <span id="lblProgressPct" style="font-family: var(--font-mono); font-weight: 700; color: var(--blue-electric);">0% Complete</span>
           </div>
           <div class="progress-track">
             <div class="progress-fill" id="progressFill"></div>
@@ -1233,12 +1234,12 @@
 
         <!-- 3-PANEL WORKSPACE -->
         <div class="main-grid">
-          <!-- PANEL 1: SCHEDULER & CREDENTIAL CONFIG -->
+          <!-- PANEL 1: SCANNER CONFIG -->
           <div class="panel">
             <div class="panel-header">
               <span class="panel-title">
-                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                Scanner Settings
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                Scanner Configuration
               </span>
             </div>
 
@@ -1248,13 +1249,13 @@
                 <select id="apiPreset">
                   <option value="discord" selected>Discord Pomelo (@username)</option>
                   <option value="github">GitHub Users</option>
-                  <option value="mock">Local Simulator (Test Mode)</option>
+                  <option value="mock">Local Simulator (High Speed Test)</option>
                   <option value="custom">Custom Endpoint</option>
                 </select>
               </div>
 
               <div class="field">
-                <label for="genMode">Combination Mode</label>
+                <label for="genMode">Combination Generator</label>
                 <select id="genMode">
                   <option value="rand4special" selected>🎲 Random 4L Mixed (a-z, 0-9, ., _)</option>
                   <option value="rand4">🎲 Random 4-Letter (a-z)</option>
@@ -1274,40 +1275,40 @@
 
               <!-- MULTI-CREDENTIAL POOL -->
               <div class="field">
-                <label for="credentialPoolInput">Authorized Credential Pool (One token per line)</label>
-                <textarea id="credentialPoolInput" placeholder="Enter one token per line. Secrets are masked in UI.">YOUR_DISCORD_TOKEN</textarea>
+                <label for="credentialPoolInput">Authorized Token Pool (One per line for multi-rotation)</label>
+                <textarea id="credentialPoolInput" placeholder="Enter tokens (one per line). Tokens rotate in parallel.">YOUR_DISCORD_TOKEN</textarea>
               </div>
 
               <!-- CONCURRENCY & DELAY -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="slider-box">
                   <div class="slider-header">
-                    <span>Concurrency</span>
+                    <span>Workers</span>
                     <span class="val" id="lblConcurrency">1 Worker</span>
                   </div>
-                  <input type="range" id="concurrencySlider" class="range-slider" min="1" max="5" step="1" value="1">
+                  <input type="range" id="concurrencySlider" class="range-slider" min="1" max="10" step="1" value="1">
                 </div>
 
                 <div class="slider-box">
                   <div class="slider-header">
                     <span>Delay</span>
-                    <span class="val" id="lblSpeed">1000ms</span>
+                    <span class="val" id="lblSpeed">800ms</span>
                   </div>
-                  <input type="range" id="delaySlider" class="range-slider" min="0" max="3000" step="50" value="1000">
+                  <input type="range" id="delaySlider" class="range-slider" min="0" max="3000" step="25" value="800">
                 </div>
               </div>
 
               <!-- SWITCHES -->
-              <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
                 <label class="toggle-row">
-                  <span>Auto-backoff 429 rate limits</span>
+                  <span>Adaptive 429 rate-limit backoff</span>
                   <span class="switch">
                     <input type="checkbox" id="autoRetry" checked>
                     <span class="switch-track"></span>
                   </span>
                 </label>
                 <label class="toggle-row">
-                  <span>Audio chime on hits</span>
+                  <span>Chime audio notification on hits</span>
                   <span class="switch">
                     <input type="checkbox" id="soundAlert" checked>
                     <span class="switch-track"></span>
@@ -1317,10 +1318,10 @@
 
               <!-- ADVANCED ACCORDION -->
               <details id="advancedDetails">
-                <summary>Endpoint Parameters</summary>
+                <summary>Advanced Endpoint & Proxy Routing</summary>
                 <div class="details-content">
                   <div class="field">
-                    <label for="targetUrl">Target Request URL</label>
+                    <label for="targetUrl">Target URL</label>
                     <input type="text" id="targetUrl" value="https://discord.com/api/v9/users/@me/pomelo-attempt">
                   </div>
                   
@@ -1334,8 +1335,8 @@
                   </div>
 
                   <div class="field">
-                    <label for="proxyListInput">Authorized Upstream Proxy Pool</label>
-                    <textarea id="proxyListInput" placeholder="http://proxy-host:port (one per line)"></textarea>
+                    <label for="proxyListInput">Proxy Pool (One per line: http://host:port)</label>
+                    <textarea id="proxyListInput" placeholder="http://proxy-host:port"></textarea>
                   </div>
 
                   <div class="field">
@@ -1346,16 +1347,16 @@
               </details>
 
               <div class="btn-group">
-                <button id="btnStart" class="btn btn-primary">Start Scheduler</button>
-                <button id="btnStop" class="btn btn-danger" style="display: none;">Pause Scheduler</button>
-                <button id="btnReset" class="btn btn-secondary">Clear Statistics</button>
+                <button id="btnStart" class="btn btn-primary">Start Scanner</button>
+                <button id="btnStop" class="btn btn-danger" style="display: none;">Pause Scanner</button>
+                <button id="btnReset" class="btn btn-secondary">Clear Stats</button>
               </div>
             </div>
           </div>
 
           <!-- PANEL 2: DISCOVERED HITS -->
           <div class="panel">
-            <div class="panel-header" style="padding: 0 16px;">
+            <div class="panel-header" style="padding: 0 12px;">
               <div class="tabs-nav">
                 <button class="tab-btn active" id="tab-available">
                   Available Hits
@@ -1366,18 +1367,18 @@
                   <span class="tab-badge" id="badgeTaken">0</span>
                 </button>
               </div>
-              <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 6px 12px;">Export .txt</button>
+              <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.68rem;">Export .txt</button>
             </div>
 
             <div class="results-list-container" id="results-display-list">
               <div class="empty-state" id="list-empty-state">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <div>No records captured. Configure credentials and start.</div>
+                <div>No records captured yet. Click Start Scanner.</div>
               </div>
             </div>
           </div>
 
-          <!-- PANEL 3: REAL-TIME ACTIVITY CONSOLE -->
+          <!-- PANEL 3: REAL-TIME CONSOLE -->
           <div class="panel terminal-panel">
             <div class="terminal-header">
               <div class="window-dots">
@@ -1385,8 +1386,8 @@
                 <div class="w-dot yellow"></div>
                 <div class="w-dot green"></div>
               </div>
-              <span class="terminal-title-text">scheduler@live-stream: ~</span>
-              <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.65rem;">Clear</button>
+              <span class="terminal-title-text">stream@snowflake-engine: ~</span>
+              <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 0.62rem;">Clear</button>
             </div>
             
             <div id="logContent" class="terminal-logs"></div>
@@ -1401,10 +1402,10 @@
         <div class="panel" style="flex: 1;">
           <div class="panel-header">
             <span class="panel-title">Discovered Identifiers Explorer</span>
-            <div style="display: flex; gap: 10px;">
-              <input type="text" id="explorerSearch" placeholder="Search discovered hits..." style="width: 220px; padding: 6px 12px; font-size: 0.75rem;">
-              <button id="btnExportCSV" class="btn btn-secondary" style="width: auto; padding: 6px 14px;">Export CSV</button>
-              <button id="btnExportJSON" class="btn btn-secondary" style="width: auto; padding: 6px 14px;">Export JSON</button>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="explorerSearch" placeholder="Filter hits..." style="width: 200px; padding: 5px 10px; font-size: 0.72rem;">
+              <button id="btnExportCSV" class="btn btn-secondary" style="width: auto; padding: 5px 10px;">Export CSV</button>
+              <button id="btnExportJSON" class="btn btn-secondary" style="width: auto; padding: 5px 10px;">Export JSON</button>
             </div>
           </div>
           <div class="panel-body" style="padding: 0; overflow-y: auto;">
@@ -1431,13 +1432,13 @@
       <!-- VIEW 3: ANALYTICS & CHARTS                 -->
       <!-- ========================================== -->
       <div class="view-section" id="view-analytics">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 400px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-height: 380px;">
           <div class="panel">
             <div class="panel-header">
-              <span class="panel-title">Response Code Distribution</span>
+              <span class="panel-title">Response Code Breakdown</span>
             </div>
-            <div class="panel-body" style="display: flex; align-items: center; justify-content: center; padding: 24px;">
-              <div style="width: 280px; height: 280px;">
+            <div class="panel-body" style="display: flex; align-items: center; justify-content: center; padding: 20px;">
+              <div style="width: 260px; height: 260px;">
                 <canvas id="analyticsDonutChart"></canvas>
               </div>
             </div>
@@ -1445,25 +1446,25 @@
 
           <div class="panel">
             <div class="panel-header">
-              <span class="panel-title">Engine Summary & Performance</span>
+              <span class="panel-title">Engine Throughput & Latency</span>
             </div>
-            <div class="panel-body" style="gap: 16px; justify-content: center;">
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px;">
-                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Peak Velocity</span>
-                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--cyan); margin-top: 4px;" id="statPeakVelocity">0 RPM</div>
+            <div class="panel-body" style="gap: 12px; justify-content: center;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
+                  <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Peak Velocity</span>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--blue-electric); margin-top: 2px;" id="statPeakVelocity">0 RPM</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px;">
-                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Average Latency</span>
-                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--purple); margin-top: 4px;" id="statAnalyticsAvgLatency">0ms</div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
+                  <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Average Latency</span>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--blue-neon); margin-top: 2px;" id="statAnalyticsAvgLatency">0ms</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px;">
-                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Total Retries / Backoffs</span>
-                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--amber); margin-top: 4px;" id="statAnalyticsRetries">0</div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
+                  <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Total Cooldowns (429)</span>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--amber); margin-top: 2px;" id="statAnalyticsRetries">0</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 14px; border-radius: 8px;">
-                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Availability Hit Rate</span>
-                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--emerald); margin-top: 4px;" id="statHitRate">0.0%</div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
+                  <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Hit Success Rate</span>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--emerald); margin-top: 2px;" id="statHitRate">0.0%</div>
                 </div>
               </div>
             </div>
@@ -1476,78 +1477,78 @@
       <!-- ========================================== -->
       <div class="view-section" id="view-credentials">
         <!-- DISCORD OAUTH2 CARD -->
-        <div class="panel" style="border-color: rgba(88,101,242,0.3); background: linear-gradient(135deg, rgba(88,101,242,0.06), rgba(139,92,246,0.04));">
-          <div class="panel-header" style="background: rgba(88,101,242,0.08);">
+        <div class="panel" style="border-color: rgba(37,99,235,0.3); background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(0,210,255,0.04));">
+          <div class="panel-header" style="background: rgba(37,99,235,0.1);">
             <span class="panel-title" style="color: #fff;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-              Discord OAuth2 Authorization Flow
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              Discord OAuth2 Login
             </span>
             <span class="badge-v" style="border-color: #5865F2; color: #5865F2; background: rgba(88,101,242,0.1);">Official OAuth2</span>
           </div>
-          <div class="panel-body" style="gap: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid var(--border-subtle); padding: 14px 18px; border-radius: 8px;">
+          <div class="panel-body" style="gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 12px 16px; border-radius: 8px;">
               <div>
-                <div style="font-weight: 700; font-size: 0.85rem; color: #fff;">Connect your Discord Account</div>
-                <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">
-                  Authorize Snowflake via standard OAuth2 <code style="color: var(--cyan);">identify</code> grant to authenticate and test endpoints.
+                <div style="font-weight: 700; font-size: 0.8rem; color: #fff;">Authorize your Discord Account</div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 2px;">
+                  Authorize Snowflake via standard OAuth2 <code style="color: var(--blue-electric);">identify</code> grant to test endpoints cleanly.
                 </div>
               </div>
-              <button id="btnConnectOAuthHub" class="btn" style="width: auto; background: #5865F2; color: #fff; padding: 8px 18px; font-size: 0.75rem; border-radius: 8px;">
+              <button id="btnConnectOAuthHub" class="btn" style="width: auto; background: #5865F2; color: #fff; padding: 7px 16px; font-size: 0.72rem; border-radius: 8px;">
                 Connect Account
               </button>
             </div>
 
             <!-- Custom Discord App Settings Accordion -->
             <details id="oauthDetails">
-              <summary>Custom Discord Application Credentials (Optional)</summary>
+              <summary>Custom Discord Developer Application (Optional)</summary>
               <div class="details-content">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                   <div class="field">
-                    <label for="oauthClientId">Discord Client ID</label>
+                    <label for="oauthClientId">Client ID</label>
                     <input type="text" id="oauthClientId" placeholder="123456789012345678">
                   </div>
                   <div class="field">
-                    <label for="oauthClientSecret">Discord Client Secret</label>
+                    <label for="oauthClientSecret">Client Secret</label>
                     <input type="password" id="oauthClientSecret" placeholder="••••••••••••••••••••••••">
                   </div>
                 </div>
                 <div class="field">
-                  <label for="oauthRedirectUri">Redirect URI (Set this in Discord Developer Portal)</label>
-                  <input type="text" id="oauthRedirectUri" readonly style="color: var(--cyan); background: rgba(0,245,255,0.04);">
+                  <label for="oauthRedirectUri">Redirect URI</label>
+                  <input type="text" id="oauthRedirectUri" readonly style="color: var(--blue-electric); background: rgba(0,210,255,0.04);">
                 </div>
               </div>
             </details>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div class="panel">
             <div class="panel-header">
-              <span class="panel-title">Authorized Tokens Pool</span>
-              <button id="btnValidateTokens" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.7rem;">Validate</button>
+              <span class="panel-title">Multi-Credential Rotation Pool</span>
+              <button id="btnValidateTokens" class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 0.68rem;">Reload</button>
             </div>
             <div class="panel-body">
               <div class="field">
                 <label>Manage Tokens (One per line)</label>
-                <textarea id="credentialHubInput" style="min-height: 180px; font-size: 0.8rem;"></textarea>
+                <textarea id="credentialHubInput" style="min-height: 160px; font-size: 0.78rem;"></textarea>
               </div>
-              <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
-                Tokens are masked in all client logs and UI displays. When multiple credentials are provided, the scheduler rotates requests across them to balance volume.
+              <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
+                Add multiple authorized tokens to multiply throughput. Each token maintains independent rate-limit cooldown timers.
               </p>
             </div>
           </div>
 
           <div class="panel">
             <div class="panel-header">
-              <span class="panel-title">Authorized Proxy Pool</span>
+              <span class="panel-title">Network Proxy Pool</span>
             </div>
             <div class="panel-body">
               <div class="field">
-                <label>Upstream Proxies (One per line)</label>
-                <textarea id="proxyHubInput" style="min-height: 180px; font-size: 0.8rem;" placeholder="http://user:pass@host:port&#10;http://ip:port"></textarea>
+                <label>Authorized Proxies (One per line)</label>
+                <textarea id="proxyHubInput" style="min-height: 160px; font-size: 0.78rem;" placeholder="http://user:pass@host:port&#10;http://ip:port"></textarea>
               </div>
-              <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
-                Upstream proxies are used exclusively for network routing when permitted by the destination service.
+              <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
+                Standard upstream HTTP proxy forwarding for distributed network routing when authorized.
               </p>
             </div>
           </div>
@@ -1561,25 +1562,25 @@
         <div class="panel terminal-panel" style="flex: 1;">
           <div class="terminal-header">
             <span class="terminal-title-text">audit-trail@full-logs: ~</span>
-            <div style="display: flex; gap: 10px;">
-              <button id="btnDownloadLogs" class="btn btn-secondary" style="width: auto; padding: 4px 12px; font-size: 0.7rem;">Download .log</button>
-              <button id="btnClearFullLogs" class="btn btn-secondary" style="width: auto; padding: 4px 12px; font-size: 0.7rem;">Clear</button>
+            <div style="display: flex; gap: 8px;">
+              <button id="btnDownloadLogs" class="btn btn-secondary" style="width: auto; padding: 3px 10px; font-size: 0.68rem;">Download .log</button>
+              <button id="btnClearFullLogs" class="btn btn-secondary" style="width: auto; padding: 3px 10px; font-size: 0.68rem;">Clear</button>
             </div>
           </div>
-          <div id="fullLogContent" class="terminal-logs" style="font-size: 0.82rem; padding: 20px;"></div>
+          <div id="fullLogContent" class="terminal-logs" style="font-size: 0.78rem; padding: 16px;"></div>
         </div>
       </div>
 
       <!-- FOOTER -->
       <footer>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span>Estimated Remaining (ETA): <span class="highlight-cyan" id="lblETA">00:00:00</span></span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span>ETA: <span class="highlight-blue" id="lblETA">00:00:00</span></span>
         </div>
 
         <div class="footer-metrics">
           <div>Duration: <span class="val-white" id="lblDuration">00:00:00</span></div>
-          <div>Active Workers: <span class="val-white" id="lblActiveWorkers">0</span></div>
-          <div>Total Requests: <span class="val-white" id="lblTotalHits">0</span></div>
+          <div>Workers: <span class="val-white" id="lblActiveWorkers">0</span></div>
+          <div>Requests: <span class="val-white" id="lblTotalHits">0</span></div>
           <div>Last Event: <span class="val-white" id="lblLastCheck">Never</span></div>
         </div>
       </footer>
