@@ -46,47 +46,167 @@ const PLATFORMS = {
 window.PLATFORMS = PLATFORMS;
 
 // ----------------------------------------------------------
-// 2. DYNAMIC INFINITE HANDLE GENERATOR ENGINE
+
+// ----------------------------------------------------------
+// 2. DYNAMIC INFINITE HANDLE GENERATOR ENGINE & 12 SUITES
 // ----------------------------------------------------------
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
+const VOWELS = 'aeiou';
+const CONSONANTS = 'bcdfghjklmnpqrstvwxyz';
+const DIGITS = '0123456789';
 const ALPHANUM = 'abcdefghijklmnopqrstuvwxyz0123456789';
-const SEMI_OG_WORDS = [
-  'apex', 'void', 'glow', 'pure', 'lunar', 'nova', 'onyx', 'soul', 'echo', 'flux',
-  'zero', 'hype', 'vibe', 'bolt', 'sync', 'neon', 'fade', 'dark', 'meta', 'cult',
-  'rare', 'grim', 'drip', 'mint', 'wave', 'holy', 'evil', 'myth', 'sage', 'lust',
-  'frost', 'ghost', 'pulse', 'vortex', 'xenon', 'cyber', 'titan', 'ultra', 'sonic', 'karma'
+
+const OG_DICTIONARY_WORDS = [
+  'ghost', 'blade', 'frost', 'toxic', 'demon', 'angel', 'cyber', 'matrix', 'pulse', 'storm',
+  'venom', 'shadow', 'phantom', 'vamp', 'draco', 'opium', 'wrath', 'sin', 'god', 'zen',
+  'beast', 'flame', 'blood', 'grave', 'magic', 'viper', 'night', 'titan', 'alpha', 'omega',
+  'chaos', 'havoc', 'prime', 'rebel', 'siren', 'abyss', 'wraith', 'void', 'nova', 'apex',
+  'onyx', 'echo', 'flux', 'glow', 'soul', 'pure', 'lunar', 'zero', 'neon', 'fade',
+  'dark', 'cult', 'mint', 'wave', 'sage', 'lust', 'vibe', 'hype', 'bolt', 'sync',
+  'myth', 'evil', 'holy', 'rare', 'grim', 'drip', 'crave', 'bliss', 'saint', 'curse',
+  'spell', 'charm', 'witch', 'devil', 'skull', 'knife', 'sword', 'crown', 'throne', 'spark',
+  'flash', 'blaze', 'inferno', 'smoke', 'mist', 'haze', 'shade', 'twilight', 'eclipse', 'comet',
+  'meteor', 'orbit', 'quasar', 'pulsar', 'stellar', 'nebula', 'zenith', 'ocean', 'river', 'cliff',
+  'stone', 'flint', 'steel', 'iron', 'gold', 'silk', 'velvet', 'pearl', 'ruby', 'diamond',
+  'amber', 'jade', 'opal', 'frenzy', 'karma', 'omen', 'saint', 'wrath', 'solace', 'sanctum',
+  'tempest', 'valkyrie', 'paragon', 'seraph', 'archon', 'revenant', 'specter', 'phantom', 'chimera'
+];
+
+const HYPE_GAMING_WORDS = [
+  'faze', 'optic', 'clout', 'drip', 'godly', 'snipes', 'tap', 'frag', 'aim', 'vibe',
+  'grim', 'glitch', 'reaper', 'slayer', 'toxic', 'savage', 'insane', 'clutch', 'streak', 'flex',
+  'hyped', 'demon', 'grind', 'lockin', 'shifty', 'speed', 'drift', 'nitro', 'pulse', 'shock',
+  'stun', 'peek', 'headshot', 'scope', 'ghost', 'ninja', 'rogue', 'hunter', 'raider', 'titan',
+  'rebel', 'havoc', 'rage', 'fatal', 'lethal', 'killer', 'deadly', 'snipe', 'strafe', 'flick',
+  'recoil', 'sweat', 'carry', 'smurf', 'ranked', 'predator', 'unreal', 'mythic', 'exotic', 'cracked',
+  'fused', 'amped', 'blitz', 'rush', 'tilt', 'drop', 'zone', 'looted', 'shield', 'armor'
+];
+
+const JAPANESE_AESTHETIC_WORDS = [
+  'kumo', 'yuki', 'kage', 'tsuki', 'hana', 'sora', 'shin', 'kami', 'ryu', 'oni',
+  'ken', 'zen', 'mizu', 'kai', 'yami', 'haze', 'kawa', 'nami', 'kuro', 'shiro',
+  'neko', 'kitsune', 'samurai', 'ronin', 'senpai', 'hikari', 'chiyo', 'haru', 'aki', 'fuyu',
+  'natsu', 'ren', 'jin', 'rei', 'rin', 'kyo', 'toru', 'akira', 'kaede', 'sakura',
+  'momiji', 'hotaru', 'tsubaki', 'ayame', 'kaida', 'kazuki', 'daiki', 'satoshi', 'ryota', 'shota',
+  'makoto', 'tatsuya', 'hideki', 'masato', 'yuto', 'naoki', 'takumi', 'kenta', 'sho', 'jun',
+  'ryo', 'sosuke', 'minato', 'haruto', 'riku', 'hinata', 'yuma', 'itsuki', 'hayato', 'kaito'
+];
+
+const FIRST_NAMES_LIST = [
+  'jack', 'alex', 'luke', 'noah', 'liam', 'maya', 'emma', 'zack', 'cody', 'kai',
+  'leo', 'finn', 'cole', 'milo', 'jude', 'ezra', 'levi', 'tate', 'nash', 'kobe',
+  'dean', 'zane', 'seth', 'kyle', 'troy', 'jake', 'sam', 'max', 'ben', 'dan',
+  'ian', 'eli', 'ryan', 'eric', 'sean', 'adam', 'paul', 'mark', 'john', 'dave',
+  'matt', 'nick', 'josh', 'chris', 'tyler', 'dylan', 'ethan', 'lucas', 'mason', 'logan',
+  'james', 'oliver', 'henry', 'theo', 'owen', 'wyatt', 'carter', 'hunter', 'connor', 'aiden'
+];
+
+const NUMERIC_LIST = [
+  '777', '666', '999', '000', '111', '6969', '7777', '8888', '1337', '404',
+  '500', '808', '303', '2026', '100k', '007', '420', '911', '360', '101',
+  '0000', '9999', '2222', '3333', '4444', '5555', '1234', '4321', '1122', '3344',
+  '5566', '7788', '9900', '1010', '2020', '3030', '4040', '5050', '6060', '7070', '8080', '9090'
+];
+
+const REPEATING_SYMMETRICAL_LIST = [
+  'abba', 'noon', 'radar', 'level', 'stats', 'otto', 'anna', 'kayak', 'deed', 'peep',
+  'pop', 'mom', 'dad', 'eye', 'sos', 'rotator', 'racecar', 'madam', 'refer', 'civic',
+  'tenet', 'solos', 'redder', 'zzzz', 'yyyy', 'xxxx', 'vvvv', 'qqqq', 'bbbb', 'cccc',
+  'dddd', 'ffff', 'gggg', 'hhhh', 'jjjj', 'kkkk', 'llll', 'mmmm', 'nnnn', 'pppp',
+  'rrrr', 'ssss', 'tttt', 'wwww'
 ];
 
 function generateNextHandle(pattern) {
+  // 1. 2L Pure Alpha (AA - ZZ)
+  if (pattern === '2L_ALPHA') {
+    return LETTERS[Math.floor(Math.random() * LETTERS.length)] + LETTERS[Math.floor(Math.random() * LETTERS.length)];
+  }
+
+  // 2. 3L Pure Letters (AAA - ZZZ)
   if (pattern === '3L_ALPHA') {
-    // 3-Letter pure letters (AAA-ZZZ) - Always 3 characters
     let s = '';
     for (let j = 0; j < 3; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
     return s;
-  } else if (pattern === '4L_ALPHA') {
-    // 4-Letter pure letters (AAAA-ZZZZ)
+  }
+
+  // 3. 3L Alphanumeric (A-Z, 0-9)
+  if (pattern === '3L_ALPHANUM') {
+    let s = '';
+    for (let j = 0; j < 3; j++) s += ALPHANUM[Math.floor(Math.random() * ALPHANUM.length)];
+    return s;
+  }
+
+  // 4. 4L Clean Letters (AAAA - ZZZZ)
+  if (pattern === '4L_ALPHA') {
     let s = '';
     for (let j = 0; j < 4; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
     return s;
-  } else if (pattern === '4L_ALPHANUM') {
-    // 4-Letter alphanumeric (A-Z, 0-9)
+  }
+
+  // 5. 4L Alphanumeric (A-Z, 0-9)
+  if (pattern === '4L_ALPHANUM') {
     let s = '';
     for (let j = 0; j < 4; j++) s += ALPHANUM[Math.floor(Math.random() * ALPHANUM.length)];
     return s;
-  } else if (pattern === '5L_SEMI_OG') {
-    const w = SEMI_OG_WORDS[Math.floor(Math.random() * SEMI_OG_WORDS.length)];
-    const suffixes = ['og', 'hq', 'vip', 'xo', 'gg', 'up', 'cc', '77', '99', 'x', 'z', ''];
-    const sfx = suffixes[Math.floor(Math.random() * suffixes.length)];
-    return Math.random() > 0.5 ? w + sfx : sfx + w;
-  } else if (pattern === 'REPEATING') {
+  }
+
+  // 6. 5L Clean Pronounceable (CVCVC / CVCV)
+  if (pattern === '5L_ALPHA') {
+    const c1 = CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)];
+    const v1 = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+    const c2 = CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)];
+    const v2 = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+    const c3 = CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)];
+    return c1 + v1 + c2 + v2 + c3;
+  }
+
+  // 7. Real Dictionary OG Words
+  if (pattern === 'OG_DICTIONARY') {
+    const w = OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
+    const affixes = ['', '', '', 'x', 'z', '_', 'og', 'hq', '7', '9'];
+    const aff = affixes[Math.floor(Math.random() * affixes.length)];
+    return Math.random() > 0.8 ? (Math.random() > 0.5 ? w + aff : aff + w) : w;
+  }
+
+  // 8. Gaming & Clout Handles
+  if (pattern === 'HYPE_GAMING') {
+    const w = HYPE_GAMING_WORDS[Math.floor(Math.random() * HYPE_GAMING_WORDS.length)];
+    const affixes = ['', '', 'x', 'z', '_', 'fn', 'gg', 'up', '77', '99', 'god'];
+    const aff = affixes[Math.floor(Math.random() * affixes.length)];
+    return Math.random() > 0.7 ? (Math.random() > 0.5 ? w + aff : aff + w) : w;
+  }
+
+  // 9. Japanese Romaji / Aesthetic
+  if (pattern === 'JAPANESE_AESTHETIC') {
+    const w = JAPANESE_AESTHETIC_WORDS[Math.floor(Math.random() * JAPANESE_AESTHETIC_WORDS.length)];
+    return Math.random() > 0.8 ? w + (Math.random() > 0.5 ? 'x' : 'z') : w;
+  }
+
+  // 10. First Names / IRL
+  if (pattern === 'FIRST_NAMES') {
+    const w = FIRST_NAMES_LIST[Math.floor(Math.random() * FIRST_NAMES_LIST.length)];
+    const affixes = ['', '', '', 'x', 'z', '_', 'real', 'its'];
+    const aff = affixes[Math.floor(Math.random() * affixes.length)];
+    return Math.random() > 0.8 ? (Math.random() > 0.5 ? aff + w : w + aff) : w;
+  }
+
+  // 11. Numeric Clean (777 / 1337 / Quad)
+  if (pattern === 'NUMERIC_CLEAN') {
+    return NUMERIC_LIST[Math.floor(Math.random() * NUMERIC_LIST.length)];
+  }
+
+  // 12. Palindromes & Symmetrical
+  if (pattern === 'REPEATING_SYMMETRICAL' || pattern === 'REPEATING') {
+    if (Math.random() > 0.5) {
+      return REPEATING_SYMMETRICAL_LIST[Math.floor(Math.random() * REPEATING_SYMMETRICAL_LIST.length)];
+    }
     const c1 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
     const c2 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
-    const mode = Math.floor(Math.random() * 4);
-    if (mode === 0) return c1 + c1 + c2 + c2;
-    if (mode === 1) return c1 + c2 + c1 + c2;
-    if (mode === 2) return c1 + c1 + c1 + c2;
-    return c1 + c2 + c2 + c2;
-  } else if (pattern === 'CUSTOM') {
+    return c1 + c1 + c2 + c2;
+  }
+
+  // 13. Custom List Queue
+  if (pattern === 'CUSTOM') {
     if (customHandlesList.length > 0) {
       if (customQueueIndex < customHandlesList.length) {
         return customHandlesList[customQueueIndex++];
@@ -95,11 +215,29 @@ function generateNextHandle(pattern) {
     }
   }
 
-  // Fallback: Random 4L
+  // Fallback: 4L Clean
   let s = '';
   for (let j = 0; j < 4; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
   return s;
 }
+
+window.selectGenPattern = function(pattern, el) {
+  window.currentGenPattern = pattern;
+  
+  // Highlight active button
+  document.querySelectorAll('.dash-preset-card').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  // Update sample pill
+  const sampleEl = document.getElementById('handlePatternLiveSample');
+  if (sampleEl) {
+    const sample = generateNextHandle(pattern);
+    sampleEl.textContent = `@${sample}`;
+  }
+
+  showToast(`✓ Selected Generator Pattern: [${pattern}]`);
+  logMessage('SYS', `Active handle generator pattern changed to [${pattern}].`);
+};
 
 // ----------------------------------------------------------
 // 3. SCANNER ENGINE EXECUTION & INFINITE STREAMING

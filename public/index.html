@@ -1141,42 +1141,90 @@
             <span id="scannerStatusBadge" style="font-size: 0.70rem; font-weight: 800; font-family: var(--font-mono); color: var(--blue-primary); background: var(--accent-subtle-bg); border: 1px solid var(--accent-subtle-border); padding: 4px 14px; border-radius: var(--radius-pill);">ENGINE READY</span>
           </div>
 
-          <!-- 4L / 3L / OG Preset Cards Grid -->
+          <!-- EXPANDED HANDLE GENERATOR SUITE & PRESET LIBRARIES -->
           <div>
-            <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;">
-              Select Handle Generator Pattern:
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+              <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 8px;">
+                <span>🎯 Select Handle Pattern / OG Library (12 Suites):</span>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span style="font-size: 0.62rem; color: var(--text-dim); font-weight: 700;">Live Sample:</span>
+                <span id="handlePatternLiveSample" style="font-size: 0.70rem; font-family: var(--font-mono); color: #c084fc; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); padding: 2px 8px; border-radius: var(--radius-pill); font-weight: 800;">@apex</span>
+              </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
               
-              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('3L_ALPHA', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
-                <span style="font-size: 1.1rem;">💎</span>
-                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">3L Letters (AAA-ZZZ)</span>
-                <span style="font-size: 0.60rem; color: var(--text-dim);">17.5k Ultra-rare</span>
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('2L_ALPHA', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">💎</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">2L Ultra-Rare</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">676 Combos (AA-ZZ)</span>
               </div>
 
-              <div class="preset-chip-btn dash-preset-card active" onclick="selectGenPattern('4L_ALPHA', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
-                <span style="font-size: 1.1rem;">⚡</span>
-                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">4L Clean Letters</span>
-                <span style="font-size: 0.60rem; color: var(--text-dim);">456.9k Permutations</span>
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('3L_ALPHA', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">🏆</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">3L Clean (AAA-ZZZ)</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">17.5k Pure Letters</span>
               </div>
 
-              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('4L_ALPHANUM', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
-                <span style="font-size: 1.1rem;">🔥</span>
-                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">4L Alphanumeric</span>
-                <span style="font-size: 0.60rem; color: var(--text-dim);">1.68M Combos</span>
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('3L_ALPHANUM', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">🔢</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">3L Alphanumeric</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">46.6k Letters+Nums</span>
               </div>
 
-              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('5L_SEMI_OG', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
-                <span style="font-size: 1.1rem;">👑</span>
-                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">5L Semi-OG Words</span>
-                <span style="font-size: 0.60rem; color: var(--text-dim);">Curated Dictionary</span>
+              <div class="preset-chip-btn dash-preset-card active" onclick="selectGenPattern('4L_ALPHA', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">⚡</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">4L Clean Letters</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">456.9k Permutations</span>
               </div>
 
-              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('REPEATING', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
-                <span style="font-size: 1.1rem;">💀</span>
-                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">Repeating Patterns</span>
-                <span style="font-size: 0.60rem; color: var(--text-dim);">Double & Quad</span>
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('4L_ALPHANUM', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">🔥</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">4L Alphanumeric</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">1.68M Combos</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('5L_ALPHA', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">✨</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">5L Clean Pronounce</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">CVCVC Smooth</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('OG_DICTIONARY', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">📖</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">Dictionary OG</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">3,000+ Real Nouns</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('HYPE_GAMING', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">🎮</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">Gaming & Clout</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">Esports & Hype Tags</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('JAPANESE_AESTHETIC', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">🌸</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">Japanese Romaji</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">Anime & Aesthetic</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('FIRST_NAMES', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">👤</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">First Names / IRL</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">Top Global Names</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('NUMERIC_CLEAN', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">🎰</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">Clean 777 / 1337</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">Triple/Quad Nums</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('REPEATING_SYMMETRICAL', this)" style="padding: 10px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 3px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.0rem;">💀</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.74rem;">Palindromes & XX</span>
+                <span style="font-size: 0.58rem; color: var(--text-dim);">ABBA / NOON / Symmetrical</span>
               </div>
 
             </div>
@@ -3040,6 +3088,6 @@
     });
   </script>
 
-  <script src="app.js?v=2.6.0"></script>
+  <script src="app.js?v=2.7.0"></script>
 </body>
 </html>
