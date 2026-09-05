@@ -6,20 +6,210 @@ import urllib.error
 import json
 import os
 import sys
-import random
+import re
 
 PORT = int(os.environ.get('PORT', 3000))
 PUBLIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public')
 
-DISCORD_CLIENT_ID = os.environ.get('DISCORD_CLIENT_ID', '')
-DISCORD_CLIENT_SECRET = os.environ.get('DISCORD_CLIENT_SECRET', '')
-DISCORD_REDIRECT_URI = os.environ.get('DISCORD_REDIRECT_URI', '')
+def check_tiktok_live(handle, proxy=None):
+    handle = handle.strip().lower()
+    
+    # Policy Rule 1: TikTok strictly restricts/bans all 3-character usernames from claim/registration
+    if len(handle) < 4:
+        return {'available': False, 'status': 'restricted', 'reason': 'TikTok restricts all 3L handles from registration'}
+
+    url = f"https://www.tiktok.com/@{handle}"
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9'
+    })
+    
+    opener = urllib.request.build_opener()
+    if proxy:
+        if not proxy.startswith('http://') and not proxy.startswith('https://'):
+            proxy = 'http://' + proxy
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
+
+    try:
+        with opener.open(req, timeout=8) as resp:
+            data = resp.read().decode('utf-8', errors='replace')
+            m = re.search(r'<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">([\s\S]*?)</script>', data)
+            if m:
+                parsed = json.loads(m.group(1))
+                detail = parsed.get('__DEFAULT_SCOPE__', {}).get('webapp.user-detail', {})
+                status_code = detail.get('statusCode')
+                user_info = detail.get('userInfo')
+
+                # Strict Rule: Only statusCode 10221 represents a completely clean, unregistered, claimable handle
+                if status_code == 10221:
+                    return {'available': True, 'status': 'available', 'reason': 'Clean unregistered handle'}
+                elif status_code == 10202:
+                    return {'available': False, 'status': 'banned_locked', 'reason': 'Deleted/banned account lock (unclaimable)'}
+                elif status_code == 209002:
+                    return {'available': False, 'status': 'reserved', 'reason': 'Reserved word (unclaimable)'}
+                elif user_info and user_info.get('user', {}).get('uniqueId'):
+                    return {'available': False, 'status': 'taken', 'reason': 'Active user profile'}
+                else:
+                    return {'available': False, 'status': 'taken', 'reason': f'Status {status_code}'}
+
+            if 'verify-bar' in data or 'captcha' in data or 'tiktok-waf' in data:
+                return {'available': False, 'status': 'rate_limited', 'reason': 'WAF / Captcha Challenge'}
+            
+            return {'available': False, 'status': 'taken', 'reason': 'Profile exists'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': False, 'status': 'restricted', 'reason': 'HTTP 404 on TikTok is restricted'}
+        elif e.code == 429:
+            return {'available': False, 'status': 'rate_limited', 'reason': 'HTTP 429 Rate Limited'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+def check_discord_live(handle, proxy=None):
+    handle = handle.strip().lower()
+    url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
+    req = urllib.request.Request(url, data=json.dumps({"username": handle}).encode('utf-8'), headers={
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    })
+    opener = urllib.request.build_opener()
+    if proxy:
+        if not proxy.startswith('http://') and not proxy.startswith('https://'):
+            proxy = 'http://' + proxy
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
+
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            is_taken = data.get('taken', True)
+            return {'available': not is_taken, 'status': 'available' if not is_taken else 'taken', 'data': data}
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            return {'available': False, 'status': 'rate_limited', 'reason': 'Discord 429'}
+        return {'available': False, 'status': 'taken' if e.code == 400 else 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+def check_kick_live(handle, proxy=None):
+    handle = handle.strip().lower()
+    url = f"https://kick.com/api/v2/channels/{handle}"
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+    })
+    opener = urllib.request.build_opener()
+    if proxy:
+        if not proxy.startswith('http://') and not proxy.startswith('https://'):
+            proxy = 'http://' + proxy
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
+
+    try:
+        with opener.open(req, timeout=6) as resp:
+            return {'available': False, 'status': 'taken', 'reason': 'Channel active (HTTP 200)'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Channel not found (HTTP 404)'}
+        elif e.code == 429 or e.code == 403:
+            return {'available': False, 'status': 'rate_limited', 'reason': f'HTTP {e.code}'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+def check_twitch_live(handle, proxy=None):
+    handle = handle.strip().lower()
+    url = f"https://passport.twitch.tv/usernames/{handle}"
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+    })
+    opener = urllib.request.build_opener()
+    if proxy:
+        if not proxy.startswith('http://') and not proxy.startswith('https://'):
+            proxy = 'http://' + proxy
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
+
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = resp.read().decode('utf-8', errors='replace')
+            if '"available":true' in data or resp.status == 204:
+                return {'available': True, 'status': 'available', 'reason': 'Twitch username available'}
+            return {'available': False, 'status': 'taken', 'reason': 'Username registered'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404 or e.code == 204:
+            return {'available': True, 'status': 'available', 'reason': 'Username available (404/204)'}
+        elif e.code == 429:
+            return {'available': False, 'status': 'rate_limited', 'reason': 'HTTP 429'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+def check_instagram_live(handle, proxy=None):
+    handle = handle.strip().lower()
+    url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={handle}"
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'x-ig-app-id': '936619743392459',
+        'Accept': 'application/json'
+    })
+    opener = urllib.request.build_opener()
+    if proxy:
+        if not proxy.startswith('http://') and not proxy.startswith('https://'):
+            proxy = 'http://' + proxy
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
+
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            user = data.get('data', {}).get('user')
+            if user:
+                return {'available': False, 'status': 'taken', 'reason': 'User profile active'}
+            return {'available': True, 'status': 'available', 'reason': 'User not found'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'HTTP 404 Not Found'}
+        elif e.code in [302, 429, 403]:
+            return {'available': False, 'status': 'rate_limited', 'reason': f'HTTP {e.code} Challenge'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+def check_twitter_live(handle, proxy=None):
+    handle = handle.strip().lower()
+    url = f"https://api.twitter.com/i/users/username_available.json?username={handle}"
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json'
+    })
+    opener = urllib.request.build_opener()
+    if proxy:
+        if not proxy.startswith('http://') and not proxy.startswith('https://'):
+            proxy = 'http://' + proxy
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
+
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            is_valid = data.get('valid', False)
+            return {'available': is_valid, 'status': 'available' if is_valid else 'taken', 'data': data}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'HTTP 404'}
+        elif e.code == 429:
+            return {'available': False, 'status': 'rate_limited', 'reason': 'HTTP 429'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
 
 class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -42,203 +232,57 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
         
         return os.path.join(PUBLIC_DIR, 'index.html')
 
-    def do_GET(self):
-        parsed_url = urllib.parse.urlparse(self.path)
-        path = parsed_url.path
-        query_params = urllib.parse.parse_qs(parsed_url.query)
-
-        # 1. OAuth2 Config Info
-        if path == '/api/auth/discord/config':
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            host = self.headers.get('Host', f'localhost:{PORT}')
-            proto = 'https' if 'onrender.com' in host or self.headers.get('X-Forwarded-Proto') == 'https' else 'http'
-            default_redirect = f"{proto}://{host}/api/auth/discord/callback"
+    def do_POST(self):
+        clean_path = self.path.split('?')[0].rstrip('/')
+        
+        # 1. Dedicated Master Handle Check Endpoint (Absolute Precision)
+        if clean_path == '/api/check-handle':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
             
-            payload = {
-                'configured': bool(DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET),
-                'client_id': DISCORD_CLIENT_ID,
-                'redirect_uri': DISCORD_REDIRECT_URI or default_redirect
-            }
-            self.wfile.write(json.dumps(payload).encode('utf-8'))
-            return
-
-        # 2. OAuth2 Authorization Redirect
-        if path == '/api/auth/discord/login':
-            client_id = query_params.get('client_id', [DISCORD_CLIENT_ID])[0]
-            host = self.headers.get('Host', f'localhost:{PORT}')
-            proto = 'https' if 'onrender.com' in host or self.headers.get('X-Forwarded-Proto') == 'https' else 'http'
-            default_redirect = f"{proto}://{host}/api/auth/discord/callback"
-            redirect_uri = query_params.get('redirect_uri', [DISCORD_REDIRECT_URI or default_redirect])[0]
-            
-            if not client_id:
-                self.send_response(400)
-                self.send_header('Content-Type', 'text/html')
-                self.end_headers()
-                self.wfile.write(b"<h3>Error: Discord Client ID is required for OAuth2 flow.</h3>")
-                return
-
-            auth_params = {
-                'client_id': client_id,
-                'redirect_uri': redirect_uri,
-                'response_type': 'code',
-                'scope': 'identify'
-            }
-            auth_url = f"https://discord.com/api/oauth2/authorize?{urllib.parse.urlencode(auth_params)}"
-            
-            self.send_response(302)
-            self.send_header('Location', auth_url)
-            self.end_headers()
-            return
-
-        # 3. OAuth2 Callback Endpoint
-        if path == '/api/auth/discord/callback':
-            code = query_params.get('code', [None])[0]
-            client_id = query_params.get('client_id', [DISCORD_CLIENT_ID])[0]
-            client_secret = query_params.get('client_secret', [DISCORD_CLIENT_SECRET])[0]
-            host = self.headers.get('Host', f'localhost:{PORT}')
-            proto = 'https' if 'onrender.com' in host or self.headers.get('X-Forwarded-Proto') == 'https' else 'http'
-            default_redirect = f"{proto}://{host}/api/auth/discord/callback"
-            redirect_uri = query_params.get('redirect_uri', [DISCORD_REDIRECT_URI or default_redirect])[0]
-
-            if not code:
-                self.send_response(400)
-                self.send_header('Content-Type', 'text/html')
-                self.end_headers()
-                error_msg = query_params.get('error_description', ['Authorization code missing'])[0]
-                self.wfile.write(f"<h3>OAuth2 Error: {error_msg}</h3>".encode('utf-8'))
-                return
-
-            # Exchange code for token
-            token_url = 'https://discord.com/api/oauth2/token'
-            data = urllib.parse.urlencode({
-                'client_id': client_id,
-                'client_secret': client_secret,
-                'grant_type': 'authorization_code',
-                'code': code,
-                'redirect_uri': redirect_uri
-            }).encode('utf-8')
-
-            token_req = urllib.request.Request(token_url, data=data, headers={
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'User-Agent': 'Snowflake-Dashboard/4.5'
-            })
-
             try:
-                with urllib.request.urlopen(token_req) as resp:
-                    token_res = json.loads(resp.read().decode('utf-8'))
-                    access_token = token_res.get('access_token')
-                    token_type = token_res.get('token_type', 'Bearer')
-                    
-                    # Fetch user metadata
-                    user_req = urllib.request.Request('https://discord.com/api/users/@me', headers={
-                        'Authorization': f"{token_type} {access_token}",
-                        'User-Agent': 'Snowflake-Dashboard/4.5'
-                    })
-                    user_profile = {}
-                    try:
-                        with urllib.request.urlopen(user_req) as u_resp:
-                            user_profile = json.loads(u_resp.read().decode('utf-8'))
-                    except Exception:
-                        pass
+                payload = json.loads(post_data.decode('utf-8'))
+                platform = payload.get('platform', 'tiktok').lower()
+                handle = payload.get('handle', '').strip()
+                proxy = payload.get('proxy')
 
-                    html_response = f"""<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Discord Authorization</title>
-  <style>
-    body {{ background: #07070b; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }}
-    .box {{ background: #12121c; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 28px; text-align: center; max-width: 360px; }}
-    h2 {{ color: #5865F2; margin-top: 0; }}
-    p {{ color: #9ca3af; font-size: 0.85rem; }}
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h2>Authorization Complete</h2>
-    <p>Connected account: <strong>@{user_profile.get('username', 'Discord User')}</strong></p>
-    <p>Linking credentials to Snowflake Dashboard...</p>
-  </div>
-  <script>
-    const payload = {{
-      type: 'DISCORD_OAUTH_SUCCESS',
-      token: "{token_type} {access_token}",
-      user: {json.dumps(user_profile)}
-    }};
-    if (window.opener) {{
-      window.opener.postMessage(payload, window.location.origin);
-      setTimeout(() => window.close(), 1200);
-    }} else {{
-      localStorage.setItem('snowflake_oauth_creds', JSON.stringify(payload));
-      setTimeout(() => {{ window.location.href = '/'; }}, 1200);
-    }}
-  </script>
-</body>
-</html>"""
-                    self.send_response(200)
-                    self.send_header('Content-Type', 'text/html; charset=utf-8')
+                if not handle:
+                    self.send_response(400)
+                    self.send_header('Content-Type', 'application/json')
                     self.end_headers()
-                    self.wfile.write(html_response.encode('utf-8'))
+                    self.wfile.write(json.dumps({'error': 'Handle parameter required'}).encode('utf-8'))
                     return
 
-            except urllib.error.HTTPError as e:
-                err_body = e.read().decode('utf-8', errors='replace')
-                self.send_response(400)
-                self.send_header('Content-Type', 'text/html')
+                if platform == 'tiktok':
+                    result = check_tiktok_live(handle, proxy)
+                elif platform == 'discord':
+                    result = check_discord_live(handle, proxy)
+                elif platform == 'kick':
+                    result = check_kick_live(handle, proxy)
+                elif platform == 'twitch':
+                    result = check_twitch_live(handle, proxy)
+                elif platform == 'instagram':
+                    result = check_instagram_live(handle, proxy)
+                elif platform == 'twitter':
+                    result = check_twitter_live(handle, proxy)
+                else:
+                    result = {'available': False, 'status': 'error', 'reason': f'Unknown platform: {platform}'}
+
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(f"<h3>OAuth2 Token Exchange Failed ({e.code}):</h3><pre>{err_body}</pre>".encode('utf-8'))
+                self.wfile.write(json.dumps(result).encode('utf-8'))
                 return
+
             except Exception as e:
-                self.send_response(500)
-                self.send_header('Content-Type', 'text/html')
-                self.end_headers()
-                self.wfile.write(f"<h3>Internal OAuth2 Error: {str(e)}</h3>".encode('utf-8'))
-                return
-
-        # 4. Handle Mock API Endpoint: GET /api/mock-check/<id>
-        if path.startswith('/api/mock-check/'):
-            identifier = path[len('/api/mock-check/'):]
-            if not identifier or len(identifier) < 3:
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({'error': 'Identifier too short'}).encode('utf-8'))
+                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
                 return
 
-            if 'limit' in identifier.lower():
-                self.send_response(429)
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Retry-After', '5')
-                self.end_headers()
-                self.wfile.write(json.dumps({'error': 'Rate limit exceeded on mock endpoint'}).encode('utf-8'))
-                return
-
-            if 'free' in identifier.lower() or 'val' in identifier.lower():
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'status': 'available', 'message': 'Identifier is available'}).encode('utf-8'))
-                return
-
-            is_available = random.random() > 0.5
-            if is_available:
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'status': 'available', 'message': 'Identifier is available'}).encode('utf-8'))
-            else:
-                self.send_response(409)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'status': 'taken', 'message': 'Identifier is already registered'}).encode('utf-8'))
-            return
-
-        super().do_GET()
-
-    def do_POST(self):
-        if self.path == '/api/proxy-check':
+        # 2. General Proxy Check Endpoint
+        if clean_path == '/api/proxy-check':
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
             
@@ -280,7 +324,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                     opener = urllib.request.build_opener()
 
                 try:
-                    with opener.open(req, timeout=12) as resp:
+                    with opener.open(req, timeout=8) as resp:
                         resp_status = resp.status
                         resp_headers = dict(resp.headers)
                         resp_data = resp.read().decode('utf-8', errors='replace')
@@ -288,18 +332,12 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                     resp_status = e.code
                     resp_headers = dict(e.headers)
                     resp_data = e.read().decode('utf-8', errors='replace')
-                except Exception as e:
+                except Exception as proxy_err:
                     self.send_response(500)
                     self.send_header('Content-Type', 'application/json')
                     self.end_headers()
-                    self.wfile.write(json.dumps({'error': 'Proxy request failed', 'message': str(e)}).encode('utf-8'))
+                    self.wfile.write(json.dumps({'error': 'Request failed', 'message': str(proxy_err)}).encode('utf-8'))
                     return
-
-                exposed_headers = {}
-                for key in ['retry-after', 'content-type', 'Retry-After', 'Content-Type']:
-                    for hk, hv in resp_headers.items():
-                        if hk.lower() == key.lower():
-                            exposed_headers[key.lower()] = hv
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
@@ -308,18 +346,48 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 response_payload = {
                     'status': resp_status,
                     'statusText': 'OK' if resp_status == 200 else 'HTTP Error',
-                    'headers': exposed_headers,
                     'data': resp_data
                 }
                 self.wfile.write(json.dumps(response_payload).encode('utf-8'))
+                return
 
             except Exception as e:
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({'error': 'Malformed JSON payload', 'message': str(e)}).encode('utf-8'))
-            return
-        
+                return
+
+        # 3. Discord Test Webhook Endpoint
+        if clean_path == '/api/discord-test':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                payload = json.loads(post_data.decode('utf-8'))
+                url = payload.get('url')
+                content = payload.get('content', '⚡ **ONYX APEX** — Discord Webhook Connected!')
+                if url:
+                    d_req = urllib.request.Request(url, data=json.dumps({'content': content}).encode('utf-8'), headers={
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'ONYX-APEX-Scanner/2.4'
+                    })
+                    try:
+                        with urllib.request.urlopen(d_req, timeout=5) as resp:
+                            pass
+                    except Exception:
+                        pass
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'status': 'sent'}).encode('utf-8'))
+                return
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
+                return
+
         self.send_response(404)
         self.end_headers()
 
@@ -331,8 +399,7 @@ if __name__ == '__main__':
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), handler) as httpd:
         print(f"==================================================")
-        print(f"Snowflake API Server with Discord OAuth2 on port {PORT}")
-        print(f"OAuth2 Login: http://localhost:{PORT}/api/auth/discord/login")
+        print(f"ONYX APEX Master Engine Server running on port {PORT}")
         print(f"Dashboard interface: http://localhost:{PORT}")
         print(f"==================================================")
         try:

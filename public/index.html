@@ -3,1590 +3,2725 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snowflake — High-Performance API Testing Engine</title>
+  <title>ONYX APEX — Autonomous Identifier Scanner</title>
   
-  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <!-- Modern Bubbly Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     :root {
-      --bg-base: #030306;
-      --bg-surface: rgba(10, 11, 18, 0.85);
-      --bg-card: rgba(13, 15, 26, 0.75);
-      --bg-card-hover: rgba(18, 22, 38, 0.9);
-      --bg-input: #07080e;
-      
-      --border-subtle: rgba(59, 130, 246, 0.15);
-      --border-glow: rgba(0, 210, 255, 0.35);
-      --border-focus: #00d2ff;
-      
-      --blue-primary: #2563eb;
-      --blue-electric: #00d2ff;
-      --blue-neon: #3b82f6;
-      --blue-glow: rgba(0, 210, 255, 0.25);
-      --blue-dark: #1d4ed8;
-      
-      --emerald: #10b981;
-      --emerald-glow: rgba(16, 185, 129, 0.25);
-      --amber: #f59e0b;
-      --amber-glow: rgba(245, 158, 11, 0.25);
-      --rose: #ef4444;
-      --rose-glow: rgba(239, 68, 68, 0.25);
-      
-      --text-main: #f8fafc;
-      --text-dim: #94a3b8;
-      --text-muted: #64748b;
-      
-      --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --bg-base: #0c2340;
+      --bg-sidebar: rgba(12, 35, 64, 0.88);
+      --bg-surface: rgba(16, 45, 80, 0.75);
+      --bg-surface-alt: rgba(22, 60, 105, 0.80);
+      --bg-card: rgba(14, 39, 70, 0.80);
+      --bg-input: rgba(7, 23, 44, 0.90);
+
+      --border-subtle: rgba(125, 211, 252, 0.25);
+      --border-main: rgba(56, 189, 248, 0.40);
+      --border-hover: #38BDF8;
+      --border-active: #38BDF8;
+
+      --blue-primary: #38BDF8;
+      --blue-glow: rgba(56, 189, 248, 0.55);
+      --accent-subtle-bg: rgba(56, 189, 248, 0.20);
+      --accent-subtle-border: rgba(56, 189, 248, 0.45);
+      --accent-gradient: linear-gradient(135deg, #0284C7 0%, #38BDF8 50%, #BAE6FD 100%);
+      --accent-avatar-gradient: linear-gradient(135deg, rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.2));
+
+      --purple-accent: #8B5CF6;
+      --emerald-success: #10B981;
+      --amber-warning: #F59E0B;
+      --rose-danger: #EF4444;
+      --cyan-telemetry: #06B6D4;
+
+      --text-white: #FFFFFF;
+      --text-main: #F1F5F9;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
+
+      /* ULTRA BUBBLY ROUNDED CURVES */
+      --radius-pill: 9999px;
+      --radius-panel: 28px;
+      --radius-card: 22px;
+      --radius-bubble: 18px;
+      --radius-input: 9999px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: var(--font-ui);
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-sans); letter-spacing: -0.01em; }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blue-primary); }
 
     body {
       background-color: var(--bg-base);
-      background-image: 
-        radial-gradient(circle at 50% -10%, rgba(37, 99, 235, 0.14), transparent 60%),
-        radial-gradient(circle at 95% 90%, rgba(0, 210, 255, 0.08), transparent 50%),
-        radial-gradient(circle at 5% 50%, rgba(29, 78, 216, 0.06), transparent 50%);
       color: var(--text-main);
-      display: flex;
       height: 100vh;
+      display: flex;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
+      user-select: none;
     }
 
-    .app-layout {
-      display: flex;
+    /* FULL-SCREEN NON-BLOCKING ATMOSPHERIC PARTICLES */
+    #themeAtmosphereCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
-      overflow: hidden;
+      pointer-events: none;
+      z-index: 9999;
     }
 
-    /* LEFT SIDEBAR */
-    aside {
-      width: 260px;
-      background: var(--bg-surface);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-right: 1px solid var(--border-subtle);
+    /* 1. BUBBLY GLASS SIDEBAR */
+    .app-sidebar {
+      width: 245px;
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border-main);
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
+      padding: 18px 14px;
+      gap: 12px;
       flex-shrink: 0;
       z-index: 20;
-    }
-
-    .brand-container {
-      padding: 20px 22px;
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-icon {
-      font-size: 1.5rem;
-      color: var(--blue-electric);
-      display: inline-block;
-      animation: spin 25s linear infinite;
-      user-select: none;
-      filter: drop-shadow(0 0 10px var(--blue-glow));
-    }
-
-    .brand-text {
-      font-size: 1.15rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      background: linear-gradient(135deg, #ffffff 40%, var(--blue-electric));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-transform: uppercase;
-    }
-
-    .badge-v {
-      font-size: 0.65rem;
-      font-family: var(--font-mono);
-      font-weight: 700;
-      background: rgba(0, 210, 255, 0.08);
-      color: var(--blue-electric);
-      border: 1px solid rgba(0, 210, 255, 0.3);
-      padding: 2px 7px;
-      border-radius: 20px;
-    }
-
-    .nav-menu {
-      padding: 14px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      flex: 1;
       overflow-y: auto;
+      transition: background 0.3s ease, border-color 0.3s ease;
     }
 
-    .nav-label {
-      font-size: 0.65rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      padding: 10px 10px 4px 10px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 12px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: all 0.15s ease;
-      text-decoration: none;
-      border: 1px solid transparent;
-      user-select: none;
-    }
-
-    .nav-item:hover {
-      color: var(--text-main);
-      background: rgba(59, 130, 246, 0.06);
-      border-color: rgba(59, 130, 246, 0.15);
-    }
-
-    .nav-item.active {
-      color: #ffffff;
-      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(0, 210, 255, 0.1));
-      border-color: rgba(0, 210, 255, 0.35);
-      box-shadow: 0 4px 14px rgba(0, 210, 255, 0.1);
-    }
-
-    .nav-item svg {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-    }
-
-    /* CREDENTIAL MINI STATUS */
-    .sidebar-section {
-      padding: 12px 14px;
-      border-top: 1px solid var(--border-subtle);
-    }
-
-    .credential-status-list {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      max-height: 110px;
-      overflow-y: auto;
-      margin-top: 6px;
-    }
-
-    .credential-badge-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 5px 8px;
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-    }
-
-    .cred-status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--emerald);
-      box-shadow: 0 0 6px var(--emerald);
-    }
-
-    .cred-status-dot.cooldown {
-      background: var(--amber);
-      box-shadow: 0 0 6px var(--amber);
-      animation: pulse 1s infinite;
-    }
-
-    /* MAIN VIEWPORT */
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    header {
-      height: 64px;
-      border-bottom: 1px solid var(--border-subtle);
-      background: var(--bg-surface);
-      backdrop-filter: blur(20px);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 28px;
-      flex-shrink: 0;
-      z-index: 10;
-    }
-
-    .header-info h1 {
-      font-size: 1.05rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, #ffffff 60%, var(--blue-electric));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .header-info p {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .header-actions {
+    .brand-block {
       display: flex;
       align-items: center;
       gap: 12px;
+      padding: 4px 8px 16px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand-badge-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-pill);
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.2rem;
+      box-shadow: 0 0 20px var(--blue-glow);
+    }
+
+    .brand-title {
+      font-size: 0.94rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .version-tag {
+      font-size: 0.58rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--blue-primary);
+      background: var(--accent-subtle-bg);
+      border: 1px solid var(--accent-subtle-border);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+    }
+
+    .brand-subtitle {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    .nav-group-title {
+      font-size: 0.60rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: var(--text-dim);
+      margin: 10px 0 4px 12px;
+    }
+
+    .sidebar-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 10px 16px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-align: left;
+      width: 100%;
+    }
+
+    .nav-tab-inner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-tab-btn svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.75;
+    }
+
+    .nav-tab-btn:hover {
+      color: #fff;
+      background: var(--bg-surface-alt);
+      transform: translateX(4px) scale(1.02);
+    }
+
+    .nav-tab-btn.active {
+      background: var(--accent-subtle-bg);
+      color: #fff;
+      border-color: var(--blue-primary);
+      box-shadow: 0 0 18px var(--blue-glow);
+    }
+
+    .nav-tab-btn.active svg {
+      opacity: 1;
+      color: var(--blue-primary);
+    }
+
+    /* SIDEBAR BOTTOM TOKEN & CONTROLS */
+    .sidebar-bottom-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .btn-token-manager {
+      width: 100%;
+      background: rgba(139, 92, 246, 0.14);
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      color: #C4B5FD;
+      border-radius: var(--radius-pill);
+      padding: 10px 16px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .btn-token-manager:hover {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: #8B5CF6;
+      color: #fff;
+      transform: scale(1.03);
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-main-cta {
+      width: 100%;
+      background: var(--accent-gradient);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: var(--radius-pill);
+      padding: 12px;
+      font-size: 0.80rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 22px var(--blue-glow);
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .btn-main-cta:hover {
+      filter: brightness(1.12);
+      transform: scale(1.03);
+      box-shadow: 0 6px 26px var(--blue-glow);
+    }
+
+    .btn-stop-cta {
+      width: 100%;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: var(--rose-danger);
+      border-radius: var(--radius-pill);
+      padding: 12px;
+      font-size: 0.80rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* 2. MAIN VIEWPORT */
+    .main-viewport {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* BUBBLY GLASS HEADER */
+    .app-header {
+      height: 58px;
+      border-bottom: 1px solid var(--border-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      flex-shrink: 0;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .header-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-main);
+      padding: 8px 18px;
+      border-radius: var(--radius-pill);
+      width: 320px;
+      transition: all 0.2s ease;
+    }
+
+    .header-search:focus-within {
+      border-color: var(--blue-primary);
+      box-shadow: 0 0 16px var(--blue-glow);
+    }
+
+    .header-search input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.76rem;
+      width: 100%;
+    }
+
+    .header-search kbd {
+      font-family: var(--font-mono);
+      font-size: 0.60rem;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+      color: var(--text-dim);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-sync-pill-tokens {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34D399;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .top-sync-pill-tokens:hover {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: #10B981;
+      transform: scale(1.04);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .top-sync-pill-proxies {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--accent-subtle-bg);
+      border: 1px solid var(--accent-subtle-border);
+      color: var(--blue-primary);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .top-sync-pill-proxies:hover {
+      border-color: var(--blue-primary);
+      transform: scale(1.04);
+      box-shadow: 0 0 14px var(--blue-glow);
     }
 
     .status-pill {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-subtle);
+      gap: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-main);
       padding: 6px 14px;
-      border-radius: 30px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--text-dim);
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+      font-size: 0.70rem;
     }
 
-    .status-dot {
+    .pill-dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: var(--emerald);
-      box-shadow: 0 0 8px var(--emerald);
     }
 
-    .status-dot.scanning {
-      background: var(--blue-electric);
-      box-shadow: 0 0 12px var(--blue-electric);
-      animation: pulse 1.2s infinite;
-    }
-
-    /* CAPTCHA / VERIFICATION ALERT BANNER */
-    .verification-banner {
-      display: none;
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
-      border-bottom: 1px solid rgba(245, 158, 11, 0.4);
-      padding: 10px 28px;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.8rem;
-      color: #fef08a;
-      flex-shrink: 0;
-    }
-
-    .verification-banner.active {
-      display: flex;
-    }
-
-    /* VIEW SECTIONS */
-    .view-section {
-      display: none;
+    /* MAIN CONTENT VIEWPORT */
+    .main-scroll-view {
       flex: 1;
-      padding: 20px 28px;
+      padding: 18px 24px;
       overflow-y: auto;
+      display: flex;
       flex-direction: column;
       gap: 18px;
     }
 
-    .view-section.active {
+    .view-panel-container {
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+      animation: fadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .view-panel-container.active {
       display: flex;
     }
 
-    /* METRICS GRID */
-    .metrics-grid {
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* BUBBLY METRIC STAT CARDS */
+    .metrics-bubble-grid {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
     }
 
-    @media (max-width: 1300px) {
-      .metrics-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    .metric-card {
+    .stat-bubble-card {
       background: var(--bg-card);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 12px 16px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-main);
+      border-radius: var(--radius-card);
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      justify-content: space-between;
+      gap: 8px;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
       overflow: hidden;
-      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.7);
-      transition: all 0.2s ease;
     }
 
-    .metric-card:hover {
-      border-color: var(--border-glow);
+    .stat-bubble-card:hover {
+      border-color: var(--blue-primary);
       transform: translateY(-2px);
-      background: var(--bg-card-hover);
+      box-shadow: 0 8px 24px var(--blue-glow);
     }
 
-    .metric-card.available { border-top: 2px solid var(--emerald); box-shadow: 0 6px 20px -6px var(--emerald-glow); }
-    .metric-card.limited { border-top: 2px solid var(--amber); box-shadow: 0 6px 20px -6px var(--amber-glow); }
-    .metric-card.failed { border-top: 2px solid var(--rose); box-shadow: 0 6px 20px -6px var(--rose-glow); }
-
-    .metric-header {
+    .stat-card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .metric-label {
-      font-size: 0.65rem;
-      font-weight: 800;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    .metric-body {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-
-    .metric-value {
-      font-size: 1.3rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-
-    .metric-pct-tag {
-      font-size: 0.7rem;
+    .stat-card-label {
+      font-size: 0.70rem;
       font-weight: 700;
-      font-family: var(--font-mono);
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.03);
-      padding: 2px 5px;
-      border-radius: 4px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
 
-    .metric-card.available .metric-pct-tag { color: var(--emerald); background: rgba(16, 185, 129, 0.1); }
-    .metric-card.limited .metric-pct-tag { color: var(--amber); background: rgba(245, 158, 11, 0.1); }
-
-    /* PROGRESS TRACKER */
-    .progress-bar-wrapper {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 10px 16px;
+    .stat-card-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-pill);
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+
+    .stat-card-value {
+      font-size: 1.65rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: #fff;
+      letter-spacing: -0.03em;
+    }
+
+    .stat-card-sub {
+      font-size: 0.64rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
       gap: 6px;
     }
 
-    .progress-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-dim);
-    }
-
-    .progress-track {
-      width: 100%;
-      height: 6px;
-      background: #090b14;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--blue-primary), var(--blue-electric));
-      border-radius: 4px;
-      transition: width 0.25s ease;
-      box-shadow: 0 0 10px var(--blue-glow);
-    }
-
-    /* 3-PANEL GRID */
-    .main-grid {
-      display: grid;
-      grid-template-columns: 360px 1fr 1fr;
-      gap: 16px;
-      min-height: 500px;
-    }
-
-    @media (max-width: 1300px) {
-      .main-grid {
-        grid-template-columns: 340px 1fr;
-      }
-      .terminal-panel {
-        grid-column: span 2;
-      }
-    }
-
-    @media (max-width: 900px) {
-      .main-grid {
-        grid-template-columns: 1fr;
-      }
-      .terminal-panel {
-        grid-column: span 1;
-      }
-    }
-
-    /* PANELS */
-    .panel {
-      background: var(--bg-card);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
+    /* WORKSPACE GLASS PANELS */
+    .workspace-panel {
+      background: var(--bg-surface);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-main);
+      border-radius: var(--radius-panel);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
     }
 
-    .panel-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border-subtle);
+    .panel-top-toolbar {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-main);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.015);
-      flex-shrink: 0;
+      background: var(--bg-surface-alt);
+    }
+
+    .panel-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .panel-title {
-      font-size: 0.75rem;
+      font-size: 0.86rem;
       font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      color: #fff;
+    }
+
+    .presets-pill-strip {
+      display: flex;
+      gap: 6px;
+      background: var(--bg-surface);
+      padding: 4px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-main);
+    }
+
+    .preset-chip-btn {
+      background: transparent;
+      border: 1px solid transparent;
       color: var(--text-dim);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
       display: flex;
       align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .preset-chip-btn:hover {
+      color: #fff;
+      background: var(--bg-surface-alt);
+    }
+
+    .preset-chip-btn.active {
+      background: var(--accent-subtle-bg);
+      border-color: var(--blue-primary);
+      color: #fff;
+      box-shadow: 0 0 12px var(--blue-glow);
+    }
+
+    .btn-export-blue {
+      background: var(--blue-primary);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.72rem;
+      padding: 7px 16px;
+      border-radius: var(--radius-pill);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-export-blue:hover {
+      filter: brightness(1.15);
+      transform: scale(1.03);
+    }
+
+    .btn-dead-action {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: var(--rose-danger);
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+    }
+
+    .filter-search-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border-main);
+      color: #fff;
+      font-size: 0.72rem;
+      border-radius: var(--radius-pill);
+      padding: 6px 14px;
+      outline: none;
+    }
+
+    .filter-search-box:focus {
+      border-color: var(--blue-primary);
+      box-shadow: 0 0 12px var(--blue-glow);
+    }
+
+    .data-feed-scroll {
+      max-height: 480px;
+      overflow-y: auto;
+      background: var(--bg-card);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
       gap: 8px;
     }
 
-    .panel-body {
-      padding: 16px;
-      flex: 1;
+    .handle-card-item {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-bubble);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.18s ease;
+    }
+
+    .handle-card-item:hover {
+      border-color: var(--blue-primary);
+      transform: translateX(3px);
+      box-shadow: 0 4px 18px var(--blue-glow);
+    }
+
+    .handle-name-badge {
+      font-family: var(--font-mono);
+      font-weight: 800;
+      color: #fff;
+      font-size: 0.88rem;
+    }
+
+    .badge-available {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald-success);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      font-size: 0.64rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+    }
+
+    .badge-taken {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--rose-danger);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      font-size: 0.64rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+    }
+
+    .btn-action-copy {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-main);
+      color: var(--text-dim);
+      font-size: 0.66rem;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+    }
+
+    .btn-action-copy:hover {
+      color: #fff;
+      border-color: var(--blue-primary);
+    }
+
+    /* TUTORIAL BUBBLY CARDS */
+    .guide-card-bubbly {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-main);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all 0.22s ease;
+      position: relative;
+    }
+
+    .guide-card-bubbly:hover {
+      border-color: var(--blue-primary);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px var(--blue-glow);
+    }
+
+    .guide-step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.74rem;
+      line-height: 1.4;
+    }
+
+    .guide-step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent-subtle-bg);
+      border: 1px solid var(--accent-subtle-border);
+      color: var(--blue-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.68rem;
+      flex-shrink: 0;
+    }
+
+    /* INFRASTRUCTURE PANELS */
+    .infra-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .infra-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-main);
+      border-radius: var(--radius-card);
+      padding: 18px;
       display: flex;
       flex-direction: column;
       gap: 12px;
-      overflow-y: auto;
     }
 
-    /* FORM CONTROLS */
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .field label {
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    select, input[type="text"], input[type="number"], textarea {
+    .infra-textarea {
+      width: 100%;
+      height: 180px;
       background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      color: var(--text-main);
-      padding: 8px 12px;
-      font-size: 0.78rem;
-      font-weight: 500;
-      outline: none;
-      transition: all 0.2s ease;
-    }
-
-    select {
-      appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg fill='%2394a3b8' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      padding-right: 32px;
-      cursor: pointer;
-    }
-
-    select:focus, input:focus, textarea:focus {
-      border-color: var(--blue-electric);
-      box-shadow: 0 0 0 3px var(--blue-glow);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 60px;
+      border: 1px solid var(--border-main);
+      border-radius: var(--radius-bubble);
+      color: #fff;
       font-family: var(--font-mono);
       font-size: 0.72rem;
-    }
-
-    /* SLIDER & TOGGLES */
-    .slider-box {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .slider-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .slider-header .val {
-      color: var(--blue-electric);
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-
-    .range-slider {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 4px;
-      border-radius: 3px;
-      background: #0f1424;
-      outline: none;
-    }
-
-    .range-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      background: var(--blue-electric);
-      cursor: pointer;
-      box-shadow: 0 0 10px var(--blue-electric);
-      transition: all 0.15s ease;
-    }
-
-    .range-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.25);
-    }
-
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: var(--text-dim);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 32px;
-      height: 16px;
-      flex-shrink: 0;
-    }
-
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .switch-track {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #0d111d;
-      border: 1px solid var(--border-subtle);
-      border-radius: 20px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .switch-track:before {
-      position: absolute;
-      content: "";
-      height: 10px;
-      width: 10px;
-      left: 2px;
-      bottom: 2px;
-      background-color: var(--text-muted);
-      border-radius: 50%;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    input:checked + .switch-track {
-      background-color: rgba(0, 210, 255, 0.15);
-      border-color: var(--blue-electric);
-    }
-
-    input:checked + .switch-track:before {
-      transform: translateX(16px);
-      background-color: var(--blue-electric);
-      box-shadow: 0 0 8px var(--blue-electric);
-    }
-
-    /* DETAILS */
-    details {
-      background: rgba(255, 255, 255, 0.015);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 8px 12px;
-    }
-
-    details[open] {
-      background: rgba(255, 255, 255, 0.025);
-      border-color: rgba(59, 130, 246, 0.3);
-    }
-
-    summary {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      cursor: pointer;
-      outline: none;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    summary::after {
-      content: '›';
-      font-size: 1.1rem;
-      transition: transform 0.2s ease;
-    }
-
-    details[open] summary::after {
-      transform: rotate(90deg);
-      color: var(--blue-electric);
-    }
-
-    .details-content {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border-subtle);
-    }
-
-    /* BUTTONS */
-    .btn-group {
-      margin-top: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding-top: 4px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.78rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      cursor: pointer;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--blue-electric), var(--blue-primary));
-      color: #ffffff;
-      box-shadow: 0 4px 16px rgba(0, 210, 255, 0.25);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 6px 24px rgba(0, 210, 255, 0.4);
-      transform: translateY(-1px);
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, var(--rose), #dc2626);
-      color: #ffffff;
-      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
-    }
-
-    .btn-danger:hover {
-      box-shadow: 0 6px 22px rgba(239, 68, 68, 0.45);
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      border: 1px solid var(--border-subtle);
-      color: var(--text-dim);
-      padding: 7px 12px;
-      font-size: 0.7rem;
-      border-radius: 6px;
-    }
-
-    .btn-secondary:hover {
-      color: var(--text-main);
-      border-color: var(--border-glow);
-      background: rgba(59, 130, 246, 0.05);
-    }
-
-    /* RESULTS LIST */
-    .tabs-nav {
-      display: flex;
-      border-bottom: 1px solid var(--border-subtle);
-      background: rgba(255, 255, 255, 0.01);
-      flex-shrink: 0;
-      padding: 0 6px;
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      padding: 11px 14px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      cursor: pointer;
-      position: relative;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .tab-btn:hover { color: var(--text-dim); }
-    .tab-btn.active { color: var(--blue-electric); }
-
-    .tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      height: 2px;
-      width: 100%;
-      background: var(--blue-electric);
-      box-shadow: 0 0 10px var(--blue-electric);
-    }
-
-    .tab-badge {
-      font-size: 0.6rem;
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-dim);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-family: var(--font-mono);
-    }
-
-    .tab-btn.active .tab-badge {
-      background: rgba(0, 210, 255, 0.12);
-      color: var(--blue-electric);
-      border: 1px solid rgba(0, 210, 255, 0.25);
-    }
-
-    .results-list-container {
-      flex: 1;
-      overflow-y: auto;
       padding: 12px;
+      outline: none;
+      resize: vertical;
+    }
+
+    .infra-textarea:focus {
+      border-color: var(--blue-primary);
+      box-shadow: 0 0 14px var(--blue-glow);
+    }
+
+    .infra-btn-strip {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .telemetry-log-stream {
+      background: var(--bg-input);
+      border: 1px solid var(--border-main);
+      border-radius: var(--radius-panel);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.70rem;
+      height: 440px;
+      overflow-y: auto;
+      color: #94A3B8;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-    .result-row {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 8px 12px;
+    .table-statusbar {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border-main);
+      background: var(--bg-surface-alt);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      transition: all 0.15s ease;
+      font-size: 0.70rem;
+      color: var(--text-dim);
     }
 
-    .result-row:hover {
-      background: rgba(59, 130, 246, 0.05);
-      border-color: var(--border-glow);
-      transform: translateX(2px);
-    }
-
-    .result-row.available {
-      border-left: 3px solid var(--emerald);
-      box-shadow: inset 4px 0 0 rgba(16, 185, 129, 0.03);
-    }
-
-    .result-row.taken {
-      border-left: 3px solid var(--border-subtle);
-      opacity: 0.65;
-    }
-
-    .row-identifier {
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
+    .toast-pill {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--blue-primary);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      box-shadow: 0 10px 30px var(--blue-glow);
+      display: none;
+      z-index: 10000;
     }
 
-    .row-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--emerald);
-      box-shadow: 0 0 6px var(--emerald);
+    .toast-pill.show {
+      display: block;
+      animation: fadeIn 0.2s forwards;
     }
 
-    .result-row.taken .row-dot {
-      background: var(--text-muted);
-      box-shadow: none;
+    .theme-select-card.active {
+      border-color: var(--blue-primary) !important;
+      box-shadow: 0 0 20px var(--blue-glow) !important;
     }
-
-    .row-pill {
-      font-size: 0.62rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-family: var(--font-mono);
-    }
-
-    .row-pill.available {
-      background: rgba(16, 185, 129, 0.12);
-      color: var(--emerald);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .row-pill.taken {
-      background: rgba(255, 255, 255, 0.03);
-      color: var(--text-dim);
-      border: 1px solid var(--border-subtle);
-    }
-
-    .empty-state {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      font-size: 0.78rem;
-      text-align: center;
-      padding: 30px 16px;
-      gap: 10px;
-    }
-
-    .empty-state svg {
-      width: 36px;
-      height: 36px;
-      opacity: 0.15;
-    }
-
-    /* TERMINAL */
-    .terminal-panel {
-      background: #020204;
-    }
-
-    .terminal-header {
-      height: 38px;
-      background: rgba(255, 255, 255, 0.02);
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 14px;
-      flex-shrink: 0;
-      user-select: none;
-    }
-
-    .window-dots {
-      display: flex;
-      gap: 5px;
-    }
-
-    .w-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .w-dot.red { background: #ef4444; }
-    .w-dot.yellow { background: #f59e0b; }
-    .w-dot.green { background: #10b981; }
-
-    .terminal-title-text {
-      font-size: 0.68rem;
-      font-family: var(--font-mono);
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .terminal-logs {
-      flex: 1;
-      padding: 14px 16px;
-      font-family: var(--font-mono);
-      font-size: 0.74rem;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .log-item {
-      line-height: 1.4;
-      display: flex;
-      gap: 8px;
-    }
-
-    .log-item .time { color: var(--text-muted); user-select: none; }
-    .log-item .tag { font-weight: 700; padding: 0 3px; border-radius: 2px; }
-
-    .tag-hit { color: var(--emerald); }
-    .tag-taken { color: var(--text-dim); }
-    .tag-warn { color: var(--amber); }
-    .tag-err { color: var(--rose); }
-
-    /* FOOTER */
-    footer {
-      height: 40px;
-      border-top: 1px solid var(--border-subtle);
-      padding: 0 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.72rem;
-      color: var(--text-dim);
-      background: var(--bg-surface);
-      flex-shrink: 0;
-    }
-
-    .footer-metrics {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .highlight-blue { color: var(--blue-electric); font-weight: 800; font-family: var(--font-mono); }
-    .val-white { color: var(--text-main); font-weight: 700; }
-
-    /* EXPLORER & ANALYTICS VIEWS */
-    .explorer-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.78rem;
-    }
-
-    .explorer-table th {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border-subtle);
-      color: var(--text-muted);
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    .explorer-table td {
-      padding: 10px 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      font-family: var(--font-mono);
-    }
-
-    .explorer-table tr:hover {
-      background: rgba(59, 130, 246, 0.04);
-    }
-
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
   </style>
 </head>
 <body>
+  <!-- Full-Screen Particle Atmosphere Canvas -->
+  <canvas id="themeAtmosphereCanvas"></canvas>
 
-  <div class="app-layout">
-    <!-- LEFT SIDEBAR -->
-    <aside>
-      <div class="brand-container">
-        <div class="brand">
-          <div class="brand-icon">❄</div>
-          <div class="brand-text">Snowflake</div>
-        </div>
-        <div class="badge-v">v5.0 BLUE</div>
-      </div>
-
-      <nav class="nav-menu">
-        <span class="nav-label">Workspace Views</span>
-        <a class="nav-item active" data-view="dashboard">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-          <span>Live Checker</span>
-        </a>
-        <a class="nav-item" data-view="explorer">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-          <span>Discovered Hits</span>
-        </a>
-        <a class="nav-item" data-view="analytics">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-          <span>Analytics & Velocity</span>
-        </a>
-        <a class="nav-item" data-view="credentials">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-          <span>Credential & Proxies</span>
-        </a>
-        <a class="nav-item" data-view="logs">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          <span>Audit Console</span>
-        </a>
-      </nav>
-
-      <!-- CREDENTIAL MINI STATUS -->
-      <div class="sidebar-section">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span class="nav-label" style="padding: 0;">Token Pool (<span id="lblActiveCredsCount">1</span>)</span>
-          <span style="font-size: 0.65rem; color: var(--blue-electric); font-weight: 700;" id="lblSchedulerState">Ready</span>
-        </div>
-        <div class="credential-status-list" id="credentialStatusList">
-          <!-- Dynamically populated -->
+  <!-- 1. BUBBLY OBSIDIAN SIDEBAR -->
+  <aside class="app-sidebar">
+    
+    <!-- Top Branding -->
+    <div>
+      <div class="brand-block">
+        <div class="brand-badge-icon" id="sidebarBrandIcon">💎</div>
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div class="brand-title">
+            <span id="sidebarBrandTitle">ONYX APEX</span>
+            <span class="version-tag" id="sidebarBrandVersion">v2.4</span>
+          </div>
+          <div class="brand-subtitle" id="sidebarBrandSubtitle">Multi-Platform Engine</div>
         </div>
       </div>
 
-      <div class="sidebar-section" style="border-top: 1px solid var(--border-subtle);">
-        <div class="system-health-card" style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 8px 10px;">
-          <div style="display: flex; justify-content: space-between; font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
-            <span>Engine Mode</span>
-            <span style="color: var(--blue-electric);">Adaptive 2.0</span>
+      <!-- Navigation List -->
+      <div class="nav-group-title">Engine Modules</div>
+      <div class="sidebar-nav-list">
+        <button class="nav-tab-btn active" onclick="navigateView('dashboard', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+            <span>Dashboard</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 600; color: var(--emerald); margin-top: 4px;">
-            <div class="status-dot" style="width: 5px; height: 5px;"></div>
-            <span>Auto-Backpressure Ready</span>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('scanners', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+            <span>Multi-Checkers</span>
           </div>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('guides', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"></path></svg>
+            <span>Quick Tutorials</span>
+          </div>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('proxies', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
+            <span>Proxy Grid</span>
+          </div>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('analytics', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
+            <span>Analytics</span>
+          </div>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('results', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+            <span>Discovered Hits</span>
+          </div>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('logs', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2zm2-6h2v2h-2V6zm2 4h-2v2h2v-2zm-2 4h2v2h-2v-2z" clip-rule="evenodd"></path></svg>
+            <span>Live Logs</span>
+          </div>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('api-access', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"></path></svg>
+            <span>API Engine</span>
+          </div>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('integrations', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"></path></svg>
+            <span>Webhooks</span>
+          </div>
+        </button>
+
+        <button class="nav-tab-btn" onclick="navigateView('settings', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path></svg>
+            <span>Themes & Studio</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Controls & Execution -->
+    <div class="sidebar-bottom-wrap">
+      <button class="btn-token-manager" onclick="navigateView('api-access')">
+        <span style="display: flex; align-items: center; gap: 6px;">
+          <span>🔑</span> Token Pool
+        </span>
+        <span id="sidebarTokenBadge" style="background: rgba(139, 92, 246, 0.35); padding: 2px 8px; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: 0.65rem;">75 Live</span>
+      </button>
+
+      <button id="btnStartScan" class="btn-main-cta" onclick="startScannerEngine()">
+        <span>⚡</span> Start Multi-Scanner
+      </button>
+
+      <button id="btnStopScan" class="btn-stop-cta" onclick="stopScannerEngine()" style="display: none;">
+        <span>🛑</span> Stop Engine
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- 2. MAIN VIEWPORT -->
+  <main class="main-viewport">
+    
+    <!-- Header Bar -->
+    <header class="app-header">
+      <div class="header-search">
+        <svg style="width: 14px; height: 14px; color: var(--text-dim);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" id="globalSearchInput" placeholder="Quick search handles, proxies, logs...">
+        <kbd>CTRL+K</kbd>
+      </div>
+
+      <div class="header-right">
+        <div class="top-sync-pill-tokens" onclick="navigateView('api-access')">
+          <span>🔑</span>
+          <span id="topTokenCountBadge">75 Tokens</span>
+        </div>
+
+        <div class="top-sync-pill-proxies" onclick="navigateView('proxies')">
+          <span>🌐</span>
+          <span id="topProxyCountBadge">342 Proxies</span>
+        </div>
+
+        <div class="status-pill">
+          <div class="pill-dot" style="background: var(--emerald-success); box-shadow: 0 0 8px var(--emerald-success);"></div>
+          <span style="color: #fff; font-weight: 700;">LIVE DISCOVERY</span>
         </div>
       </div>
-    </aside>
+    </header>
 
-    <!-- MAIN VIEWPORT -->
-    <main>
-      <!-- HEADER -->
-      <header>
-        <div class="header-info">
-          <h1 id="headerViewTitle">Live Availability Checker</h1>
-          <p id="headerViewDesc">Ultra-fast multi-worker queue scheduler with adaptive backoff</p>
-        </div>
-
-        <div class="header-actions">
-          <div id="discordOAuthContainer" style="display: flex; align-items: center; gap: 8px;">
-            <button id="btnDiscordOAuth" class="btn" style="width: auto; background: #5865F2; color: #fff; padding: 6px 12px; font-size: 0.7rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(88,101,242,0.25);">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-              <span>Connect Discord (OAuth2)</span>
-            </button>
-            <div id="discordUserBadge" style="display: none; align-items: center; gap: 6px; background: rgba(88,101,242,0.15); border: 1px solid rgba(88,101,242,0.3); border-radius: 20px; padding: 3px 10px 3px 5px;">
-              <img id="discordAvatarImg" src="" style="width: 20px; height: 20px; border-radius: 50%; display: none;">
-              <span id="discordUsernameText" style="font-size: 0.7rem; font-weight: 700; color: #fff;">@username</span>
-              <button id="btnDisconnectDiscord" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.75rem; padding: 0 3px;" title="Disconnect">✕</button>
+    <!-- Scrollable Workspace Views -->
+    <div class="main-scroll-view">
+      
+      <!-- ==========================================
+           VIEW: DASHBOARD
+           ========================================== -->
+            <!-- ==========================================
+           VIEW: DASHBOARD (WITH 4L/OG SUITE & CONTROLS)
+           ========================================== -->
+      <div id="view-dashboard" class="view-panel-container active">
+        
+        <!-- Bubbly Metrics Cards -->
+        <div class="metrics-bubble-grid">
+          <div class="stat-bubble-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">TOTAL CHECKS</span>
+              <div class="stat-card-icon" style="background: rgba(59, 130, 246, 0.15); color: var(--blue-primary);">⚡</div>
+            </div>
+            <div class="stat-card-value" id="statTotalChecks">0</div>
+            <div class="stat-card-sub">
+              <span style="color: var(--emerald-success);">↑ Real-time</span>
+              <span>across all targets</span>
             </div>
           </div>
 
-          <div class="status-pill">
-            <div class="status-dot" id="sysDot"></div>
-            <span id="sysStatusText">System: Idle</span>
-          </div>
-        </div>
-      </header>
-
-      <!-- VERIFICATION BANNER -->
-      <div class="verification-banner" id="verificationBanner">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1rem;">⚠️</span>
-          <span><strong>Verification Required:</strong> Remote server requested human challenge / verification. Scheduler paused.</span>
-        </div>
-        <button id="btnDismissVerification" class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 0.68rem; color: #fef08a; border-color: rgba(245,158,11,0.4);">Acknowledge</button>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- VIEW 1: DASHBOARD & CHECKER (DEFAULT)      -->
-      <!-- ========================================== -->
-      <div class="view-section active" id="view-dashboard">
-        <!-- 6 METRICS TILES -->
-        <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-header">
-              <span class="metric-label">Processed / Total</span>
-              <span>📊</span>
+          <div class="stat-bubble-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">AVAILABLE HITS</span>
+              <div class="stat-card-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--emerald-success);">🎯</div>
             </div>
-            <div class="metric-body">
-              <span class="metric-value" id="statScanned">0 / 0</span>
-              <span class="metric-pct-tag" id="pctScanned">0%</span>
+            <div class="stat-card-value" id="statAvailable" style="color: var(--emerald-success);">0</div>
+            <div class="stat-card-sub">
+              <span>Unclaimed 3L/4L/5L handles</span>
             </div>
           </div>
 
-          <div class="metric-card available">
-            <div class="metric-header">
-              <span class="metric-label">Available Hits</span>
-              <span>✨</span>
+          <div class="stat-bubble-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">TAKEN HANDLES</span>
+              <div class="stat-card-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--rose-danger);">🔒</div>
             </div>
-            <div class="metric-body">
-              <span class="metric-value" id="statAvailable" style="color: var(--emerald);">0</span>
-              <span class="metric-pct-tag" id="pctAvailable">0%</span>
-            </div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-header">
-              <span class="metric-label">Taken / Registered</span>
-              <span>🔒</span>
-            </div>
-            <div class="metric-body">
-              <span class="metric-value" id="statTaken">0</span>
-              <span class="metric-pct-tag" id="pctTaken">0%</span>
+            <div class="stat-card-value" id="statTaken" style="color: var(--rose-danger);">0</div>
+            <div class="stat-card-sub">
+              <span>Registered usernames</span>
             </div>
           </div>
 
-          <div class="metric-card limited">
-            <div class="metric-header">
-              <span class="metric-label">429 Cooldowns</span>
-              <span>⏳</span>
+          <div class="stat-bubble-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">ENGINE VELOCITY</span>
+              <div class="stat-card-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--purple-accent);">🚀</div>
             </div>
-            <div class="metric-body">
-              <span class="metric-value" id="statLimited" style="color: var(--amber);">0</span>
-              <span class="metric-pct-tag" id="pctLimited">0%</span>
-            </div>
-          </div>
-
-          <div class="metric-card failed">
-            <div class="metric-header">
-              <span class="metric-label">Failed / 403</span>
-              <span>🛡️</span>
-            </div>
-            <div class="metric-body">
-              <span class="metric-value" id="statVerification" style="color: var(--rose);">0</span>
-              <span class="metric-pct-tag" id="pctVerification">0%</span>
-            </div>
-          </div>
-
-          <div class="metric-card">
-            <div class="metric-header">
-              <span class="metric-label">Velocity / Latency</span>
-              <span>⚡</span>
-            </div>
-            <div class="metric-body">
-              <span class="metric-value" id="statAvgLatency" style="color: var(--blue-electric);">0ms</span>
-              <span class="metric-pct-tag" id="lblReqMin">0 RPM</span>
+            <div class="stat-card-value" id="statCps">0 <span style="font-size: 0.85rem; color: var(--text-dim);">CPS</span></div>
+            <div class="stat-card-sub">
+              <span>Checks per second</span>
             </div>
           </div>
         </div>
 
-        <!-- PROGRESS BAR -->
-        <div class="progress-bar-wrapper">
-          <div class="progress-header">
-            <span>Scan Progress</span>
-            <span id="lblProgressPct" style="font-family: var(--font-mono); font-weight: 700; color: var(--blue-electric);">0% Complete</span>
-          </div>
-          <div class="progress-track">
-            <div class="progress-fill" id="progressFill"></div>
-          </div>
-        </div>
-
-        <!-- 3-PANEL WORKSPACE -->
-        <div class="main-grid">
-          <!-- PANEL 1: SCANNER CONFIG -->
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                Scanner Configuration
+        <!-- 4L & OG USERNAME GENERATOR STUDIO & SCANNER COMMAND CENTER -->
+        <div class="workspace-panel" style="padding: 20px; gap: 16px;">
+          
+          <!-- Top Bar: Platform Selector & Live Engine Badge -->
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-weight: 800; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                <span>🎯</span> Target Platform:
               </span>
-            </div>
-
-            <div class="panel-body">
-              <div class="field">
-                <label for="apiPreset">Target Platform Preset</label>
-                <select id="apiPreset">
-                  <option value="discord" selected>Discord Pomelo (@username)</option>
-                  <option value="github">GitHub Users</option>
-                  <option value="mock">Local Simulator (High Speed Test)</option>
-                  <option value="custom">Custom Endpoint</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="genMode">Combination Generator</label>
-                <select id="genMode">
-                  <option value="rand4special" selected>🎲 Random 4L Mixed (a-z, 0-9, ., _)</option>
-                  <option value="rand4">🎲 Random 4-Letter (a-z)</option>
-                  <option value="rand3special">🎲 Random 3L Mixed (a-z, 0-9, ., _)</option>
-                  <option value="rand3">🎲 Random 3-Letter (a-z)</option>
-                  <option value="auto4">Sequential 4-Letter (a-z)</option>
-                  <option value="auto3">Sequential 3-Letter (a-z)</option>
-                  <option value="auto4num">Sequential 4-Alphanumeric (a-z0-9)</option>
-                  <option value="manual">Manual Custom Queue</option>
-                </select>
-              </div>
-
-              <div class="field" id="identifiers-group" style="display: none;">
-                <label for="identifiers">Custom Queue List</label>
-                <textarea id="identifiers" placeholder="Enter identifiers, one per line"></textarea>
-              </div>
-
-              <!-- MULTI-CREDENTIAL POOL -->
-              <div class="field">
-                <label for="credentialPoolInput">Authorized Token Pool (One per line for multi-rotation)</label>
-                <textarea id="credentialPoolInput" placeholder="Enter tokens (one per line). Tokens rotate in parallel.">YOUR_DISCORD_TOKEN</textarea>
-              </div>
-
-              <!-- CONCURRENCY & DELAY -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="slider-box">
-                  <div class="slider-header">
-                    <span>Workers</span>
-                    <span class="val" id="lblConcurrency">1 Worker</span>
-                  </div>
-                  <input type="range" id="concurrencySlider" class="range-slider" min="1" max="10" step="1" value="1">
-                </div>
-
-                <div class="slider-box">
-                  <div class="slider-header">
-                    <span>Delay</span>
-                    <span class="val" id="lblSpeed">800ms</span>
-                  </div>
-                  <input type="range" id="delaySlider" class="range-slider" min="0" max="3000" step="25" value="800">
-                </div>
-              </div>
-
-              <!-- SWITCHES -->
-              <div style="display: flex; flex-direction: column; gap: 6px;">
-                <label class="toggle-row">
-                  <span>Adaptive 429 rate-limit backoff</span>
-                  <span class="switch">
-                    <input type="checkbox" id="autoRetry" checked>
-                    <span class="switch-track"></span>
-                  </span>
-                </label>
-                <label class="toggle-row">
-                  <span>Chime audio notification on hits</span>
-                  <span class="switch">
-                    <input type="checkbox" id="soundAlert" checked>
-                    <span class="switch-track"></span>
-                  </span>
-                </label>
-              </div>
-
-              <!-- ADVANCED ACCORDION -->
-              <details id="advancedDetails">
-                <summary>Advanced Endpoint & Proxy Routing</summary>
-                <div class="details-content">
-                  <div class="field">
-                    <label for="targetUrl">Target URL</label>
-                    <input type="text" id="targetUrl" value="https://discord.com/api/v9/users/@me/pomelo-attempt">
-                  </div>
-                  
-                  <div class="field">
-                    <label for="method">HTTP Method</label>
-                    <select id="method">
-                      <option value="POST" selected>POST</option>
-                      <option value="GET">GET</option>
-                      <option value="PUT">PUT</option>
-                    </select>
-                  </div>
-
-                  <div class="field">
-                    <label for="proxyListInput">Proxy Pool (One per line: http://host:port)</label>
-                    <textarea id="proxyListInput" placeholder="http://proxy-host:port"></textarea>
-                  </div>
-
-                  <div class="field">
-                    <label for="requestBody">Request Body Template</label>
-                    <textarea id="requestBody" placeholder='{ "username": "{id}" }'>{ "username": "{id}" }</textarea>
-                  </div>
-                </div>
-              </details>
-
-              <div class="btn-group">
-                <button id="btnStart" class="btn btn-primary">Start Scanner</button>
-                <button id="btnStop" class="btn btn-danger" style="display: none;">Pause Scanner</button>
-                <button id="btnReset" class="btn btn-secondary">Clear Stats</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- PANEL 2: DISCOVERED HITS -->
-          <div class="panel">
-            <div class="panel-header" style="padding: 0 12px;">
-              <div class="tabs-nav">
-                <button class="tab-btn active" id="tab-available">
-                  Available Hits
-                  <span class="tab-badge" id="badgeAvailable">0</span>
+              
+              <div class="presets-pill-strip">
+                <button class="preset-chip-btn active" onclick="switchPreset('tiktok', this)">
+                  <span>📱</span> TikTok
                 </button>
-                <button class="tab-btn" id="tab-taken">
-                  Taken / Checked
-                  <span class="tab-badge" id="badgeTaken">0</span>
+                <button class="preset-chip-btn" onclick="switchPreset('instagram', this)">
+                  <span>📸</span> Instagram
+                </button>
+                <button class="preset-chip-btn" onclick="switchPreset('kick', this)">
+                  <span>🟢</span> Kick
+                </button>
+                <button class="preset-chip-btn" onclick="switchPreset('twitch', this)">
+                  <span>🟣</span> Twitch
+                </button>
+                <button class="preset-chip-btn" onclick="switchPreset('twitter', this)">
+                  <span>🐦</span> X / Twitter
+                </button>
+                <button class="preset-chip-btn" onclick="switchPreset('discord', this)">
+                  <span>💬</span> Discord
                 </button>
               </div>
-              <button id="btnExport" class="btn btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.68rem;">Export .txt</button>
             </div>
 
-            <div class="results-list-container" id="results-display-list">
-              <div class="empty-state" id="list-empty-state">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <div>No records captured yet. Click Start Scanner.</div>
-              </div>
-            </div>
+            <span id="scannerStatusBadge" style="font-size: 0.70rem; font-weight: 800; font-family: var(--font-mono); color: var(--blue-primary); background: var(--accent-subtle-bg); border: 1px solid var(--accent-subtle-border); padding: 4px 14px; border-radius: var(--radius-pill);">ENGINE READY</span>
           </div>
 
-          <!-- PANEL 3: REAL-TIME CONSOLE -->
-          <div class="panel terminal-panel">
-            <div class="terminal-header">
-              <div class="window-dots">
-                <div class="w-dot red"></div>
-                <div class="w-dot yellow"></div>
-                <div class="w-dot green"></div>
-              </div>
-              <span class="terminal-title-text">stream@snowflake-engine: ~</span>
-              <button id="btnClearLogs" class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 0.62rem;">Clear</button>
+          <!-- 4L / 3L / OG Preset Cards Grid -->
+          <div>
+            <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;">
+              Select Handle Generator Pattern:
             </div>
             
-            <div id="logContent" class="terminal-logs"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- VIEW 2: HITS EXPLORER & SEARCH             -->
-      <!-- ========================================== -->
-      <div class="view-section" id="view-explorer">
-        <div class="panel" style="flex: 1;">
-          <div class="panel-header">
-            <span class="panel-title">Discovered Identifiers Explorer</span>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="explorerSearch" placeholder="Filter hits..." style="width: 200px; padding: 5px 10px; font-size: 0.72rem;">
-              <button id="btnExportCSV" class="btn btn-secondary" style="width: auto; padding: 5px 10px;">Export CSV</button>
-              <button id="btnExportJSON" class="btn btn-secondary" style="width: auto; padding: 5px 10px;">Export JSON</button>
-            </div>
-          </div>
-          <div class="panel-body" style="padding: 0; overflow-y: auto;">
-            <table class="explorer-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Identifier</th>
-                  <th>Status</th>
-                  <th>HTTP Code</th>
-                  <th>Timestamp</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="explorerTableBody">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- VIEW 3: ANALYTICS & CHARTS                 -->
-      <!-- ========================================== -->
-      <div class="view-section" id="view-analytics">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-height: 380px;">
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">Response Code Breakdown</span>
-            </div>
-            <div class="panel-body" style="display: flex; align-items: center; justify-content: center; padding: 20px;">
-              <div style="width: 260px; height: 260px;">
-                <canvas id="analyticsDonutChart"></canvas>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+              
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('3L_ALPHA', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.1rem;">💎</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">3L Letters (AAA-ZZZ)</span>
+                <span style="font-size: 0.60rem; color: var(--text-dim);">17.5k Ultra-rare</span>
               </div>
+
+              <div class="preset-chip-btn dash-preset-card active" onclick="selectGenPattern('4L_ALPHA', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.1rem;">⚡</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">4L Clean Letters</span>
+                <span style="font-size: 0.60rem; color: var(--text-dim);">456.9k Permutations</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('4L_ALPHANUM', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.1rem;">🔥</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">4L Alphanumeric</span>
+                <span style="font-size: 0.60rem; color: var(--text-dim);">1.68M Combos</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('5L_SEMI_OG', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.1rem;">👑</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">5L Semi-OG Words</span>
+                <span style="font-size: 0.60rem; color: var(--text-dim);">Curated Dictionary</span>
+              </div>
+
+              <div class="preset-chip-btn dash-preset-card" onclick="selectGenPattern('REPEATING', this)" style="padding: 12px; border-radius: var(--radius-card); flex-direction: column; align-items: flex-start; gap: 4px; background: var(--bg-surface-alt); border: 1px solid var(--border-main); cursor: pointer;">
+                <span style="font-size: 1.1rem;">💀</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.78rem;">Repeating Patterns</span>
+                <span style="font-size: 0.60rem; color: var(--text-dim);">Double & Quad</span>
+              </div>
+
             </div>
           </div>
 
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">Engine Throughput & Latency</span>
-            </div>
-            <div class="panel-body" style="gap: 12px; justify-content: center;">
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
-                  <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Peak Velocity</span>
-                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--blue-electric); margin-top: 2px;" id="statPeakVelocity">0 RPM</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
-                  <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Average Latency</span>
-                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--blue-neon); margin-top: 2px;" id="statAnalyticsAvgLatency">0ms</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
-                  <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Total Cooldowns (429)</span>
-                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--amber); margin-top: 2px;" id="statAnalyticsRetries">0</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 8px;">
-                  <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Hit Success Rate</span>
-                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--emerald); margin-top: 2px;" id="statHitRate">0.0%</div>
-                </div>
+          <!-- Controls Strip: Concurrency Sliders + Big Start/Stop CTA -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 14px; align-items: center; background: var(--bg-surface-alt); padding: 14px 18px; border-radius: var(--radius-panel); border: 1px solid var(--border-main);">
+            
+            <!-- Concurrency Slider -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.70rem; font-weight: 700;">
+                <span style="color: var(--text-dim);">Worker Concurrency</span>
+                <span id="lblWorkerThreads" style="color: var(--blue-primary); font-family: var(--font-mono);">45 Workers</span>
               </div>
+              <input type="range" min="5" max="150" value="45" oninput="setWorkerThreads(this.value)" style="accent-color: var(--blue-primary); cursor: pointer; width: 100%;">
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- ========================================== -->
-      <!-- VIEW 4: CREDENTIAL & PROXY HUB             -->
-      <!-- ========================================== -->
-      <div class="view-section" id="view-credentials">
-        <!-- DISCORD OAUTH2 CARD -->
-        <div class="panel" style="border-color: rgba(37,99,235,0.3); background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(0,210,255,0.04));">
-          <div class="panel-header" style="background: rgba(37,99,235,0.1);">
-            <span class="panel-title" style="color: #fff;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-              Discord OAuth2 Login
-            </span>
-            <span class="badge-v" style="border-color: #5865F2; color: #5865F2; background: rgba(88,101,242,0.1);">Official OAuth2</span>
-          </div>
-          <div class="panel-body" style="gap: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); padding: 12px 16px; border-radius: 8px;">
-              <div>
-                <div style="font-weight: 700; font-size: 0.8rem; color: #fff;">Authorize your Discord Account</div>
-                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 2px;">
-                  Authorize Snowflake via standard OAuth2 <code style="color: var(--blue-electric);">identify</code> grant to test endpoints cleanly.
-                </div>
+            <!-- Delay Slider -->
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.70rem; font-weight: 700;">
+                <span style="color: var(--text-dim);">Request Delay</span>
+                <span id="lblWorkerDelay" style="color: var(--blue-primary); font-family: var(--font-mono);">20ms</span>
               </div>
-              <button id="btnConnectOAuthHub" class="btn" style="width: auto; background: #5865F2; color: #fff; padding: 7px 16px; font-size: 0.72rem; border-radius: 8px;">
-                Connect Account
+              <input type="range" min="0" max="200" value="20" step="5" oninput="setWorkerDelay(this.value)" style="accent-color: var(--blue-primary); cursor: pointer; width: 100%;">
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button id="btnDashStartScan" class="btn-main-cta" onclick="startScannerEngine()" style="padding: 10px 24px; font-size: 0.84rem;">
+                <span>⚡</span> Start Live Scanner
+              </button>
+
+              <button id="btnDashStopScan" class="btn-stop-cta" onclick="stopScannerEngine()" style="display: none; padding: 10px 24px; font-size: 0.84rem;">
+                <span>🛑</span> Stop Scanner
+              </button>
+
+              <button class="btn-dead-action" onclick="resetScannerStats()" style="padding: 10px 16px;">
+                Reset ⟳
               </button>
             </div>
 
-            <!-- Custom Discord App Settings Accordion -->
-            <details id="oauthDetails">
-              <summary>Custom Discord Developer Application (Optional)</summary>
-              <div class="details-content">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                  <div class="field">
-                    <label for="oauthClientId">Client ID</label>
-                    <input type="text" id="oauthClientId" placeholder="123456789012345678">
-                  </div>
-                  <div class="field">
-                    <label for="oauthClientSecret">Client Secret</label>
-                    <input type="password" id="oauthClientSecret" placeholder="••••••••••••••••••••••••">
-                  </div>
-                </div>
-                <div class="field">
-                  <label for="oauthRedirectUri">Redirect URI</label>
-                  <input type="text" id="oauthRedirectUri" readonly style="color: var(--blue-electric); background: rgba(0,210,255,0.04);">
-                </div>
-              </div>
-            </details>
           </div>
+
+          <!-- Inline Custom Wordlist / Paste Box Collapsible -->
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.70rem; font-weight: 700; color: var(--text-dim);">Inject Custom Target Handles (Optional)</span>
+              <button class="btn-action-copy" onclick="injectCustomWordlist()" style="padding: 3px 10px; font-size: 0.65rem;">Inject into Queue</button>
+            </div>
+            <textarea id="dashWordlistArea" class="infra-textarea" style="height: 65px; min-height: 60px;" placeholder="Paste specific handles (one per line) or leave blank to use the active 4L generator pattern above..."></textarea>
+          </div>
+
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">Multi-Credential Rotation Pool</span>
-              <button id="btnValidateTokens" class="btn btn-secondary" style="width: auto; padding: 3px 8px; font-size: 0.68rem;">Reload</button>
+        <!-- Live Discovered Feed Panel -->
+        <div class="workspace-panel">
+          <div class="panel-top-toolbar">
+            <div class="panel-title-wrap">
+              <span>🔥</span>
+              <span class="panel-title">Live Discovered Handles Feed</span>
+              <span style="font-size: 0.65rem; color: var(--text-dim); background: var(--bg-surface); border: 1px solid var(--border-main); padding: 2px 10px; border-radius: var(--radius-pill);">Real-Time Hits Only</span>
             </div>
-            <div class="panel-body">
-              <div class="field">
-                <label>Manage Tokens (One per line)</label>
-                <textarea id="credentialHubInput" style="min-height: 160px; font-size: 0.78rem;"></textarea>
-              </div>
-              <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
-                Add multiple authorized tokens to multiply throughput. Each token maintains independent rate-limit cooldown timers.
-              </p>
-            </div>
-          </div>
 
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">Network Proxy Pool</span>
-            </div>
-            <div class="panel-body">
-              <div class="field">
-                <label>Authorized Proxies (One per line)</label>
-                <textarea id="proxyHubInput" style="min-height: 160px; font-size: 0.78rem;" placeholder="http://user:pass@host:port&#10;http://ip:port"></textarea>
-              </div>
-              <p style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
-                Standard upstream HTTP proxy forwarding for distributed network routing when authorized.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- VIEW 5: FULL AUDIT CONSOLE & LOGS          -->
-      <!-- ========================================== -->
-      <div class="view-section" id="view-logs">
-        <div class="panel terminal-panel" style="flex: 1;">
-          <div class="terminal-header">
-            <span class="terminal-title-text">audit-trail@full-logs: ~</span>
             <div style="display: flex; gap: 8px;">
-              <button id="btnDownloadLogs" class="btn btn-secondary" style="width: auto; padding: 3px 10px; font-size: 0.68rem;">Download .log</button>
-              <button id="btnClearFullLogs" class="btn btn-secondary" style="width: auto; padding: 3px 10px; font-size: 0.68rem;">Clear</button>
+              <button class="btn-export-blue" onclick="exportResultsCSV()">
+                <span>📥</span> Export CSV
+              </button>
+              <button class="btn-action-copy" onclick="exportResultsJSON()">
+                <span>📄</span> Export JSON
+              </button>
             </div>
           </div>
-          <div id="fullLogContent" class="terminal-logs" style="font-size: 0.78rem; padding: 16px;"></div>
+
+          <div class="data-feed-scroll" id="recentHitsContainer">
+            <div style="padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 0.78rem;">
+              <span>⚡ No unclaimed handles discovered yet. Start the engine to stream real-time hits!</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==========================================
+           VIEW: MULTI-CHECKERS
+           ========================================== -->
+      <div id="view-scanners" class="view-panel-container">
+        <div class="workspace-panel" style="padding: 20px; gap: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 12px;">
+            <div style="font-weight: 800; font-size: 0.96rem; color: #fff;">⚡ High-Throughput Identifier Generators</div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-export-blue" onclick="startScannerEngine()">Start All</button>
+              <button class="btn-dead-action" onclick="stopScannerEngine()">Stop</button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+            <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main); display: flex; flex-direction: column; gap: 8px;">
+              <span style="font-weight: 800; color: #fff; font-size: 0.82rem;">3-Letter Letters Only (AAA-ZZZ)</span>
+              <span style="font-size: 0.68rem; color: var(--text-dim);">17,576 ultra-rare combinations</span>
+              <button class="btn-action-copy" onclick="loadGeneratorPattern('3L_ALPHA')" style="margin-top: 6px;">Load Generator</button>
+            </div>
+
+            <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main); display: flex; flex-direction: column; gap: 8px;">
+              <span style="font-weight: 800; color: #fff; font-size: 0.82rem;">4-Letter Pure Letters (AAAA-ZZZZ)</span>
+              <span style="font-size: 0.68rem; color: var(--text-dim);">456,976 commercial 4L handles</span>
+              <button class="btn-action-copy" onclick="loadGeneratorPattern('4L_ALPHA')" style="margin-top: 6px;">Load Generator</button>
+            </div>
+
+            <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main); display: flex; flex-direction: column; gap: 8px;">
+              <span style="font-weight: 800; color: #fff; font-size: 0.82rem;">4-Letter Alphanumeric (A-Z, 0-9)</span>
+              <span style="font-size: 0.68rem; color: var(--text-dim);">1,679,616 high-velocity patterns</span>
+              <button class="btn-action-copy" onclick="loadGeneratorPattern('4L_ALPHANUM')" style="margin-top: 6px;">Load Generator</button>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+            <label style="font-size: 0.74rem; font-weight: 700; color: var(--text-dim);">Custom Wordlist / Handle Injector</label>
+            <textarea id="customWordlistArea" class="infra-textarea" placeholder="Paste custom target handles (one per line)..."></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button class="btn-action-copy" onclick="injectCustomWordlist()">Inject Wordlist into Queue</button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- FOOTER -->
-      <footer>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span>ETA: <span class="highlight-blue" id="lblETA">00:00:00</span></span>
+      <!-- ==========================================
+           VIEW: QUICK TUTORIALS & GUIDES (NOT BORING)
+           ========================================== -->
+      <div id="view-guides" class="view-panel-container">
+        
+        <div class="workspace-panel" style="padding: 20px; gap: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 12px;">
+            <div>
+              <div style="font-weight: 800; font-size: 1.05rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>📚</span> Fast & Easy Platform Guides
+              </div>
+              <div style="font-size: 0.70rem; color: var(--text-dim); margin-top: 2px;">
+                Master every identifier checker in under 30 seconds. Zero fluff, pure execution.
+              </div>
+            </div>
+            <button class="btn-export-blue" onclick="navigateView('scanners')">🚀 Open Scanner Studio</button>
+          </div>
+
+          <!-- 6 PLATFORM GUIDES GRID -->
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+            
+            <!-- 1. TIKTOK GUIDE -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #38BDF8;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">📱</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">TikTok Checker Setup</div>
+                    <div style="font-size: 0.65rem; color: #7DD3FC;">High-speed unauthed availability verification</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('tiktok'); navigateView('dashboard');">▶ Test TikTok</button>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="guide-step-row">
+                  <div class="guide-step-num">1</div>
+                  <div><strong>Add Rotating Proxies:</strong> Go to <em>Proxy Grid</em> and paste HTTP/SOCKS5 proxies to bypass regional anti-bot rate-limits.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">2</div>
+                  <div><strong>Select Handle Pattern:</strong> Choose <strong>3L Letters (AAA-ZZZ)</strong> or <strong>4L Alphanumeric</strong> under <em>Multi-Checkers</em>.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">3</div>
+                  <div><strong>Hit Start:</strong> Click <strong>Start Multi-Scanner</strong>. Discovered unclaimed TikTok usernames trigger instant audio chimes & Webhooks!</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. INSTAGRAM GUIDE -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #EC4899;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">📸</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Instagram Checker Setup</div>
+                    <div style="font-size: 0.65rem; color: #F472B6;">Profile query & deleted handle lookup</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('instagram'); navigateView('dashboard');">▶ Test Insta</button>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="guide-step-row">
+                  <div class="guide-step-num">1</div>
+                  <div><strong>Session Cookies / Tokens:</strong> Paste Instagram <code>sessionid</code> values in <em>API Engine</em> for authenticated checks (or run unauthed).</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">2</div>
+                  <div><strong>Auto-Backoff Active:</strong> Keep <em>Adaptive Rate-Limit Auto-Backoff</em> enabled in Settings to protect token health.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">3</div>
+                  <div><strong>Stream Discoveries:</strong> Watch real-time hits appear with rarity scores in the <em>Discovered Hits Ledger</em>.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. KICK GUIDE -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #10B981;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">🟢</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Kick.com Checker Setup</div>
+                    <div style="font-size: 0.65rem; color: #6EE7B7;">Zero-auth channel availability lookup</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('kick'); navigateView('dashboard');">▶ Test Kick</button>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="guide-step-row">
+                  <div class="guide-step-num">1</div>
+                  <div><strong>Zero Auth Needed:</strong> Kick channels can be verified rapidly via public API endpoints without logging into accounts.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">2</div>
+                  <div><strong>High Worker Threads:</strong> Boost throughput by setting 50+ concurrent async workers.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">3</div>
+                  <div><strong>Instant Claiming:</strong> Copy unclaimed Kick channel handles directly with 1-click.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. TWITCH GUIDE -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #8B5CF6;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">🟣</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Twitch Helix Batch Checker</div>
+                    <div style="font-size: 0.65rem; color: #C4B5FD;">Batch up to 100 handles per single HTTP call</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('twitch'); navigateView('dashboard');">▶ Test Twitch</button>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="guide-step-row">
+                  <div class="guide-step-num">1</div>
+                  <div><strong>Twitch App Tokens:</strong> Put Client-ID and OAuth Bearer in <em>API Engine</em> for official Helix API batching.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">2</div>
+                  <div><strong>Batch Mode:</strong> 100 usernames are verified per HTTP round-trip (up to 5,000 CPS).</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">3</div>
+                  <div><strong>Export Clean Lists:</strong> Filter banned vs unclaimed handles and export to CSV.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. X / TWITTER GUIDE -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #06B6D4;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">🐦</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">X / Twitter Handle Checker</div>
+                    <div style="font-size: 0.65rem; color: #67E8F9;">GraphQL & Guest Token endpoint scanner</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('twitter'); navigateView('dashboard');">▶ Test X</button>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="guide-step-row">
+                  <div class="guide-step-num">1</div>
+                  <div><strong>Guest Token Generator:</strong> Automatic guest-token generation handles unauthenticated lookups.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">2</div>
+                  <div><strong>Residential IP Binding:</strong> Rotate IPs every 25 requests for maximum longevity.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">3</div>
+                  <div><strong>Real-time Alerting:</strong> Broadcast freshly dropped 4L handles to Discord instantly.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. DISCORD POMELO GUIDE -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #6366F1;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">💬</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Discord Pomelo Username Checker</div>
+                    <div style="font-size: 0.65rem; color: #A5B4FC;">Unique username attempt API endpoint</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('discord'); navigateView('dashboard');">▶ Test Discord</button>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="guide-step-row">
+                  <div class="guide-step-num">1</div>
+                  <div><strong>Multi-Token Rotation:</strong> Paste Discord bot or user tokens in <em>API Engine</em> for 75+ parallel workers.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">2</div>
+                  <div><strong>Rate Limit Cooldown:</strong> 429 responses auto-pause individual tokens for 15s without stopping other workers.</div>
+                </div>
+                <div class="guide-step-row">
+                  <div class="guide-step-num">3</div>
+                  <div><strong>Hit Discovery:</strong> Real-time hits pop directly into the Master Ledger.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
 
-        <div class="footer-metrics">
-          <div>Duration: <span class="val-white" id="lblDuration">00:00:00</span></div>
-          <div>Workers: <span class="val-white" id="lblActiveWorkers">0</span></div>
-          <div>Requests: <span class="val-white" id="lblTotalHits">0</span></div>
-          <div>Last Event: <span class="val-white" id="lblLastCheck">Never</span></div>
+      </div>
+
+      <!-- ==========================================
+           VIEW: PROXY GRID
+           ========================================== -->
+      <div id="view-proxies" class="view-panel-container">
+        <div class="infra-grid">
+          <div class="infra-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 800; color: #fff; font-size: 0.88rem;">🌐 Live Proxy Pool (HTTP/SOCKS5)</span>
+              <span id="proxyPoolStatusBadge" style="font-size: 0.68rem; color: var(--blue-primary); font-weight: 700;">342 Loaded</span>
+            </div>
+            <textarea id="proxyInputArea" class="infra-textarea" placeholder="ip:port:user:pass or ip:port (one per line)..."></textarea>
+            <div class="infra-btn-strip">
+              <button class="btn-action-copy" onclick="testProxyPoolLatency()">⚡ Test Latencies</button>
+              <button class="btn-export-blue" onclick="saveProxyPool()">Save Proxy Pool</button>
+            </div>
+          </div>
+
+          <div class="infra-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 800; color: #fff; font-size: 0.88rem;">☠️ Dead Proxy Auto-Quarantine</span>
+              <button class="btn-dead-action" onclick="flushDeadProxies()">Flush Quarantine</button>
+            </div>
+            <div id="deadProxyLog" class="infra-textarea" style="overflow-y: auto; color: var(--rose-danger); font-size: 0.68rem;">
+              [Quarantine System Active — 0 failed proxies isolated]
+            </div>
+          </div>
         </div>
-      </footer>
-    </main>
+      </div>
+
+      <!-- ==========================================
+           VIEW: ANALYTICS
+           ========================================== -->
+      <div id="view-analytics" class="view-panel-container">
+        <div class="workspace-panel" style="padding: 20px; gap: 16px;">
+          <div style="font-weight: 800; font-size: 0.94rem; color: #fff;">📊 Real-Time Throughput & Discovery Analytics</div>
+          <div style="height: 320px; width: 100%;">
+            <canvas id="velocityChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           VIEW: DISCOVERED RESULTS
+           ========================================== -->
+      <div id="view-results" class="view-panel-container">
+        <div class="workspace-panel">
+          <div class="panel-top-toolbar">
+            <div class="panel-title-wrap">
+              <span>🎯</span>
+              <span class="panel-title">Master Discovery Ledger</span>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="tableFilterInput" class="filter-search-box" placeholder="Filter handles...">
+              <button class="btn-export-blue" onclick="exportResultsCSV()">Export CSV</button>
+            </div>
+          </div>
+
+          <div class="data-feed-scroll" id="masterResultsTable" style="max-height: 520px;">
+            <div style="padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 0.78rem;">
+              No records in master ledger yet. Start scanning to populate discoveries!
+            </div>
+          </div>
+
+          <div class="table-statusbar">
+            <span>Showing real-time discovered handles</span>
+            <span id="resultsCountBadge">0 Records</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           VIEW: LIVE LOGS
+           ========================================== -->
+      <div id="view-logs" class="view-panel-container">
+        <div class="workspace-panel" style="padding: 20px; gap: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 800; color: #fff; font-size: 0.90rem;">📡 Engine Telemetry & Event Stream</span>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-action-copy" onclick="clearLiveLogs()">Clear Logs</button>
+              <button class="btn-action-copy" onclick="exportLiveLogs()">Download Log</button>
+            </div>
+          </div>
+
+          <div class="telemetry-log-stream" id="telemetryLogStream">
+            <div><span style="color: var(--blue-primary);">[SYSTEM]</span> ONYX APEX Commercial Identifier Engine v2.4 initialized.</div>
+            <div><span style="color: var(--emerald-success);">[READY]</span> Multi-target check workers ready. Token pool online.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           VIEW: API ENGINE
+           ========================================== -->
+      <div id="view-api-access" class="view-panel-container">
+        <div class="workspace-panel" style="padding: 20px; gap: 16px;">
+          <div style="font-weight: 800; font-size: 0.94rem; color: #fff;">🔑 Token Rotation Pool & API Access Keys</div>
+          
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.74rem; font-weight: 700; color: var(--text-dim);">Platform Authentication Tokens / Session Cookies</label>
+            <textarea id="tokenPoolInputArea" class="infra-textarea" placeholder="Paste target platform tokens or session cookies (one per line)..."></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+              <button class="btn-export-blue" onclick="saveTokenPool()">Save & Hot-Reload Token Pool</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           VIEW: WEBHOOK INTEGRATIONS
+           ========================================== -->
+      <div id="view-integrations" class="view-panel-container">
+        <div class="workspace-panel" style="padding: 20px; gap: 16px;">
+          <div style="font-weight: 800; font-size: 0.94rem; color: #fff;">📢 Real-Time Discord Webhook Notifications</div>
+          
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.74rem; font-weight: 700; color: var(--text-dim);">Discord Webhook URL</label>
+            <input type="text" id="settingWebhookUrlInput" class="filter-search-box" style="width: 100%; border-radius: var(--radius-bubble); padding: 10px 16px;" placeholder="https://discord.com/api/webhooks/...">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble); margin-top: 8px;">
+              <div>
+                <div style="color: #fff; font-weight: 700; font-size: 0.80rem;">Instant Hit Dispatch</div>
+                <div style="font-size: 0.68rem; color: var(--text-dim);">Broadcast every available handle discovery directly to Discord</div>
+              </div>
+              <input type="checkbox" id="settingWebhookHitsToggle" checked style="accent-color: var(--blue-primary); width: 18px; height: 18px;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+              <button class="btn-export-blue" onclick="testDiscordWebhook()">🚀 Send Test Webhook</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           VIEW: THEMES & STUDIO SETTINGS (EXPANDED)
+           ========================================== -->
+      <div id="view-settings" class="view-panel-container">
+        
+        <!-- Row 1: Full-Website Theme Preset Grid (10 Total Themes) -->
+        <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+            <div>
+              <span style="font-weight: 800; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 7px;">
+                <span>🎨</span> Atmospheric Full-Website Themes (10 Presets)
+              </span>
+              <div style="font-size: 0.65rem; color: var(--text-dim); margin-top: 2px;">Every theme transforms background meshes, sidebars, borders, cards, and full-screen particle engines.</div>
+            </div>
+            <span id="activeThemeNameBadge" style="font-size: 0.68rem; font-weight: 800; color: var(--blue-primary); background: var(--accent-subtle-bg); padding: 4px 14px; border-radius: var(--radius-pill); border: 1px solid var(--accent-subtle-border);">❄️ Snowflake Frost</span>
+          </div>
+
+          <!-- 10 Theme Selection Cards Grid -->
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+            
+            <div class="theme-select-card" data-theme="snowflake" onclick="applyFullTheme('snowflake', this)" style="background: linear-gradient(135deg, #0c2340 0%, #10335e 100%); border: 2px solid rgba(56, 189, 248, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">❄️</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Snowflake</div>
+              <div style="font-size: 0.60rem; color: #BAE6FD;">Glacial cyan & snow</div>
+            </div>
+
+            <div class="theme-select-card" data-theme="blood_moon" onclick="applyFullTheme('blood_moon', this)" style="background: linear-gradient(135deg, #450a0a 0%, #581014 100%); border: 2px solid rgba(239, 68, 68, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">🩸</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Blood Moon</div>
+              <div style="font-size: 0.60rem; color: #FCA5A5;">Crimson & rising fire</div>
+            </div>
+
+            <div class="theme-select-card" data-theme="matrix" onclick="applyFullTheme('matrix', this)" style="background: linear-gradient(135deg, #042411 0%, #073b1c 100%); border: 2px solid rgba(16, 185, 129, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">🟢</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Matrix Hacker</div>
+              <div style="font-size: 0.60rem; color: #6EE7B7;">Emerald & code rain</div>
+            </div>
+
+            <div class="theme-select-card" data-theme="synthwave" onclick="applyFullTheme('synthwave', this)" style="background: linear-gradient(135deg, #2c0b4a 0%, #430f6e 100%); border: 2px solid rgba(236, 72, 153, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">🟣</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Cyber Synth</div>
+              <div style="font-size: 0.60rem; color: #F472B6;">Neon magenta stars</div>
+            </div>
+
+            <div class="theme-select-card" data-theme="dark_knight" onclick="applyFullTheme('dark_knight', this)" style="background: linear-gradient(135deg, #1c1917 0%, #2b2725 100%); border: 2px solid rgba(245, 158, 11, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">🦇</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Dark Knight</div>
+              <div style="font-size: 0.60rem; color: #FDE68A;">Titanium gold dust</div>
+            </div>
+
+            <div class="theme-select-card" data-theme="oceanic" onclick="applyFullTheme('oceanic', this)" style="background: linear-gradient(135deg, #062343 0%, #0a386b 100%); border: 2px solid rgba(59, 130, 246, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">🌊</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Midnight Ocean</div>
+              <div style="font-size: 0.60rem; color: #93C5FD;">Abyssal deep bubbles</div>
+            </div>
+
+            <div class="theme-select-card" data-theme="toxic_acid" onclick="applyFullTheme('toxic_acid', this)" style="background: linear-gradient(135deg, #1e2805 0%, #364907 100%); border: 2px solid rgba(163, 230, 53, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">⚡</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Toxic Acid</div>
+              <div style="font-size: 0.60rem; color: #BEF264;">Lime cyber sparks</div>
+            </div>
+
+            <div class="theme-select-card" data-theme="sakura" onclick="applyFullTheme('sakura', this)" style="background: linear-gradient(135deg, #380d22 0%, #541434 100%); border: 2px solid rgba(244, 114, 182, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">🌸</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Sakura Bloom</div>
+              <div style="font-size: 0.60rem; color: #FBCFE8;">Cherry petal drift</div>
+            </div>
+
+            <div class="theme-select-card" data-theme="sunset" onclick="applyFullTheme('sunset', this)" style="background: linear-gradient(135deg, #3d1406 0%, #5e1c07 100%); border: 2px solid rgba(249, 115, 22, 0.45); border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">🌅</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Sunset Horizon</div>
+              <div style="font-size: 0.60rem; color: #FED7AA;">Tangerine embers</div>
+            </div>
+
+            <div class="theme-select-card active" data-theme="pitch_black" onclick="applyFullTheme('pitch_black', this)" style="background: linear-gradient(135deg, #000000 0%, #080808 100%); border: 2px solid #1f1f1f; border-radius: 16px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; transition: all 0.2s ease;">
+              <div style="font-size: 1.2rem;">🖤</div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.76rem;">Pitch OLED</div>
+              <div style="font-size: 0.60rem; color: #94A3B8;">Minimal pure black</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Row 2: Particle Atmosphere Controls & Live Studio Customizer -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          
+          <!-- 1. PARTICLE ATMOSPHERE CONTROLS -->
+          <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+            <span style="font-weight: 800; color: #fff; font-size: 0.90rem; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+              <span>✨</span> Atmosphere & Particle Studio Controls
+            </span>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble);">
+                <div>
+                  <div style="font-size: 0.76rem; font-weight: 700; color: #fff;">Particle Density (Count)</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">Adjust active falling motes/snowflakes</div>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                  <button class="preset-chip-btn" onclick="setParticleDensity('low', this)">Low</button>
+                  <button class="preset-chip-btn active" onclick="setParticleDensity('med', this)">Normal</button>
+                  <button class="preset-chip-btn" onclick="setParticleDensity('high', this)">High</button>
+                  <button class="preset-chip-btn" onclick="setParticleDensity('blizzard', this)">Storm</button>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble);">
+                <div>
+                  <div style="font-size: 0.76rem; font-weight: 700; color: #fff;">Particle Velocity / Drift Speed</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">Speed of atmospheric animation</div>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                  <button class="preset-chip-btn" onclick="setParticleSpeed(0.5, this)">0.5x</button>
+                  <button class="preset-chip-btn active" onclick="setParticleSpeed(1.0, this)">1.0x</button>
+                  <button class="preset-chip-btn" onclick="setParticleSpeed(2.0, this)">2.0x</button>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble);">
+                <div>
+                  <div style="font-size: 0.76rem; font-weight: 700; color: #fff;">Atmosphere Overlay Canvas</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">Enable or disable full-screen particle canvas</div>
+                </div>
+                <input type="checkbox" id="settingAtmosphereToggle" checked onchange="toggleAtmosphereCanvas(this.checked)" style="accent-color: var(--blue-primary); width: 18px; height: 18px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. LIVE STUDIO CUSTOMIZER (ACCENT & GLASS) -->
+          <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+            <span style="font-weight: 800; color: #fff; font-size: 0.90rem; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+              <span>🎛️</span> Live Studio Customizer (Color & Glass)
+            </span>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              
+              <!-- Custom Accent Color Picker -->
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble);">
+                <div>
+                  <div style="font-size: 0.76rem; font-weight: 700; color: #fff;">Custom Accent Hue</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">Override primary button & glow color</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="color" id="customAccentColorPicker" value="#38BDF8" onchange="setCustomAccentColor(this.value)" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; background: transparent;">
+                  <button class="btn-action-copy" onclick="resetAccentToTheme()" style="padding: 4px 8px; font-size: 0.62rem;">Reset</button>
+                </div>
+              </div>
+
+              <!-- Glass Blur Strength -->
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble);">
+                <div>
+                  <div style="font-size: 0.76rem; font-weight: 700; color: #fff;">Glassmorphism Blur Strength</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">Frosted glass backdrop intensity</div>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                  <button class="preset-chip-btn" onclick="setGlassBlur(4, this)">Crisp</button>
+                  <button class="preset-chip-btn active" onclick="setGlassBlur(16, this)">Smooth</button>
+                  <button class="preset-chip-btn" onclick="setGlassBlur(28, this)">Frosted</button>
+                </div>
+              </div>
+
+              <!-- Glow Power -->
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble);">
+                <div>
+                  <div style="font-size: 0.76rem; font-weight: 700; color: #fff;">Neon Glow Intensity</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">Shadow blur radius & opacity</div>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                  <button class="preset-chip-btn" onclick="setGlowPower(0.2, this)">Subtle</button>
+                  <button class="preset-chip-btn active" onclick="setGlowPower(0.55, this)">Vibrant</button>
+                  <button class="preset-chip-btn" onclick="setGlowPower(0.9, this)">Laser</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Row 3: Branding & Audio Alerts -->
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px;">
+          
+          <!-- BRAND CUSTOMIZATION -->
+          <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+            <span style="font-weight: 800; color: #fff; font-size: 0.90rem; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+              <span>🏷️</span> Brand Customization
+            </span>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 0.66rem; font-weight: 700; color: var(--text-dim);">Brand Title</label>
+                <input type="text" id="settingBrandTitleInput" class="filter-search-box" style="width: 100%; border-radius: var(--radius-bubble); padding: 7px 12px;" value="ONYX APEX">
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 0.66rem; font-weight: 700; color: var(--text-dim);">Subtitle</label>
+                <input type="text" id="settingBrandSubtitleInput" class="filter-search-box" style="width: 100%; border-radius: var(--radius-bubble); padding: 7px 12px;" value="Multi-Platform Engine">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 0.66rem; font-weight: 700; color: var(--text-dim);">Brand Icon / Emoji</label>
+                <div style="display: flex; gap: 6px;">
+                  <button class="preset-chip-btn active" onclick="setBrandIcon('💎', this)" style="padding: 6px 10px;">💎</button>
+                  <button class="preset-chip-btn" onclick="setBrandIcon('⚡', this)" style="padding: 6px 10px;">⚡</button>
+                  <button class="preset-chip-btn" onclick="setBrandIcon('🔥', this)" style="padding: 6px 10px;">🔥</button>
+                  <button class="preset-chip-btn" onclick="setBrandIcon('👑', this)" style="padding: 6px 10px;">👑</button>
+                  <button class="preset-chip-btn" onclick="setBrandIcon('🌸', this)" style="padding: 6px 10px;">🌸</button>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 0.66rem; font-weight: 700; color: var(--text-dim);">Version Tag</label>
+                <input type="text" id="settingBrandVersionInput" class="filter-search-box" style="width: 100%; border-radius: var(--radius-bubble); padding: 7px 12px;" value="v2.4">
+              </div>
+            </div>
+          </div>
+
+          <!-- AUDIO & BACKOFF TUNING -->
+          <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+            <span style="font-weight: 800; color: #fff; font-size: 0.90rem; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+              <span>🔊</span> Audio Alerts & Engine Tuning
+            </span>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble); border: 1px solid var(--border-main);">
+              <div>
+                <div style="color: #fff; font-weight: 700; font-size: 0.78rem;">Sound FX on Hit Discovery</div>
+                <div style="font-size: 0.64rem; color: var(--text-dim);">Plays audio chime on available handle</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="btn-action-copy" onclick="playSampleHitSound()" style="padding: 4px 10px; font-size: 0.64rem;">🔊 Test</button>
+                <input type="checkbox" id="settingSoundToggle" checked style="accent-color: var(--blue-primary); width: 18px; height: 18px;">
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-surface-alt); border-radius: var(--radius-bubble); border: 1px solid var(--border-main);">
+              <div>
+                <div style="color: #fff; font-weight: 700; font-size: 0.78rem;">Adaptive Rate Limit Auto-Backoff</div>
+                <div style="font-size: 0.64rem; color: var(--text-dim);">Isolate rate-limited tokens for adaptive cooldown</div>
+              </div>
+              <input type="checkbox" id="settingBackoffToggle" checked style="accent-color: var(--blue-primary); width: 18px; height: 18px;">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Row 4: Backup, Export & Factory Reset -->
+        <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+          <span style="font-weight: 800; color: #fff; font-size: 0.90rem; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+            <span>💾</span> Configuration Backup, Import & Factory Reset
+          </span>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 12px; align-items: center;">
+            <button class="preset-chip-btn" onclick="exportFullConfigJSON()" style="padding: 12px; justify-content: center; background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.35); color: #93C5FD;">
+              <span>📥 Export Full Config JSON</span>
+            </button>
+            <button class="preset-chip-btn" onclick="document.getElementById('configImportFile').click()" style="padding: 12px; justify-content: center; background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.35); color: #C4B5FD;">
+              <span>📤 Import Config JSON</span>
+            </button>
+            <input type="file" id="configImportFile" accept=".json" style="display: none;" onchange="importFullConfigJSON(event)">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(239, 68, 68, 0.08); border-radius: var(--radius-bubble); border: 1px solid rgba(239, 68, 68, 0.25);">
+              <div>
+                <div style="color: #FCA5A5; font-weight: 800; font-size: 0.76rem;">Factory Reset Everything</div>
+                <div style="font-size: 0.62rem; color: var(--text-dim);">Restore defaults & wipe caches</div>
+              </div>
+              <button class="btn-dead-action" onclick="factoryResetSettings()">Reset ⟳</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer style="height: 30px; border-top: 1px solid var(--border-main); background: var(--bg-sidebar); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 0.65rem; font-family: var(--font-mono); color: var(--text-dim); flex-shrink: 0;">
+      <div><span>ENGINE: </span><span style="color: #fff; font-weight: 800;">ONYX-APEX-V2</span></div>
+      <div style="display: flex; gap: 20px;">
+        <div><span>POOL: </span><span id="footerTokenPool" style="color: var(--blue-primary); font-weight: 800;">75 ACTIVE</span></div>
+        <div><span>LATENCY: </span><span style="color: var(--emerald-success); font-weight: 800;">42ms</span></div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- 3. HANDLE INSPECTOR MODAL -->
+  <div id="inspectorModal" class="modal-backdrop hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(14px); z-index:10001; display:none; align-items:center; justify-content:center;">
+    <div style="background:var(--bg-surface); border:1px solid var(--border-main); border-radius:var(--radius-panel); width:480px; max-width:90vw; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,0.95);">
+      <div style="padding:16px 20px; border-bottom:1px solid var(--border-main); display:flex; align-items:center; justify-content:space-between; background:var(--bg-surface-alt);">
+        <span id="mTitle" style="font-weight: 800; color: #fff; font-size: 0.88rem;">Handle Inspector</span>
+        <button onclick="closeInspector()" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:1.2rem;">✕</button>
+      </div>
+      <div style="padding:18px 20px; display:flex; flex-direction:column; gap:12px; font-size:0.76rem;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <div style="background: var(--bg-surface-alt); padding: 12px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main);">
+            <div style="font-size: 0.64rem; color: var(--text-dim); font-weight: 700;">LENGTH</div>
+            <div id="mLen" style="font-size: 1.15rem; font-weight: 800; color: #fff; font-family: var(--font-mono);">4 chars</div>
+          </div>
+          <div style="background: var(--bg-surface-alt); padding: 12px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main);">
+            <div style="font-size: 0.64rem; color: var(--text-dim); font-weight: 700;">RARITY</div>
+            <div id="mScore" style="font-size: 1.15rem; font-weight: 800; color: var(--blue-primary); font-family: var(--font-mono);">98/100</div>
+          </div>
+          <div style="background: var(--bg-surface-alt); padding: 12px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main);">
+            <div style="font-size: 0.64rem; color: var(--text-dim); font-weight: 700;">LATENCY</div>
+            <div id="mLatency" style="font-size: 1.15rem; font-weight: 800; color: var(--emerald-success); font-family: var(--font-mono);">38ms</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 20px; border-top:1px solid var(--border-main); display:flex; justify-content:flex-end; gap:8px; background:var(--bg-surface-alt);">
+        <button onclick="closeInspector()" class="btn-action-copy">Close</button>
+      </div>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastNotification" class="toast-pill">✓ Action completed</div>
+
+  <!-- CORE SCRIPTS -->
+  <script>
+    // ==========================================
+    // COMPLETE 10 FULL-WEBSITE THEME DEFINITIONS
+    // ==========================================
+    const THEMES = {
+      'snowflake': {
+        name: 'Snowflake Frost',
+        icon: '❄️',
+        bgBase: '#0c2340',
+        bgSidebar: 'rgba(12, 35, 64, 0.88)',
+        bgSurface: 'rgba(16, 45, 80, 0.75)',
+        bgSurfaceAlt: 'rgba(22, 60, 105, 0.80)',
+        bgCard: 'rgba(14, 39, 70, 0.80)',
+        bgInput: 'rgba(7, 23, 44, 0.90)',
+        borderMain: 'rgba(56, 189, 248, 0.40)',
+        borderSubtle: 'rgba(125, 211, 252, 0.25)',
+        borderHover: '#38BDF8',
+        accentPrimary: '#38BDF8',
+        accentGlow: 'rgba(56, 189, 248, 0.55)',
+        accentGradient: 'linear-gradient(135deg, #0284C7 0%, #38BDF8 50%, #BAE6FD 100%)',
+        accentSubtleBg: 'rgba(56, 189, 248, 0.20)',
+        accentSubtleBorder: 'rgba(56, 189, 248, 0.45)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.2))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.45) 0%, transparent 65%), radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.35) 0%, transparent 60%), linear-gradient(135deg, #0c2340 0%, #07172c 50%, #10335e 100%)'
+      },
+      'blood_moon': {
+        name: 'Blood Moon',
+        icon: '🩸',
+        bgBase: '#450a0a',
+        bgSidebar: 'rgba(69, 10, 10, 0.88)',
+        bgSurface: 'rgba(88, 16, 20, 0.75)',
+        bgSurfaceAlt: 'rgba(115, 20, 26, 0.80)',
+        bgCard: 'rgba(79, 12, 17, 0.80)',
+        bgInput: 'rgba(46, 6, 9, 0.90)',
+        borderMain: 'rgba(239, 68, 68, 0.40)',
+        borderSubtle: 'rgba(248, 113, 113, 0.25)',
+        borderHover: '#EF4444',
+        accentPrimary: '#EF4444',
+        accentGlow: 'rgba(239, 68, 68, 0.60)',
+        accentGradient: 'linear-gradient(135deg, #DC2626 0%, #EF4444 50%, #F87171 100%)',
+        accentSubtleBg: 'rgba(239, 68, 68, 0.22)',
+        accentSubtleBorder: 'rgba(239, 68, 68, 0.50)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(239, 68, 68, 0.5), rgba(239, 68, 68, 0.2))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.50) 0%, transparent 65%), radial-gradient(circle at 10% 90%, rgba(220, 38, 38, 0.40) 0%, transparent 60%), linear-gradient(135deg, #450a0a 0%, #2e0609 50%, #581014 100%)'
+      },
+      'matrix': {
+        name: 'Matrix Hacker',
+        icon: '🟢',
+        bgBase: '#042411',
+        bgSidebar: 'rgba(4, 36, 17, 0.88)',
+        bgSurface: 'rgba(7, 56, 27, 0.75)',
+        bgSurfaceAlt: 'rgba(10, 75, 36, 0.80)',
+        bgCard: 'rgba(5, 45, 22, 0.80)',
+        bgInput: 'rgba(2, 23, 11, 0.90)',
+        borderMain: 'rgba(16, 185, 129, 0.40)',
+        borderSubtle: 'rgba(110, 231, 183, 0.25)',
+        borderHover: '#10B981',
+        accentPrimary: '#10B981',
+        accentGlow: 'rgba(16, 185, 129, 0.60)',
+        accentGradient: 'linear-gradient(135deg, #059669 0%, #10B981 50%, #6EE7B7 100%)',
+        accentSubtleBg: 'rgba(16, 185, 129, 0.20)',
+        accentSubtleBorder: 'rgba(16, 185, 129, 0.45)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(16, 185, 129, 0.5), rgba(16, 185, 129, 0.2))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.45) 0%, transparent 65%), radial-gradient(circle at 20% 80%, rgba(5, 150, 105, 0.35) 0%, transparent 60%), linear-gradient(135deg, #042411 0%, #02170b 50%, #073b1c 100%)'
+      },
+      'synthwave': {
+        name: 'Cyber Synth',
+        icon: '🟣',
+        bgBase: '#2c0b4a',
+        bgSidebar: 'rgba(44, 11, 74, 0.88)',
+        bgSurface: 'rgba(64, 16, 108, 0.75)',
+        bgSurfaceAlt: 'rgba(85, 22, 142, 0.80)',
+        bgCard: 'rgba(52, 13, 88, 0.80)',
+        bgInput: 'rgba(25, 5, 46, 0.90)',
+        borderMain: 'rgba(236, 72, 153, 0.40)',
+        borderSubtle: 'rgba(244, 114, 182, 0.25)',
+        borderHover: '#EC4899',
+        accentPrimary: '#EC4899',
+        accentGlow: 'rgba(236, 72, 153, 0.60)',
+        accentGradient: 'linear-gradient(135deg, #A855F7 0%, #EC4899 50%, #F472B6 100%)',
+        accentSubtleBg: 'rgba(236, 72, 153, 0.20)',
+        accentSubtleBorder: 'rgba(236, 72, 153, 0.45)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(236, 72, 153, 0.5), rgba(168, 85, 247, 0.25))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(236, 72, 153, 0.45) 0%, transparent 65%), radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.40) 0%, transparent 60%), linear-gradient(135deg, #2c0b4a 0%, #19052e 50%, #430f6e 100%)'
+      },
+      'dark_knight': {
+        name: 'Dark Knight',
+        icon: '🦇',
+        bgBase: '#1c1917',
+        bgSidebar: 'rgba(28, 25, 23, 0.88)',
+        bgSurface: 'rgba(44, 40, 37, 0.75)',
+        bgSurfaceAlt: 'rgba(60, 54, 50, 0.80)',
+        bgCard: 'rgba(36, 32, 30, 0.80)',
+        bgInput: 'rgba(16, 15, 14, 0.90)',
+        borderMain: 'rgba(245, 158, 11, 0.35)',
+        borderSubtle: 'rgba(251, 191, 36, 0.22)',
+        borderHover: '#F59E0B',
+        accentPrimary: '#F59E0B',
+        accentGlow: 'rgba(245, 158, 11, 0.55)',
+        accentGradient: 'linear-gradient(135deg, #D97706 0%, #F59E0B 50%, #FDE68A 100%)',
+        accentSubtleBg: 'rgba(245, 158, 11, 0.18)',
+        accentSubtleBorder: 'rgba(245, 158, 11, 0.45)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(245, 158, 11, 0.5), rgba(245, 158, 11, 0.2))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.40) 0%, transparent 65%), radial-gradient(circle at 20% 80%, rgba(217, 119, 6, 0.30) 0%, transparent 60%), linear-gradient(135deg, #1c1917 0%, #100f0e 50%, #2b2725 100%)'
+      },
+      'oceanic': {
+        name: 'Midnight Oceanic',
+        icon: '🌊',
+        bgBase: '#062343',
+        bgSidebar: 'rgba(6, 35, 67, 0.88)',
+        bgSurface: 'rgba(9, 48, 92, 0.75)',
+        bgSurfaceAlt: 'rgba(13, 67, 128, 0.80)',
+        bgCard: 'rgba(8, 41, 79, 0.80)',
+        bgInput: 'rgba(3, 20, 39, 0.90)',
+        borderMain: 'rgba(59, 130, 246, 0.40)',
+        borderSubtle: 'rgba(96, 165, 250, 0.25)',
+        borderHover: '#3B82F6',
+        accentPrimary: '#3B82F6',
+        accentGlow: 'rgba(59, 130, 246, 0.55)',
+        accentGradient: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 50%, #60A5FA 100%)',
+        accentSubtleBg: 'rgba(59, 130, 246, 0.20)',
+        accentSubtleBorder: 'rgba(59, 130, 246, 0.45)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(59, 130, 246, 0.2))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.45) 0%, transparent 65%), radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.35) 0%, transparent 60%), linear-gradient(135deg, #062343 0%, #031427 50%, #0a386b 100%)'
+      },
+      'toxic_acid': {
+        name: 'Toxic Acid',
+        icon: '⚡',
+        bgBase: '#1c2805',
+        bgSidebar: 'rgba(28, 40, 5, 0.88)',
+        bgSurface: 'rgba(40, 58, 7, 0.75)',
+        bgSurfaceAlt: 'rgba(54, 78, 10, 0.80)',
+        bgCard: 'rgba(35, 52, 6, 0.80)',
+        bgInput: 'rgba(18, 27, 3, 0.90)',
+        borderMain: 'rgba(163, 230, 53, 0.40)',
+        borderSubtle: 'rgba(190, 242, 100, 0.25)',
+        borderHover: '#A3E635',
+        accentPrimary: '#A3E635',
+        accentGlow: 'rgba(163, 230, 53, 0.60)',
+        accentGradient: 'linear-gradient(135deg, #65A30D 0%, #A3E635 50%, #D9F99D 100%)',
+        accentSubtleBg: 'rgba(163, 230, 53, 0.20)',
+        accentSubtleBorder: 'rgba(163, 230, 53, 0.45)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(163, 230, 53, 0.5), rgba(163, 230, 53, 0.2))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(163, 230, 53, 0.45) 0%, transparent 65%), radial-gradient(circle at 20% 80%, rgba(101, 163, 13, 0.35) 0%, transparent 60%), linear-gradient(135deg, #1c2805 0%, #0e1502 50%, #2c3e08 100%)'
+      },
+      'sakura': {
+        name: 'Sakura Bloom',
+        icon: '🌸',
+        bgBase: '#380d22',
+        bgSidebar: 'rgba(56, 13, 34, 0.88)',
+        bgSurface: 'rgba(78, 18, 48, 0.75)',
+        bgSurfaceAlt: 'rgba(102, 24, 63, 0.80)',
+        bgCard: 'rgba(68, 15, 41, 0.80)',
+        bgInput: 'rgba(35, 7, 21, 0.90)',
+        borderMain: 'rgba(244, 114, 182, 0.40)',
+        borderSubtle: 'rgba(251, 207, 232, 0.25)',
+        borderHover: '#F472B6',
+        accentPrimary: '#F472B6',
+        accentGlow: 'rgba(244, 114, 182, 0.60)',
+        accentGradient: 'linear-gradient(135deg, #DB2777 0%, #F472B6 50%, #FBCFE8 100%)',
+        accentSubtleBg: 'rgba(244, 114, 182, 0.20)',
+        accentSubtleBorder: 'rgba(244, 114, 182, 0.45)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(244, 114, 182, 0.5), rgba(244, 114, 182, 0.2))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(244, 114, 182, 0.45) 0%, transparent 65%), radial-gradient(circle at 80% 80%, rgba(219, 39, 119, 0.35) 0%, transparent 60%), linear-gradient(135deg, #380d22 0%, #200713 50%, #501330 100%)'
+      },
+      'sunset': {
+        name: 'Sunset Horizon',
+        icon: '🌅',
+        bgBase: '#3d1406',
+        bgSidebar: 'rgba(61, 20, 6, 0.88)',
+        bgSurface: 'rgba(84, 28, 8, 0.75)',
+        bgSurfaceAlt: 'rgba(110, 36, 11, 0.80)',
+        bgCard: 'rgba(74, 24, 7, 0.80)',
+        bgInput: 'rgba(40, 12, 3, 0.90)',
+        borderMain: 'rgba(249, 115, 22, 0.40)',
+        borderSubtle: 'rgba(254, 215, 170, 0.25)',
+        borderHover: '#F97316',
+        accentPrimary: '#F97316',
+        accentGlow: 'rgba(249, 115, 22, 0.60)',
+        accentGradient: 'linear-gradient(135deg, #EA580C 0%, #F97316 50%, #FFEDD5 100%)',
+        accentSubtleBg: 'rgba(249, 115, 22, 0.20)',
+        accentSubtleBorder: 'rgba(249, 115, 22, 0.45)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(249, 115, 22, 0.5), rgba(249, 115, 22, 0.2))',
+        bodyMesh: 'radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.45) 0%, transparent 65%), radial-gradient(circle at 20% 80%, rgba(234, 88, 12, 0.35) 0%, transparent 60%), linear-gradient(135deg, #3d1406 0%, #220b03 50%, #561c08 100%)'
+      },
+      'pitch_black': {
+        name: 'Pitch OLED Onyx',
+        icon: '🖤',
+        bgBase: '#000000',
+        bgSidebar: '#050505',
+        bgSurface: '#0a0a0a',
+        bgSurfaceAlt: '#121212',
+        bgCard: '#080808',
+        bgInput: '#000000',
+        borderMain: '#1f1f1f',
+        borderSubtle: 'rgba(255, 255, 255, 0.10)',
+        borderHover: '#3B82F6',
+        accentPrimary: '#3B82F6',
+        accentGlow: 'rgba(59, 130, 246, 0.40)',
+        accentGradient: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)',
+        accentSubtleBg: 'rgba(59, 130, 246, 0.15)',
+        accentSubtleBorder: 'rgba(59, 130, 246, 0.35)',
+        accentAvatarGrad: 'linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(59, 130, 246, 0.15))',
+        bodyMesh: '#000000'
+      }
+    };
+
+    // ==========================================
+    // THEME ATMOSPHERE PARTICLE SYSTEM (FULL-SCREEN)
+    // ==========================================
+    let currentAtmosphereMode = 'snowflake';
+    let particleAnimFrame = null;
+    let particles = [];
+    let matrixColumns = [];
+    let particleDensityMultiplier = 1.0;
+    let particleSpeedMultiplier = 1.0;
+    let atmosphereEnabled = true;
+
+    function initAtmosphereCanvas() {
+      const canvas = document.getElementById('themeAtmosphereCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        initParticlesForMode(currentAtmosphereMode);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (atmosphereEnabled) {
+          renderAtmosphere(ctx, canvas);
+        }
+        particleAnimFrame = requestAnimationFrame(animate);
+      }
+
+      if (particleAnimFrame) cancelAnimationFrame(particleAnimFrame);
+      animate();
+    }
+
+    function initParticlesForMode(mode) {
+      const canvas = document.getElementById('themeAtmosphereCanvas');
+      if (!canvas) return;
+      particles = [];
+      matrixColumns = [];
+
+      const w = canvas.width;
+      const h = canvas.height;
+      const baseCount = Math.floor(70 * particleDensityMultiplier);
+
+      if (mode === 'snowflake') {
+        const count = Math.floor(90 * particleDensityMultiplier);
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            radius: Math.random() * 3.2 + 1.2,
+            speedY: (Math.random() * 1.4 + 0.6) * particleSpeedMultiplier,
+            speedX: Math.sin(Math.random() * Math.PI) * 0.8 * particleSpeedMultiplier,
+            opacity: Math.random() * 0.75 + 0.25,
+            swayAngle: Math.random() * Math.PI * 2,
+            swaySpeed: Math.random() * 0.025 + 0.01
+          });
+        }
+      } else if (mode === 'matrix') {
+        const fontSize = 14;
+        const columns = Math.floor(w / fontSize);
+        for (let i = 0; i < columns; i++) {
+          matrixColumns.push({
+            x: i * fontSize,
+            y: Math.random() * -h,
+            speed: (Math.random() * 3.5 + 2) * particleSpeedMultiplier,
+            chars: []
+          });
+        }
+      } else if (mode === 'dark_knight') {
+        for (let i = 0; i < baseCount; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            radius: Math.random() * 2.4 + 0.8,
+            speedY: -(Math.random() * 0.9 + 0.3) * particleSpeedMultiplier,
+            speedX: (Math.random() - 0.5) * 0.5 * particleSpeedMultiplier,
+            opacity: Math.random() * 0.8 + 0.2,
+            color: Math.random() > 0.3 ? '#F59E0B' : '#FBBF24'
+          });
+        }
+      } else if (mode === 'synthwave') {
+        for (let i = 0; i < baseCount; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            radius: Math.random() * 2.6 + 1.0,
+            speedY: (Math.random() * 0.8 + 0.3) * particleSpeedMultiplier,
+            speedX: (Math.random() - 0.5) * 0.5 * particleSpeedMultiplier,
+            opacity: Math.random() * 0.8 + 0.2,
+            color: Math.random() > 0.5 ? '#EC4899' : '#A855F7'
+          });
+        }
+      } else if (mode === 'blood_moon') {
+        for (let i = 0; i < baseCount + 10; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            radius: Math.random() * 2.8 + 1.0,
+            speedY: -(Math.random() * 1.2 + 0.4) * particleSpeedMultiplier,
+            speedX: (Math.random() - 0.5) * 0.7 * particleSpeedMultiplier,
+            opacity: Math.random() * 0.85 + 0.25,
+            color: Math.random() > 0.4 ? '#EF4444' : '#F87171'
+          });
+        }
+      } else if (mode === 'oceanic') {
+        for (let i = 0; i < baseCount; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            radius: Math.random() * 3.8 + 1.5,
+            speedY: -(Math.random() * 1.0 + 0.4) * particleSpeedMultiplier,
+            speedX: (Math.random() - 0.5) * 0.4 * particleSpeedMultiplier,
+            opacity: Math.random() * 0.65 + 0.2,
+            color: '#38BDF8'
+          });
+        }
+      } else if (mode === 'toxic_acid') {
+        for (let i = 0; i < baseCount; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            radius: Math.random() * 2.6 + 1.0,
+            speedY: -(Math.random() * 1.1 + 0.4) * particleSpeedMultiplier,
+            speedX: (Math.random() - 0.5) * 0.6 * particleSpeedMultiplier,
+            opacity: Math.random() * 0.85 + 0.2,
+            color: Math.random() > 0.4 ? '#A3E635' : '#BEF264'
+          });
+        }
+      } else if (mode === 'sakura') {
+        // Drifting Petals
+        for (let i = 0; i < baseCount; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            radius: Math.random() * 3.4 + 1.5,
+            speedY: (Math.random() * 1.1 + 0.4) * particleSpeedMultiplier,
+            speedX: (Math.sin(Math.random() * Math.PI) * 0.9 + 0.2) * particleSpeedMultiplier,
+            opacity: Math.random() * 0.75 + 0.25,
+            swayAngle: Math.random() * Math.PI * 2,
+            swaySpeed: Math.random() * 0.02 + 0.01,
+            color: Math.random() > 0.4 ? '#F472B6' : '#FBCFE8'
+          });
+        }
+      } else if (mode === 'sunset') {
+        for (let i = 0; i < baseCount; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            radius: Math.random() * 2.6 + 1.0,
+            speedY: -(Math.random() * 0.9 + 0.3) * particleSpeedMultiplier,
+            speedX: (Math.random() - 0.5) * 0.5 * particleSpeedMultiplier,
+            opacity: Math.random() * 0.8 + 0.2,
+            color: Math.random() > 0.4 ? '#F97316' : '#FDBA74'
+          });
+        }
+      }
+    }
+
+    function renderAtmosphere(ctx, canvas) {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      if (currentAtmosphereMode === 'snowflake' || currentAtmosphereMode === 'sakura') {
+        particles.forEach(p => {
+          p.y += p.speedY;
+          p.swayAngle += p.swaySpeed;
+          p.x += Math.sin(p.swayAngle) * 0.8;
+
+          if (p.y > h) { p.y = -10; p.x = Math.random() * w; }
+          if (p.x > w) p.x = 0;
+          if (p.x < 0) p.x = w;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color || `rgba(224, 242, 254, ${p.opacity})`;
+          ctx.shadowColor = p.color || '#38BDF8';
+          ctx.shadowBlur = p.radius * 3.5;
+          ctx.fill();
+        });
+      } else if (currentAtmosphereMode === 'matrix') {
+        const chars = '0123456789ABCDEF0123456789abcdef';
+        const fontSize = 14;
+        ctx.font = `${fontSize}px monospace`;
+
+        matrixColumns.forEach(col => {
+          col.y += col.speed;
+          if (col.y > h + 100) col.y = Math.random() * -100;
+
+          const char = chars[Math.floor(Math.random() * chars.length)];
+          ctx.fillStyle = '#A7F3D0';
+          ctx.shadowColor = '#10B981';
+          ctx.shadowBlur = 8;
+          ctx.fillText(char, col.x, col.y);
+
+          for (let k = 1; k < 6; k++) {
+            const trailY = col.y - k * fontSize;
+            if (trailY > 0 && trailY < h) {
+              const trailChar = chars[Math.floor(Math.random() * chars.length)];
+              ctx.fillStyle = `rgba(16, 185, 129, ${0.8 - k * 0.15})`;
+              ctx.shadowBlur = 2;
+              ctx.fillText(trailChar, col.x, trailY);
+            }
+          }
+        });
+      } else if (['dark_knight', 'synthwave', 'blood_moon', 'oceanic', 'toxic_acid', 'sunset'].includes(currentAtmosphereMode)) {
+        particles.forEach(p => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+
+          if (p.speedY < 0 && p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+          if (p.speedY > 0 && p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color || '#fff';
+          ctx.globalAlpha = p.opacity;
+          ctx.shadowColor = p.color || '#fff';
+          ctx.shadowBlur = p.radius * 4.0;
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        });
+      }
+    }
+
+    // ==========================================
+    // STUDIO & PARTICLE CONTROLS HANDLERS
+    // ==========================================
+    function setParticleDensity(level, btnEl) {
+      if (btnEl) {
+        btnEl.parentElement.querySelectorAll('.preset-chip-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      if (level === 'low') particleDensityMultiplier = 0.4;
+      else if (level === 'med') particleDensityMultiplier = 1.0;
+      else if (level === 'high') particleDensityMultiplier = 1.8;
+      else if (level === 'blizzard') particleDensityMultiplier = 3.0;
+      initParticlesForMode(currentAtmosphereMode);
+      showToast(`Particle density set to: ${level.toUpperCase()}`);
+    }
+
+    function setParticleSpeed(speed, btnEl) {
+      if (btnEl) {
+        btnEl.parentElement.querySelectorAll('.preset-chip-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      particleSpeedMultiplier = speed;
+      initParticlesForMode(currentAtmosphereMode);
+      showToast(`Particle animation speed set to: ${speed}x`);
+    }
+
+    function toggleAtmosphereCanvas(enabled) {
+      atmosphereEnabled = enabled;
+      const canvas = document.getElementById('themeAtmosphereCanvas');
+      if (canvas) canvas.style.display = enabled ? 'block' : 'none';
+      showToast(enabled ? '✨ Atmosphere canvas enabled' : 'Atmosphere canvas paused');
+    }
+
+    function setCustomAccentColor(colorHex) {
+      const root = document.documentElement;
+      root.style.setProperty('--blue-primary', colorHex);
+      root.style.setProperty('--blue-glow', colorHex + '80');
+      root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${colorHex} 0%, #FFFFFF 100%)`);
+      showToast(`Custom accent color updated: ${colorHex}`);
+    }
+
+    function resetAccentToTheme() {
+      applyFullTheme(currentAtmosphereMode, null);
+      showToast('Reset accent to theme default');
+    }
+
+    function setGlassBlur(px, btnEl) {
+      if (btnEl) {
+        btnEl.parentElement.querySelectorAll('.preset-chip-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      document.querySelectorAll('.app-sidebar, .app-header, .workspace-panel, .stat-bubble-card').forEach(el => {
+        el.style.backdropFilter = `blur(${px}px)`;
+        el.style.webkitBackdropFilter = `blur(${px}px)`;
+      });
+      showToast(`Glass blur strength set to ${px}px`);
+    }
+
+    function setGlowPower(opacityVal, btnEl) {
+      if (btnEl) {
+        btnEl.parentElement.querySelectorAll('.preset-chip-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      const t = THEMES[currentAtmosphereMode];
+      if (t) {
+        const root = document.documentElement;
+        root.style.setProperty('--blue-glow', t.accentPrimary + Math.floor(opacityVal * 255).toString(16).padStart(2, '0'));
+      }
+      showToast('Glow power intensity updated');
+    }
+
+    // ==========================================
+    // THEME APPLICATION & PERSISTENCE
+    // ==========================================
+    function applyFullTheme(themeKey, btnEl) {
+      const t = THEMES[themeKey];
+      if (!t) return;
+
+      const root = document.documentElement;
+      root.style.setProperty('--bg-base', t.bgBase);
+      root.style.setProperty('--bg-sidebar', t.bgSidebar);
+      root.style.setProperty('--bg-surface', t.bgSurface);
+      root.style.setProperty('--bg-surface-alt', t.bgSurfaceAlt);
+      root.style.setProperty('--bg-card', t.bgCard);
+      root.style.setProperty('--bg-input', t.bgInput);
+      root.style.setProperty('--border-main', t.borderMain);
+      root.style.setProperty('--border-subtle', t.borderSubtle);
+      root.style.setProperty('--border-hover', t.borderHover);
+      root.style.setProperty('--blue-primary', t.accentPrimary);
+      root.style.setProperty('--blue-glow', t.accentGlow);
+      root.style.setProperty('--accent-gradient', t.accentGradient);
+      root.style.setProperty('--accent-subtle-bg', t.accentSubtleBg);
+      root.style.setProperty('--accent-subtle-border', t.accentSubtleBorder);
+      root.style.setProperty('--accent-avatar-gradient', t.accentAvatarGrad);
+
+      let styleTag = document.getElementById('dynamic-theme-overrides');
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'dynamic-theme-overrides';
+        document.head.appendChild(styleTag);
+      }
+
+      styleTag.innerHTML = `
+        body {
+          background: ${t.bodyMesh} !important;
+          background-attachment: fixed !important;
+        }
+        .app-sidebar {
+          background: ${t.bgSidebar} !important;
+          backdrop-filter: blur(20px) !important;
+          -webkit-backdrop-filter: blur(20px) !important;
+          border-right-color: ${t.borderMain} !important;
+        }
+        .app-header {
+          background: ${t.bgSidebar} !important;
+          backdrop-filter: blur(20px) !important;
+          -webkit-backdrop-filter: blur(20px) !important;
+          border-bottom-color: ${t.borderMain} !important;
+        }
+        .main-viewport {
+          background: transparent !important;
+        }
+        .workspace-panel {
+          background: ${t.bgSurface} !important;
+          backdrop-filter: blur(14px) !important;
+          -webkit-backdrop-filter: blur(14px) !important;
+          border-color: ${t.borderMain} !important;
+        }
+        .panel-top-toolbar, .table-statusbar {
+          background: ${t.bgSurfaceAlt} !important;
+          border-color: ${t.borderMain} !important;
+        }
+        .stat-bubble-card {
+          background: ${t.bgCard} !important;
+          backdrop-filter: blur(14px) !important;
+          -webkit-backdrop-filter: blur(14px) !important;
+          border-color: ${t.borderMain} !important;
+        }
+        .stat-bubble-card:hover {
+          border-color: ${t.accentPrimary} !important;
+          box-shadow: 0 8px 24px ${t.accentGlow} !important;
+        }
+        .presets-pill-strip {
+          background: ${t.bgSurface} !important;
+          border-color: ${t.borderMain} !important;
+        }
+        .data-feed-scroll {
+          background: ${t.bgCard} !important;
+        }
+        .handle-card-item {
+          background: ${t.bgSurfaceAlt} !important;
+          border-color: ${t.borderSubtle} !important;
+        }
+        .handle-card-item:hover {
+          border-color: ${t.accentPrimary} !important;
+          box-shadow: 0 8px 24px ${t.accentGlow} !important;
+        }
+        .infra-card {
+          background: ${t.bgSurface} !important;
+          border-color: ${t.borderMain} !important;
+        }
+        .infra-textarea {
+          background: ${t.bgInput} !important;
+          border-color: ${t.borderMain} !important;
+        }
+        .telemetry-log-stream {
+          background: ${t.bgInput} !important;
+        }
+        .brand-badge-icon {
+          background: ${t.accentGradient} !important;
+          box-shadow: 0 0 24px ${t.accentGlow} !important;
+        }
+        .version-tag {
+          color: ${t.accentPrimary} !important;
+          background: ${t.accentSubtleBg} !important;
+          border-color: ${t.accentSubtleBorder} !important;
+        }
+        .nav-tab-btn.active {
+          background: ${t.accentSubtleBg} !important;
+          color: #ffffff !important;
+          border-color: ${t.accentPrimary} !important;
+          box-shadow: 0 0 20px ${t.accentGlow} !important;
+        }
+        .nav-tab-btn.active svg {
+          color: ${t.accentPrimary} !important;
+        }
+        .btn-main-cta {
+          background: ${t.accentGradient} !important;
+          box-shadow: 0 6px 26px ${t.accentGlow} !important;
+        }
+        .preset-chip-btn.active {
+          background: ${t.accentSubtleBg} !important;
+          border-color: ${t.accentPrimary} !important;
+          color: #ffffff !important;
+          box-shadow: 0 0 18px ${t.accentGlow} !important;
+        }
+        .btn-export-blue {
+          background: ${t.accentPrimary} !important;
+          box-shadow: 0 0 16px ${t.accentGlow} !important;
+        }
+        .header-search {
+          background: ${t.bgSurface} !important;
+          border-color: ${t.borderMain} !important;
+        }
+        .header-search:focus-within {
+          border-color: ${t.accentPrimary} !important;
+          box-shadow: 0 0 16px ${t.accentGlow} !important;
+        }
+        .top-sync-pill-proxies {
+          color: ${t.accentPrimary} !important;
+          background: ${t.accentSubtleBg} !important;
+          border-color: ${t.accentSubtleBorder} !important;
+        }
+        .theme-select-card.active {
+          border-color: ${t.accentPrimary} !important;
+          box-shadow: 0 0 20px ${t.accentGlow} !important;
+        }
+        footer {
+          background: ${t.bgSidebar} !important;
+          backdrop-filter: blur(20px) !important;
+          -webkit-backdrop-filter: blur(20px) !important;
+          border-color: ${t.borderMain} !important;
+        }
+      `;
+
+      document.querySelectorAll('.theme-select-card').forEach(c => c.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      else {
+        const matchingCard = document.querySelector(`.theme-select-card[data-theme="${themeKey}"]`);
+        if (matchingCard) matchingCard.classList.add('active');
+      }
+
+      const activeBadge = document.getElementById('activeThemeNameBadge');
+      if (activeBadge) activeBadge.textContent = `${t.icon} ${t.name}`;
+
+      localStorage.setItem('onyx_selected_full_theme', themeKey);
+      showToast(`Applied Complete Theme: [${t.icon} ${t.name}]`);
+      currentAtmosphereMode = themeKey;
+      initParticlesForMode(themeKey);
+    }
+
+    // ==========================================
+    // NAVIGATION & TAB SWITCHING
+    // ==========================================
+    function navigateView(viewName, btnEl) {
+      document.querySelectorAll('.view-panel-container').forEach(panel => {
+        panel.classList.remove('active');
+      });
+
+      const targetView = document.getElementById('view-' + viewName);
+      if (targetView) {
+        targetView.classList.add('active');
+      }
+
+      document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) {
+        btnEl.classList.add('active');
+      } else {
+        const matchingBtn = document.querySelector(`.nav-tab-btn[onclick*="'${viewName}'"]`);
+        if (matchingBtn) matchingBtn.classList.add('active');
+      }
+    }
+
+    function switchPreset(platform, btnEl) {
+      document.querySelectorAll('.presets-pill-strip .preset-chip-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      showToast(`Active platform switched to: ${platform.toUpperCase()}`);
+      if (window.setActiveTargetPlatform) {
+        window.setActiveTargetPlatform(platform);
+      }
+    }
+
+    function setBrandIcon(icon, btnEl) {
+      if (btnEl) {
+        btnEl.parentElement.querySelectorAll('.preset-chip-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      const badge = document.getElementById('sidebarBrandIcon');
+      if (badge) badge.textContent = icon;
+      localStorage.setItem('onyx_brand_icon', icon);
+      showToast(`Brand icon set to: ${icon}`);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    function playSampleHitSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+        showToast('🔊 Audio Chime Tested!');
+      } catch(e) {
+        showToast('Audio playback not supported in current environment');
+      }
+    }
+
+    function testDiscordWebhook() {
+      const input = document.getElementById('settingWebhookUrlInput');
+      const url = input ? input.value.trim() : '';
+      if (!url) {
+        showToast('⚠️ Please enter a valid Discord Webhook URL first');
+        return;
+      }
+      showToast('🚀 Sending test embed to Discord Webhook...');
+      fetch('/api/discord-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url })
+      }).then(() => {
+        showToast('✓ Webhook test dispatched!');
+      }).catch(() => {
+        showToast('✓ Webhook payload queued');
+      });
+    }
+
+    function exportFullConfigJSON() {
+      const cfg = {
+        theme: localStorage.getItem('onyx_selected_full_theme') || 'snowflake',
+        brandTitle: document.getElementById('settingBrandTitleInput') ? document.getElementById('settingBrandTitleInput').value : 'ONYX APEX',
+        brandSubtitle: document.getElementById('settingBrandSubtitleInput') ? document.getElementById('settingBrandSubtitleInput').value : 'Multi-Platform Engine',
+        brandVersion: document.getElementById('settingBrandVersionInput') ? document.getElementById('settingBrandVersionInput').value : 'v2.4',
+        webhookUrl: document.getElementById('settingWebhookUrlInput') ? document.getElementById('settingWebhookUrlInput').value : '',
+        soundEnabled: document.getElementById('settingSoundToggle') ? document.getElementById('settingSoundToggle').checked : true
+      };
+      const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `onyx-apex-config-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📥 Config JSON exported successfully!');
+    }
+
+    function importFullConfigJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const cfg = JSON.parse(e.target.result);
+          if (cfg.theme) applyFullTheme(cfg.theme, null);
+          if (cfg.webhookUrl && document.getElementById('settingWebhookUrlInput')) {
+            document.getElementById('settingWebhookUrlInput').value = cfg.webhookUrl;
+          }
+          showToast('✓ Configuration loaded from JSON file!');
+        } catch(err) {
+          showToast('Error importing config JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function factoryResetSettings() {
+      localStorage.clear();
+      applyFullTheme('snowflake', null);
+
+      if (document.getElementById('settingBrandTitleInput')) document.getElementById('settingBrandTitleInput').value = 'ONYX APEX';
+      if (document.getElementById('settingBrandSubtitleInput')) document.getElementById('settingBrandSubtitleInput').value = 'Multi-Platform Engine';
+      if (document.getElementById('settingBrandVersionInput')) document.getElementById('settingBrandVersionInput').value = 'v2.4';
+      if (document.getElementById('settingWebhookUrlInput')) document.getElementById('settingWebhookUrlInput').value = '';
+
+      showToast('✓ Restored all default settings and themes!');
+    }
+
+    function loadSavedPreferences() {
+      const savedFullTheme = localStorage.getItem('onyx_selected_full_theme');
+      if (savedFullTheme) {
+        applyFullTheme(savedFullTheme, null);
+      } else {
+        applyFullTheme('snowflake', null);
+      }
+
+      const savedIcon = localStorage.getItem('onyx_brand_icon');
+      if (savedIcon) {
+        setBrandIcon(savedIcon, null);
+      }
+    }
+
+    function closeInspector() {
+      const m = document.getElementById('inspectorModal');
+      if (m) m.style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSavedPreferences();
+      initAtmosphereCanvas();
+    });
+  </script>
+
+  <script src="app.js?v=2.4.99"></script>
 </body>
 </html>
