@@ -1,6 +1,6 @@
 // ==========================================================
 // ONYX APEX v2.4 — Master Commercial Checker Engine
-// 17-Platform Precision Scanner Suite (Zero False Positives)
+// 17-Platform Precision Scanner Suite (Infinite Continuous Mode)
 // ==========================================================
 
 // Global State
@@ -18,6 +18,7 @@ window.workerDelayMs = 20;
 let checkTimestamps = [];
 let cpsTimer = null;
 let customHandlesList = [];
+let customQueueIndex = 0;
 
 // ----------------------------------------------------------
 // 1. COMPREHENSIVE 17-PLATFORM REGISTRY
@@ -45,7 +46,7 @@ const PLATFORMS = {
 window.PLATFORMS = PLATFORMS;
 
 // ----------------------------------------------------------
-// 2. GENERATOR ENGINES (3L, 4L, Alphanum, Semi-OG, Patterns)
+// 2. DYNAMIC INFINITE HANDLE GENERATOR ENGINE
 // ----------------------------------------------------------
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
 const ALPHANUM = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -56,86 +57,57 @@ const SEMI_OG_WORDS = [
   'frost', 'ghost', 'pulse', 'vortex', 'xenon', 'cyber', 'titan', 'ultra', 'sonic', 'karma'
 ];
 
-function buildQueueForPattern(pattern) {
-  const queue = [];
-  const minLen = (PLATFORMS[window.activePlatform] && PLATFORMS[window.activePlatform].min) || 4;
-  
+function generateNextHandle(pattern) {
   if (pattern === '3L_ALPHA') {
-    // 3-Letter Letters (AAA-ZZZ) - 17,576
-    const count = minLen > 3 ? 0 : 2500;
-    if (minLen > 3) {
-      showToast(`⚠️ Note: ${window.activePlatform.toUpperCase()} requires min ${minLen} chars. Generating ${minLen}L instead.`);
-      for (let i = 0; i < 2500; i++) {
-        let s = '';
-        for (let j = 0; j < minLen; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
-        queue.push(s);
-      }
-    } else {
-      for (let i = 0; i < 2500; i++) {
-        let s = '';
-        for (let j = 0; j < 3; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
-        queue.push(s);
-      }
-    }
+    // 3-Letter pure letters (AAA-ZZZ) - Always 3 characters
+    let s = '';
+    for (let j = 0; j < 3; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
+    return s;
   } else if (pattern === '4L_ALPHA') {
-    // 4-Letter Pure Letters (AAAA-ZZZZ)
-    for (let i = 0; i < 3500; i++) {
-      let s = '';
-      for (let j = 0; j < 4; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
-      queue.push(s);
-    }
+    // 4-Letter pure letters (AAAA-ZZZZ)
+    let s = '';
+    for (let j = 0; j < 4; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
+    return s;
   } else if (pattern === '4L_ALPHANUM') {
-    // 4-Letter Alphanumeric (A-Z, 0-9)
-    for (let i = 0; i < 4000; i++) {
-      let s = '';
-      for (let j = 0; j < 4; j++) s += ALPHANUM[Math.floor(Math.random() * ALPHANUM.length)];
-      queue.push(s);
-    }
+    // 4-Letter alphanumeric (A-Z, 0-9)
+    let s = '';
+    for (let j = 0; j < 4; j++) s += ALPHANUM[Math.floor(Math.random() * ALPHANUM.length)];
+    return s;
   } else if (pattern === '5L_SEMI_OG') {
-    // Semi-OG Dictionary Words & Suffix Combinations
-    const suffixes = ['og', 'hq', 'vip', 'xo', 'gg', 'up', 'cc', '77', '99', 'x', 'z'];
-    SEMI_OG_WORDS.forEach(w => {
-      queue.push(w);
-      suffixes.forEach(sfx => {
-        queue.push(w + sfx);
-        queue.push(sfx + w);
-      });
-    });
-    queue.sort(() => Math.random() - 0.5);
+    const w = SEMI_OG_WORDS[Math.floor(Math.random() * SEMI_OG_WORDS.length)];
+    const suffixes = ['og', 'hq', 'vip', 'xo', 'gg', 'up', 'cc', '77', '99', 'x', 'z', ''];
+    const sfx = suffixes[Math.floor(Math.random() * suffixes.length)];
+    return Math.random() > 0.5 ? w + sfx : sfx + w;
   } else if (pattern === 'REPEATING') {
-    // Repeating & Double Patterns (e.g. xxab, aaxx, 99ab)
-    for (let i = 0; i < 2500; i++) {
-      const c1 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
-      const c2 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
-      const mode = Math.floor(Math.random() * 4);
-      if (mode === 0) queue.push(c1 + c1 + c2 + c2);
-      else if (mode === 1) queue.push(c1 + c2 + c1 + c2);
-      else if (mode === 2) queue.push(c1 + c1 + c1 + c2);
-      else queue.push(c1 + c2 + c2 + c2);
-    }
-  } else if (pattern === 'CUSTOM' && customHandlesList.length > 0) {
-    queue.push(...customHandlesList);
-  } else {
-    // Fallback: Random 4L
-    for (let i = 0; i < 2500; i++) {
-      let s = '';
-      for (let j = 0; j < 4; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
-      queue.push(s);
+    const c1 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+    const c2 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+    const mode = Math.floor(Math.random() * 4);
+    if (mode === 0) return c1 + c1 + c2 + c2;
+    if (mode === 1) return c1 + c2 + c1 + c2;
+    if (mode === 2) return c1 + c1 + c1 + c2;
+    return c1 + c2 + c2 + c2;
+  } else if (pattern === 'CUSTOM') {
+    if (customHandlesList.length > 0) {
+      if (customQueueIndex < customHandlesList.length) {
+        return customHandlesList[customQueueIndex++];
+      }
+      return null;
     }
   }
 
-  return queue;
+  // Fallback: Random 4L
+  let s = '';
+  for (let j = 0; j < 4; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
+  return s;
 }
 
 // ----------------------------------------------------------
-// 3. SCANNER ENGINE EXECUTION & CONTROLS
+// 3. SCANNER ENGINE EXECUTION & INFINITE STREAMING
 // ----------------------------------------------------------
 window.startScannerEngine = function() {
   if (window.isScanning) return;
   window.isScanning = true;
-
-  window.scannerQueue = buildQueueForPattern(window.currentGenPattern);
-  window.queueCursor = 0;
+  customQueueIndex = 0;
 
   toggleScannerUIState(true);
 
@@ -143,8 +115,8 @@ window.startScannerEngine = function() {
   cpsTimer = setInterval(updateVelocityStats, 500);
 
   const pData = PLATFORMS[window.activePlatform] || { name: window.activePlatform.toUpperCase() };
-  logMessage('SYS', `Engine started for [${pData.name}] with pattern [${window.currentGenPattern}] (${window.scannerQueue.length} queued).`);
-  showToast(`⚡ Scanner Active: ${pData.name} (${window.activeWorkerThreads} Workers)`);
+  logMessage('SYS', `Infinite Engine started for [${pData.name}] with pattern [${window.currentGenPattern}] (Non-stop streaming).`);
+  showToast(`⚡ Scanner Active: ${pData.name} — Infinite Continuous Mode`);
 
   const threads = Math.min(window.activeWorkerThreads || 45, 150);
   for (let i = 0; i < threads; i++) {
@@ -160,7 +132,7 @@ window.stopScannerEngine = function() {
   const statCps = document.getElementById('statCps');
   if (statCps) statCps.innerHTML = `0 <span style="font-size: 0.85rem; color: var(--text-dim);">CPS</span>`;
 
-  logMessage('SYS', `Engine stopped.`);
+  logMessage('SYS', `Engine stopped by user.`);
   showToast('🛑 Scanner Engine Stopped');
 };
 
@@ -170,6 +142,7 @@ window.resetScannerStats = function() {
   window.availableHits = [];
   window.takenCount = 0;
   window.queueCursor = 0;
+  customQueueIndex = 0;
   checkTimestamps = [];
 
   updateDashboardMetrics();
@@ -192,18 +165,27 @@ function toggleScannerUIState(scanning) {
 
   if (statusBadge) {
     const pData = PLATFORMS[window.activePlatform] || { name: window.activePlatform.toUpperCase() };
-    statusBadge.textContent = scanning ? `SCANNING @${pData.name.toUpperCase()}` : 'ENGINE READY';
+    statusBadge.textContent = scanning ? `SCANNING @${pData.name.toUpperCase()} (INFINITE)` : 'ENGINE READY';
     statusBadge.style.color = scanning ? 'var(--emerald-success)' : 'var(--blue-primary)';
   }
 }
 
 // ----------------------------------------------------------
-// 4. ASYNC WORKER THREAD POOL
+// 4. ASYNC WORKER THREAD POOL (INFINITE GENERATION LOOP)
 // ----------------------------------------------------------
 async function spawnScannerWorker(workerId) {
-  while (window.isScanning && window.queueCursor < window.scannerQueue.length) {
-    const handle = window.scannerQueue[window.queueCursor++];
-    if (!handle) break;
+  while (window.isScanning) {
+    const handle = generateNextHandle(window.currentGenPattern);
+    
+    // If custom list reached the end, stop
+    if (!handle) {
+      if (window.currentGenPattern === 'CUSTOM') {
+        window.stopScannerEngine();
+        logMessage('SYS', 'Custom wordlist fully scanned.');
+        showToast('✓ Custom wordlist scan complete');
+      }
+      break;
+    }
 
     await executeHandleCheck(handle);
 
@@ -211,11 +193,6 @@ async function spawnScannerWorker(workerId) {
     if (delay > 0) {
       await new Promise(r => setTimeout(r, delay));
     }
-  }
-
-  if (window.queueCursor >= window.scannerQueue.length && window.isScanning) {
-    window.stopScannerEngine();
-    logMessage('SYS', 'Queue fully processed.');
   }
 }
 
@@ -228,6 +205,7 @@ async function executeHandleCheck(handle) {
 
   const platform = window.activePlatform || 'tiktok';
   let isAvailable = false;
+  let checkResult = null;
 
   try {
     const res = await fetch('/api/check-handle', {
@@ -235,16 +213,22 @@ async function executeHandleCheck(handle) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         platform: platform,
-        handle: handle
+        handle: handle.toLowerCase()
       })
     });
 
-    const result = await res.json();
+    checkResult = await res.json();
 
-    if (result.available === true || result.status === 'available') {
+    if (checkResult.available === true || checkResult.status === 'available') {
       isAvailable = true;
-    } else if (result.status === 'rate_limited') {
+    } else if (checkResult.status === 'rate_limited') {
       logMessage('WARN', `Rate-limit / Challenge on @${handle} (${platform.toUpperCase()})`);
+      isAvailable = false;
+    } else if (checkResult.status === 'restricted') {
+      if (window.totalCheckedCount % 25 === 0) {
+        logMessage('WARN', `@${handle} is restricted on ${platform.toUpperCase()}: ${checkResult.reason}`);
+      }
+      isAvailable = false;
     } else {
       isAvailable = false;
     }
@@ -254,24 +238,25 @@ async function executeHandleCheck(handle) {
   }
 
   if (isAvailable) {
-    handleDiscoveryHit(handle, platform);
+    handleDiscoveryHit(handle.toLowerCase(), platform, checkResult);
   } else {
     window.takenCount++;
-    if (window.totalCheckedCount % 12 === 0) {
-      logMessage('SCAN', `Checked @${handle} (${platform.toUpperCase()}) — Taken`);
+    if (window.totalCheckedCount % 15 === 0) {
+      logMessage('SCAN', `Checked @${handle.toLowerCase()} (${platform.toUpperCase()}) — Taken`);
     }
   }
 
   updateDashboardMetrics();
 }
 
-function handleDiscoveryHit(handle, platform) {
+function handleDiscoveryHit(handle, platform, checkResult) {
   const score = handle.length <= 3 ? '★ 99 Score' : (handle.length === 4 ? '★ 96 Score' : '★ 91 Score');
   const hit = {
     handle: handle,
     platform: platform,
     len: handle.length,
     rarity: score,
+    reason: (checkResult && checkResult.reason) || 'Clean unregistered handle',
     timestamp: new Date().toLocaleTimeString()
   };
 
@@ -285,7 +270,7 @@ function handleDiscoveryHit(handle, platform) {
 }
 
 // ----------------------------------------------------------
-// 6. MULTI-PLATFORM MATRIX SCANNER (CHECK 1 USER ACROSS ALL 17)
+// 6. MULTI-PLATFORM MATRIX SCANNER
 // ----------------------------------------------------------
 window.runMultiMatrixCheck = async function() {
   const input = document.getElementById('matrixInputHandle');
@@ -294,7 +279,7 @@ window.runMultiMatrixCheck = async function() {
     return;
   }
 
-  const handle = input.value.trim().lstrip ? input.value.trim().lstrip('@') : input.value.trim().replace(/^@+/, '');
+  const handle = input.value.trim().replace(/^@+/, '').toLowerCase();
   const container = document.getElementById('matrixResultsGrid');
   if (!container) return;
 
@@ -451,7 +436,7 @@ window.selectGenPattern = function(pattern, btnEl) {
   window.currentGenPattern = pattern;
   document.querySelectorAll('.dash-preset-card').forEach(c => c.classList.remove('active'));
   if (btnEl) btnEl.classList.add('active');
-  showToast(`Active Generator Pattern: [${pattern}]`);
+  showToast(`Active Generator: [${pattern}] (Infinite Stream)`);
   logMessage('SYS', `Selected generator pattern: ${pattern}`);
 };
 
@@ -469,7 +454,7 @@ window.switchPreset = function(platform, btnEl) {
   const pData = PLATFORMS[window.activePlatform] || { name: window.activePlatform.toUpperCase() };
   const statusBadge = document.getElementById('scannerStatusBadge');
   if (statusBadge) {
-    statusBadge.textContent = window.isScanning ? `SCANNING @${pData.name.toUpperCase()}` : 'ENGINE READY';
+    statusBadge.textContent = window.isScanning ? `SCANNING @${pData.name.toUpperCase()} (INFINITE)` : 'ENGINE READY';
   }
 
   showToast(`Target Set: ${pData.name}`);
@@ -496,8 +481,9 @@ window.injectCustomWordlist = function() {
     showToast('⚠️ Wordlist area is empty. Paste handles first.');
     return;
   }
-  const lines = ta.value.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = ta.value.split('\n').map(l => l.trim().toLowerCase()).filter(Boolean);
   customHandlesList = lines;
+  customQueueIndex = 0;
   window.currentGenPattern = 'CUSTOM';
   showToast(`✓ Loaded ${lines.length} custom handles into queue!`);
   logMessage('SYS', `Loaded ${lines.length} custom handles.`);
@@ -553,9 +539,9 @@ window.exportResultsCSV = function() {
     showToast('⚠️ No records to export');
     return;
   }
-  let csv = 'Handle,Platform,Length,Rarity,Timestamp\n';
+  let csv = 'Handle,Platform,Length,Rarity,Reason,Timestamp\n';
   window.availableHits.forEach(h => {
-    csv += `${h.handle},${h.platform},${h.len},${h.rarity.replace(/,/g, '')},${h.timestamp}\n`;
+    csv += `${h.handle},${h.platform},${h.len},${h.rarity.replace(/,/g, '')},"${h.reason || ''}",${h.timestamp}\n`;
   });
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a');
@@ -628,8 +614,8 @@ function playDiscoveryChime() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
     gain.gain.setValueAtTime(0.2, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
     osc.connect(gain);
@@ -681,6 +667,6 @@ window.navigateView = function(viewId, btnEl) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  logMessage('SYS', 'ONYX APEX 17-Platform Engine initialized.');
+  logMessage('SYS', 'ONYX APEX 17-Platform Engine initialized in Infinite Streaming mode.');
   updateDashboardMetrics();
 });
