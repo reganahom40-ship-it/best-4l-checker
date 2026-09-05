@@ -856,7 +856,10 @@ def claim_username_on_platform(platform, handle, token, password=None, cookie=No
             err_json = json.loads(err_body)
             msg = err_json.get('message') or err_json.get('error') or f'HTTP {e.code}'
         except Exception:
-            msg = f'HTTP {e.code}: {err_body[:100]}'
+            if 'just a moment' in err_body.lower() or '<html' in err_body.lower():
+                msg = f'HTTP {e.code}: TikTok Cloudflare Security Challenge (Datacenter IP blocked). Run locally via python server.py or use browser direct claim.'
+            else:
+                msg = f'HTTP {e.code}: {err_body[:100]}'
         return {'success': False, 'status': e.code, 'latencyMs': latency_ms, 'message': msg}
     except Exception as e:
         latency_ms = int((time.time() - start_time) * 1000)

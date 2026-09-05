@@ -455,7 +455,13 @@ async function handleDiscoveryHit(handle, platform, checkResult) {
         try {
           claimData = JSON.parse(rawText);
         } catch(jsonErr) {
-          claimData = { success: false, message: rawText ? rawText.slice(0, 120) : `HTTP ${claimRes.status}` };
+          let cleanMsg = rawText;
+          if (rawText.includes('Just a moment') || rawText.includes('<html')) {
+            cleanMsg = 'Cloudflare Security Challenge (Datacenter IP restricted by TikTok).';
+          } else {
+            cleanMsg = rawText.replace(/<[^>]*>/g, '').trim().slice(0, 100) || `HTTP ${claimRes.status}`;
+          }
+          claimData = { success: false, message: cleanMsg };
         }
       } catch(streamErr) {
         claimData = { success: false, message: `Network/Stream error: ${streamErr.message}` };
@@ -466,7 +472,10 @@ async function handleDiscoveryHit(handle, platform, checkResult) {
         logMessage('HIT', `🏆 USERNAME CLAIMED & SECURED: @${handle} (${claimData.latencyMs || 0}ms)`);
         window.logSniperConsole(`[SUCCESS] 🏆 SECURED @${handle} ON TARGET ACCOUNT! Latency: ${claimData.latencyMs || 0}ms. ${claimData.message}`);
       } else {
-        const msg = (claimData && claimData.message) || 'Platform rejected swap request';
+        let msg = (claimData && claimData.message) || 'Platform rejected swap request';
+        if (msg.includes('Just a moment') || msg.includes('<html')) {
+          msg = 'Cloudflare Security Challenge (Datacenter IP restricted by TikTok).';
+        }
         showToast(`⚠️ Auto-claim: ${msg}`);
         logMessage('WARN', `Auto-claim attempt on @${handle}: ${msg}`);
         window.logSniperConsole(`[ERROR] ❌ Claim attempt for @${handle}: ${msg}`);
