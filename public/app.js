@@ -1167,6 +1167,37 @@ window.initSniperSystem = function() {
   if (tokenArea) tokenArea.value = window.sniperToken;
   if (passInput) passInput.value = window.sniperPassword;
 
+  // Restore verified state if available
+  const savedVerified = localStorage.getItem('onyx_sniper_verified_data');
+  if (savedVerified) {
+    try {
+      const data = JSON.parse(savedVerified);
+      if (data && data.valid) {
+        const nameEl = document.getElementById('sniperAccountName');
+        const idEl = document.getElementById('sniperAccountId');
+        const badgeEl = document.getElementById('sniperAccountBadge');
+        const avatarEl = document.getElementById('sniperAccountAvatar');
+        const uHandle = data.username ? `@${data.username}` : '';
+        const sName = data.screenName ? `(${data.screenName})` : (data.displayName ? `(${data.displayName})` : '');
+        const fullLabel = uHandle ? `${uHandle} ${sName}` : (data.screenName || data.displayName || 'Verified Target Account');
+
+        if (nameEl) nameEl.textContent = `Connected: ${fullLabel}`;
+        if (idEl) idEl.textContent = `Account ID: ${data.id || 'Active'} • Platform: ${(data.platform || window.sniperPlatform).toUpperCase()}`;
+        if (badgeEl) {
+          badgeEl.textContent = 'ONLINE 🟢';
+          badgeEl.style = 'font-size: 0.65rem; color: var(--emerald-success); background: rgba(16,185,129,0.2); padding: 3px 8px; border-radius: var(--radius-pill); font-weight: 800; border: 1px solid rgba(16,185,129,0.3);';
+        }
+        if (avatarEl) {
+          if (data.avatar) {
+            avatarEl.innerHTML = `<img src="${data.avatar}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.onerror=null;this.parentElement.textContent='👤';">`;
+          } else {
+            avatarEl.textContent = '👤';
+          }
+        }
+      }
+    } catch(e) {}
+  }
+
   // Sync checkboxes
   const quickClaim = document.getElementById('toggleQuickAutoClaim');
   const mainClaim = document.getElementById('toggleMainAutoClaim');
@@ -1295,8 +1326,6 @@ window.verifySniperAccount = async function() {
   showToast('🔍 Verifying target account handshake...');
   window.logSniperConsole(`[AUTH] Verifying credentials on ${window.sniperPlatform.toUpperCase()}...`);
 
-  const rotatingProxy = window.proxyPoolList.length > 0 ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
-
   try {
     const res = await fetch('/api/verify-account', {
       method: 'POST',
@@ -1305,7 +1334,7 @@ window.verifySniperAccount = async function() {
         platform: window.sniperPlatform,
         token: window.sniperToken,
         cookie: window.sniperToken,
-        proxy: rotatingProxy
+        proxy: null
       })
     });
 
@@ -1316,9 +1345,10 @@ window.verifySniperAccount = async function() {
     const avatarEl = document.getElementById('sniperAccountAvatar');
 
     if (data.valid) {
+      localStorage.setItem('onyx_sniper_verified_data', JSON.stringify(data));
       const uHandle = data.username ? `@${data.username}` : '';
-      const sName = data.screenName ? `(${data.screenName})` : '';
-      const fullLabel = uHandle ? `${uHandle} ${sName}` : (data.screenName || 'Verified Target Account');
+      const sName = data.screenName ? `(${data.screenName})` : (data.displayName ? `(${data.displayName})` : '');
+      const fullLabel = uHandle ? `${uHandle} ${sName}` : (data.screenName || data.displayName || 'Verified Target Account');
       
       if (nameEl) nameEl.textContent = `Connected: ${fullLabel}`;
       if (idEl) idEl.textContent = `Account ID: ${data.id || 'Active'} • Platform: ${window.sniperPlatform.toUpperCase()}`;
@@ -1328,7 +1358,7 @@ window.verifySniperAccount = async function() {
       }
       if (avatarEl) {
         if (data.avatar) {
-          avatarEl.innerHTML = `<img src="${data.avatar}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+          avatarEl.innerHTML = `<img src="${data.avatar}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.onerror=null;this.parentElement.textContent='👤';">`;
         } else {
           avatarEl.textContent = '👤';
         }
