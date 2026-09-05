@@ -253,7 +253,7 @@ async function executeHandleCheck(handle) {
   updateDashboardMetrics();
 }
 
-function handleDiscoveryHit(handle, platform, checkResult) {
+async function handleDiscoveryHit(handle, platform, checkResult) {
   const score = handle.length <= 3 ? '★ 99 Score' : (handle.length === 4 ? '★ 96 Score' : '★ 91 Score');
   const hit = {
     handle: handle,
@@ -271,6 +271,57 @@ function handleDiscoveryHit(handle, platform, checkResult) {
   renderMasterLedger();
   playDiscoveryChime();
   dispatchDiscordWebhookHit(handle, platform, score);
+
+  // ---------------------------------------------------------
+  // AUTO-CLAIM SNIPER EXECUTION ON DISCOVERED HIT
+  // ---------------------------------------------------------
+  if (window.sniperAutoClaimEnabled && window.sniperToken) {
+    showToast(`🎯 AUTO-SNIPING @${handle} ON TARGET ACCOUNT...`);
+    logMessage('HIT', `🎯 AUTO-CLAIM SNIPER TRIGGERED FOR @${handle} on ${window.sniperPlatform.toUpperCase()}!`);
+    window.logSniperConsole(`[CLAIM] 🎯 HIT DETECTED: @${handle}! Firing automated claim payload...`);
+
+    const rotatingProxy = window.proxyPoolList.length > 0 ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
+
+    try {
+      const claimRes = await fetch('/api/claim-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: window.sniperPlatform || platform,
+          handle: handle,
+          token: window.sniperToken,
+          password: window.sniperPassword,
+          cookie: window.sniperToken,
+          proxy: rotatingProxy
+        })
+      });
+
+      const claimData = await claimRes.json();
+      if (claimData.success) {
+        showToast(`🏆 CLAIMED & SECURED @${handle} ON TARGET ACCOUNT!`);
+        logMessage('HIT', `🏆 USERNAME CLAIMED & SECURED: @${handle} (${claimData.latencyMs}ms)`);
+        window.logSniperConsole(`[SUCCESS] 🏆 SECURED @${handle} ON TARGET ACCOUNT! Latency: ${claimData.latencyMs}ms. ${claimData.message}`);
+      } else {
+        showToast(`⚠️ Auto-claim attempt for @${handle}: ${claimData.message}`);
+        logMessage('WARN', `Auto-claim attempt failed on @${handle}: ${claimData.message}`);
+        window.logSniperConsole(`[ERROR] ❌ Claim attempt for @${handle} rejected: ${claimData.message}`);
+      }
+    } catch(err) {
+      window.logSniperConsole(`[ERROR] ❌ Auto-claim network error on @${handle}: ${err.message}`);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // AUTO-STOP SCANNER ON VERIFIED HIT
+  // ---------------------------------------------------------
+  if (window.sniperAutoStopEnabled) {
+    if (window.isScanningActive) {
+      window.toggleScannerEngine();
+      showToast(`🛑 Scanner auto-stopped on verified hit @${handle}!`);
+      logMessage('SYS', `🛑 Scanner automatically halted on Hit to preserve account.`);
+      window.logSniperConsole(`[HALT] 🛑 Scanner automatically halted on verified hit @${handle}.`);
+    }
+  }
 }
 
 // ----------------------------------------------------------
@@ -931,6 +982,270 @@ window.removeDeadProxies = function() {
 
 document.addEventListener('DOMContentLoaded', () => {
   window.initProxyAndTokenPool();
+  window.initSniperSystem();
   logMessage('SYS', 'ONYX APEX 17-Platform Engine initialized in Infinite Streaming mode.');
   updateDashboardMetrics();
 });
+
+
+// ==========================================================
+// AUTO-CLAIM SNIPER & ACCOUNT SWAPPER ENGINE
+// ==========================================================
+window.sniperAutoClaimEnabled = localStorage.getItem('onyx_sniper_enabled') === 'true';
+window.sniperAutoStopEnabled = localStorage.getItem('onyx_sniper_autostop') !== 'false'; // default true
+window.sniperPlatform = localStorage.getItem('onyx_sniper_platform') || 'discord';
+window.sniperToken = localStorage.getItem('onyx_sniper_token') || '';
+window.sniperPassword = localStorage.getItem('onyx_sniper_password') || '';
+
+window.initSniperSystem = function() {
+  const platSelect = document.getElementById('sniperPlatformSelect');
+  const tokenArea = document.getElementById('sniperAuthToken');
+  const passInput = document.getElementById('sniperAccountPassword');
+
+  if (platSelect) platSelect.value = window.sniperPlatform;
+  if (tokenArea) tokenArea.value = window.sniperToken;
+  if (passInput) passInput.value = window.sniperPassword;
+
+  // Sync checkboxes
+  const quickClaim = document.getElementById('toggleQuickAutoClaim');
+  const mainClaim = document.getElementById('toggleMainAutoClaim');
+  const quickStop = document.getElementById('toggleQuickAutoStop');
+  const mainStop = document.getElementById('toggleMainAutoStop');
+
+  if (quickClaim) quickClaim.checked = window.sniperAutoClaimEnabled;
+  if (mainClaim) mainClaim.checked = window.sniperAutoClaimEnabled;
+  if (quickStop) quickStop.checked = window.sniperAutoStopEnabled;
+  if (mainStop) mainStop.checked = window.sniperAutoStopEnabled;
+
+  window.updateSniperBadges();
+  window.updateSniperPlaceholder();
+};
+
+window.updateSniperBadges = function() {
+  const qBadge = document.getElementById('quickSniperStatusBadge');
+  const mBadge = document.getElementById('sniperMainStatusBadge');
+  const qText = document.getElementById('quickSniperAccountText');
+
+  const isArmed = window.sniperAutoClaimEnabled;
+  const badgeHtml = isArmed ? 'ARMED ⚡' : 'OFF';
+  const mainBadgeHtml = isArmed ? 'ARMED & READY ⚡' : 'DISARMED';
+  const badgeStyle = isArmed 
+    ? 'font-size: 0.65rem; background: rgba(16,185,129,0.2); color: var(--emerald-success); border: 1px solid rgba(16,185,129,0.3); padding: 2px 8px; border-radius: var(--radius-pill); font-weight: 800;'
+    : 'font-size: 0.65rem; background: rgba(239,68,68,0.2); color: var(--rose-danger); border: 1px solid rgba(239,68,68,0.3); padding: 2px 8px; border-radius: var(--radius-pill); font-weight: 800;';
+
+  if (qBadge) {
+    qBadge.textContent = badgeHtml;
+    qBadge.style = badgeStyle;
+  }
+  if (mBadge) {
+    mBadge.textContent = mainBadgeHtml;
+    mBadge.style = badgeStyle.replace('font-size: 0.65rem', 'font-size: 0.68rem').replace('padding: 2px 8px', 'padding: 3px 10px');
+  }
+  if (qText) {
+    qText.textContent = isArmed 
+      ? `⚡ Sniper ARMED on ${window.sniperPlatform.toUpperCase()}. Auto-claims hit and halts scanner immediately.`
+      : 'Automatically claims discovered rare usernames on your target account and halts scanner immediately on hit.';
+  }
+};
+
+window.handleSniperToggleChange = function(checked, type) {
+  if (type === 'claim') {
+    window.sniperAutoClaimEnabled = checked;
+    localStorage.setItem('onyx_sniper_enabled', checked ? 'true' : 'false');
+    
+    const quickClaim = document.getElementById('toggleQuickAutoClaim');
+    const mainClaim = document.getElementById('toggleMainAutoClaim');
+    if (quickClaim) quickClaim.checked = checked;
+    if (mainClaim) mainClaim.checked = checked;
+
+    window.updateSniperBadges();
+    showToast(checked ? '⚡ Auto-Claim Sniper ARMED!' : '🛑 Auto-Claim Sniper Disarmed');
+    logMessage('SYS', `Auto-Claim Sniper: ${checked ? 'ARMED ⚡' : 'DISARMED 🛑'}`);
+    window.logSniperConsole(`[STATUS] Auto-Claim Sniper ${checked ? 'ARMED ⚡' : 'DISARMED 🛑'}`);
+  } else if (type === 'stop') {
+    window.sniperAutoStopEnabled = checked;
+    localStorage.setItem('onyx_sniper_autostop', checked ? 'true' : 'false');
+
+    const quickStop = document.getElementById('toggleQuickAutoStop');
+    const mainStop = document.getElementById('toggleMainAutoStop');
+    if (quickStop) quickStop.checked = checked;
+    if (mainStop) mainStop.checked = checked;
+
+    showToast(checked ? '🛑 Auto-Stop on Hit Enabled' : 'Auto-Stop on Hit Disabled');
+    logMessage('SYS', `Auto-Stop on Hit: ${checked ? 'ENABLED' : 'DISABLED'}`);
+    window.logSniperConsole(`[STATUS] Auto-Stop on Hit: ${checked ? 'ENABLED' : 'DISABLED'}`);
+  }
+};
+
+window.updateSniperPlaceholder = function() {
+  const plat = document.getElementById('sniperPlatformSelect')?.value || 'discord';
+  window.sniperPlatform = plat;
+  localStorage.setItem('onyx_sniper_platform', plat);
+
+  const tokenArea = document.getElementById('sniperAuthToken');
+  const label = document.getElementById('sniperAuthInputLabel');
+
+  if (plat === 'discord') {
+    if (label) label.textContent = 'DISCORD USER AUTHORIZATION TOKEN:';
+    if (tokenArea) tokenArea.placeholder = 'Paste Discord User Authorization Token (e.g. MTM0...)...';
+  } else if (plat === 'tiktok') {
+    if (label) label.textContent = 'TIKTOK SESSIONID COOKIE:';
+    if (tokenArea) tokenArea.placeholder = 'Paste TikTok sessionid cookie value (e.g. 7f8a9e0...)...';
+  } else if (plat === 'roblox') {
+    if (label) label.textContent = 'ROBLOX .ROBLOSECURITY COOKIE:';
+    if (tokenArea) tokenArea.placeholder = 'Paste Roblox .ROBLOSECURITY cookie value...';
+  } else if (plat === 'github') {
+    if (label) label.textContent = 'GITHUB PERSONAL ACCESS TOKEN:';
+    if (tokenArea) tokenArea.placeholder = 'Paste GitHub token (e.g. ghp_...)...';
+  } else if (plat === 'twitch') {
+    if (label) label.textContent = 'TWITCH OAUTH USER TOKEN:';
+    if (tokenArea) tokenArea.placeholder = 'Paste Twitch OAuth token (oauth:...)...';
+  } else {
+    if (label) label.textContent = 'GENERIC / CUSTOM API TOKEN:';
+    if (tokenArea) tokenArea.placeholder = 'Paste API Token / Authorization header...';
+  }
+};
+
+window.saveSniperConfig = function() {
+  const plat = document.getElementById('sniperPlatformSelect')?.value || 'discord';
+  const token = document.getElementById('sniperAuthToken')?.value.trim() || '';
+  const pass = document.getElementById('sniperAccountPassword')?.value.trim() || '';
+
+  window.sniperPlatform = plat;
+  window.sniperToken = token;
+  window.sniperPassword = pass;
+
+  localStorage.setItem('onyx_sniper_platform', plat);
+  localStorage.setItem('onyx_sniper_token', token);
+  localStorage.setItem('onyx_sniper_password', pass);
+
+  showToast('✓ Sniper credentials and target settings saved!');
+  logMessage('SYS', `Sniper settings saved for platform: ${plat.toUpperCase()}`);
+  window.logSniperConsole(`[CONFIG] Saved settings for ${plat.toUpperCase()}. Token Length: ${token.length} chars.`);
+};
+
+window.verifySniperAccount = async function() {
+  window.saveSniperConfig();
+  if (!window.sniperToken) {
+    showToast('⚠️ Paste session token or authorization header first.');
+    return;
+  }
+
+  showToast('🔍 Verifying target account handshake...');
+  window.logSniperConsole(`[AUTH] Verifying credentials on ${window.sniperPlatform.toUpperCase()}...`);
+
+  const rotatingProxy = window.proxyPoolList.length > 0 ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
+
+  try {
+    const res = await fetch('/api/verify-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        platform: window.sniperPlatform,
+        token: window.sniperToken,
+        cookie: window.sniperToken,
+        proxy: rotatingProxy
+      })
+    });
+
+    const data = await res.json();
+    const nameEl = document.getElementById('sniperAccountName');
+    const idEl = document.getElementById('sniperAccountId');
+    const badgeEl = document.getElementById('sniperAccountBadge');
+    const avatarEl = document.getElementById('sniperAccountAvatar');
+
+    if (data.valid) {
+      if (nameEl) nameEl.textContent = `Connected: @${data.username || 'Target Account'}`;
+      if (idEl) idEl.textContent = data.message || `Account ID: ${data.id || 'Verified'}`;
+      if (badgeEl) {
+        badgeEl.textContent = 'ONLINE 🟢';
+        badgeEl.style = 'font-size: 0.65rem; color: var(--emerald-success); background: rgba(16,185,129,0.2); padding: 3px 8px; border-radius: var(--radius-pill); font-weight: 800; border: 1px solid rgba(16,185,129,0.3);';
+      }
+      if (avatarEl) avatarEl.textContent = '👤';
+      showToast(`✓ Connected as @${data.username || 'User'}!`);
+      logMessage('SYS', `Target account verified: @${data.username} on ${window.sniperPlatform.toUpperCase()}`);
+      window.logSniperConsole(`[SUCCESS] 🟢 Verified target account: @${data.username} (ID: ${data.id}). Ready for auto-claim.`);
+    } else {
+      if (nameEl) nameEl.textContent = 'Authentication Failed';
+      if (idEl) idEl.textContent = data.message || 'Invalid token or session expired';
+      if (badgeEl) {
+        badgeEl.textContent = 'INVALID ❌';
+        badgeEl.style = 'font-size: 0.65rem; color: var(--rose-danger); background: rgba(239,68,68,0.2); padding: 3px 8px; border-radius: var(--radius-pill); font-weight: 800; border: 1px solid rgba(239,68,68,0.3);';
+      }
+      showToast(`⚠️ Verification failed: ${data.message || 'Invalid auth'}`);
+      window.logSniperConsole(`[ERROR] ❌ Authentication failed: ${data.message}`);
+    }
+
+  } catch(e) {
+    showToast(`⚠️ Connection error: ${e.message}`);
+    window.logSniperConsole(`[ERROR] ❌ Handshake request failed: ${e.message}`);
+  }
+};
+
+window.testManualSniperSwap = async function() {
+  window.saveSniperConfig();
+  const testHandle = document.getElementById('sniperManualTestHandle')?.value.trim();
+  if (!testHandle) {
+    showToast('⚠️ Enter a test username to swap.');
+    return;
+  }
+  if (!window.sniperToken) {
+    showToast('⚠️ Paste target account auth token first.');
+    return;
+  }
+
+  showToast(`⚡ Firing manual rename payload for @${testHandle}...`);
+  window.logSniperConsole(`[MANUAL_SWAP] ⚡ Executing rename to @${testHandle} on ${window.sniperPlatform.toUpperCase()}...`);
+
+  const rotatingProxy = window.proxyPoolList.length > 0 ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
+
+  try {
+    const res = await fetch('/api/claim-username', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        platform: window.sniperPlatform,
+        handle: testHandle,
+        token: window.sniperToken,
+        password: window.sniperPassword,
+        cookie: window.sniperToken,
+        proxy: rotatingProxy
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(`🏆 Successfully swapped username to @${testHandle}!`);
+      logMessage('HIT', `Manual swap successful: @${testHandle} (${data.latencyMs}ms)`);
+      window.logSniperConsole(`[SWAP_SUCCESS] 🏆 USERNAME SWAPPED TO @${testHandle}! Latency: ${data.latencyMs}ms. Response: ${data.message}`);
+    } else {
+      showToast(`⚠️ Swap failed: ${data.message}`);
+      logMessage('WARN', `Manual swap failed for @${testHandle}: ${data.message}`);
+      window.logSniperConsole(`[SWAP_FAILED] ❌ Swap rejected: ${data.message}`);
+    }
+  } catch(e) {
+    showToast(`⚠️ Swap error: ${e.message}`);
+    window.logSniperConsole(`[SWAP_ERROR] ❌ Network error: ${e.message}`);
+  }
+};
+
+window.logSniperConsole = function(msg) {
+  const consoleEl = document.getElementById('sniperConsoleLog');
+  if (!consoleEl) return;
+  const time = new Date().toLocaleTimeString();
+  const line = document.createElement('div');
+  line.style.padding = '2px 0';
+  if (msg.includes('[SUCCESS]') || msg.includes('[SWAP_SUCCESS]')) {
+    line.style.color = 'var(--emerald-success)';
+    line.style.fontWeight = '800';
+  } else if (msg.includes('[ERROR]') || msg.includes('[SWAP_FAILED]') || msg.includes('[SWAP_ERROR]')) {
+    line.style.color = 'var(--rose-danger)';
+  } else if (msg.includes('[CLAIM]') || msg.includes('[MANUAL_SWAP]') || msg.includes('[HALT]')) {
+    line.style.color = 'var(--purple-accent)';
+    line.style.fontWeight = '700';
+  } else {
+    line.style.color = 'var(--text-dim)';
+  }
+  line.textContent = `[${time}] ${msg}`;
+  consoleEl.prepend(line);
+};

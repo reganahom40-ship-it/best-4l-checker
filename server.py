@@ -500,6 +500,278 @@ def dispatch_handle_check(platform, handle, proxy=None):
     return {'available': False, 'status': 'error', 'reason': f'Unknown platform: {platform}'}
 
 
+
+# --------------------------------------------------------------------
+# AUTO-CLAIM & ACCOUNT SNIPER MODULE
+# --------------------------------------------------------------------
+
+def verify_target_account(platform, token, cookie=None, proxy=None):
+    """Verifies account credentials and retrieves current user profile"""
+    platform = platform.lower()
+    token = (token or '').strip()
+    cookie = (cookie or '').strip()
+    opener = get_opener(proxy)
+
+    try:
+        # Discord
+        if platform == 'discord':
+            req = urllib.request.Request('https://discord.com/api/v9/users/@me', headers={
+                'Authorization': token,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                return {
+                    'valid': True,
+                    'platform': 'discord',
+                    'username': data.get('username'),
+                    'id': data.get('id'),
+                    'discriminator': data.get('discriminator'),
+                    'avatar': data.get('avatar'),
+                    'message': f"Connected to Discord as @{data.get('username')} (ID: {data.get('id')})"
+                }
+
+        # TikTok
+        elif platform == 'tiktok':
+            session_val = cookie or token
+            req = urllib.request.Request('https://www.tiktok.com/passport/web/account/info/', headers={
+                'Cookie': f'sessionid={session_val};',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            try:
+                with opener.open(req, timeout=6) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    uname = data.get('data', {}).get('username') or data.get('data', {}).get('screen_name') or 'TikTok User'
+                    return {
+                        'valid': True,
+                        'platform': 'tiktok',
+                        'username': uname,
+                        'id': data.get('data', {}).get('user_id', 'Session-Active'),
+                        'message': f"TikTok session active (Target user: @{uname})"
+                    }
+            except Exception:
+                return {
+                    'valid': True,
+                    'platform': 'tiktok',
+                    'username': 'Session Token Configured',
+                    'id': 'tiktok-session',
+                    'message': 'TikTok sessionid cookie loaded & ready'
+                }
+
+        # Roblox
+        elif platform == 'roblox':
+            sec_cookie = cookie or token
+            req = urllib.request.Request('https://users.roblox.com/v1/users/authenticated', headers={
+                'Cookie': f'.ROBLOSECURITY={sec_cookie};',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                return {
+                    'valid': True,
+                    'platform': 'roblox',
+                    'username': data.get('name'),
+                    'id': data.get('id'),
+                    'displayName': data.get('displayName'),
+                    'message': f"Connected to Roblox as @{data.get('name')} (User ID: {data.get('id')})"
+                }
+
+        # GitHub
+        elif platform == 'github':
+            req = urllib.request.Request('https://api.github.com/user', headers={
+                'Authorization': f'Bearer {token}',
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'ONYX-APEX-Sniper'
+            })
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                return {
+                    'valid': True,
+                    'platform': 'github',
+                    'username': data.get('login'),
+                    'id': data.get('id'),
+                    'message': f"Connected to GitHub as @{data.get('login')}"
+                }
+
+        # Generic / Other
+        else:
+            return {
+                'valid': True,
+                'platform': platform,
+                'username': 'Generic Token Ready',
+                'id': 'custom-auth',
+                'message': f'Auth credentials configured for {platform.upper()}'
+            }
+
+    except urllib.error.HTTPError as e:
+        return {'valid': False, 'status': e.code, 'message': f'Authentication failed: HTTP {e.code}'}
+    except Exception as e:
+        return {'valid': False, 'message': f'Connection error: {str(e)}'}
+
+
+def claim_username_on_platform(platform, handle, token, password=None, cookie=None, proxy=None):
+    """Fires the instant automated username swap/claim API payload"""
+    import time
+    start_time = time.time()
+    platform = platform.lower()
+    handle = handle.strip().lstrip('@')
+    token = (token or '').strip()
+    cookie = (cookie or '').strip()
+    password = (password or '').strip()
+    opener = get_opener(proxy)
+
+    try:
+        # 1. DISCORD AUTO-CLAIM
+        if platform == 'discord':
+            if not token:
+                return {'success': False, 'message': 'Discord User Authorization Token required'}
+            
+            url = "https://discord.com/api/v9/users/@me"
+            payload = {'username': handle}
+            if password:
+                payload['password'] = password
+            
+            req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={
+                'Authorization': token,
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }, method='PATCH')
+
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                latency_ms = int((time.time() - start_time) * 1000)
+                return {
+                    'success': True,
+                    'platform': 'discord',
+                    'handle': handle,
+                    'latencyMs': latency_ms,
+                    'message': f"Successfully swapped Discord username to @{handle}!",
+                    'data': data
+                }
+
+        # 2. TIKTOK AUTO-CLAIM
+        elif platform == 'tiktok':
+            session_val = cookie or token
+            if not session_val:
+                return {'success': False, 'message': 'TikTok sessionid cookie required'}
+            
+            url = "https://www.tiktok.com/api/user/info/edit/"
+            post_data = urllib.parse.urlencode({'login_name': handle}).encode('utf-8')
+            req = urllib.request.Request(url, data=post_data, headers={
+                'Cookie': f'sessionid={session_val};',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }, method='POST')
+
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                latency_ms = int((time.time() - start_time) * 1000)
+                status_code = data.get('status_code', 0)
+                if status_code == 0 or data.get('message') == 'success':
+                    return {
+                        'success': True,
+                        'platform': 'tiktok',
+                        'handle': handle,
+                        'latencyMs': latency_ms,
+                        'message': f"Successfully updated TikTok username to @{handle}!",
+                        'data': data
+                    }
+                else:
+                    return {
+                        'success': False,
+                        'platform': 'tiktok',
+                        'handle': handle,
+                        'latencyMs': latency_ms,
+                        'message': data.get('message', f'TikTok status {status_code}'),
+                        'data': data
+                    }
+
+        # 3. ROBLOX AUTO-CLAIM
+        elif platform == 'roblox':
+            sec_cookie = cookie or token
+            if not sec_cookie:
+                return {'success': False, 'message': 'Roblox .ROBLOSECURITY cookie required'}
+            
+            # Step A: Get CSRF token
+            csrf_token = None
+            try:
+                csrf_req = urllib.request.Request('https://auth.roblox.com/v2/login', data=b'{}', headers={
+                    'Cookie': f'.ROBLOSECURITY={sec_cookie};',
+                    'Content-Type': 'application/json'
+                }, method='POST')
+                opener.open(csrf_req, timeout=5)
+            except urllib.error.HTTPError as e:
+                csrf_token = e.headers.get('x-csrf-token') or e.headers.get('X-CSRF-TOKEN')
+
+            if not csrf_token:
+                return {'success': False, 'message': 'Failed to obtain Roblox X-CSRF-TOKEN'}
+
+            # Step B: Modify username
+            url = "https://users.roblox.com/v1/usernames"
+            payload = {'username': handle}
+            if password:
+                payload['password'] = password
+
+            req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers={
+                'Cookie': f'.ROBLOSECURITY={sec_cookie};',
+                'X-CSRF-TOKEN': csrf_token,
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }, method='POST')
+
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                latency_ms = int((time.time() - start_time) * 1000)
+                return {
+                    'success': True,
+                    'platform': 'roblox',
+                    'handle': handle,
+                    'latencyMs': latency_ms,
+                    'message': f"Successfully claimed Roblox username @{handle}!",
+                    'data': data
+                }
+
+        # 4. GITHUB AUTO-CLAIM
+        elif platform == 'github':
+            if not token:
+                return {'success': False, 'message': 'GitHub Personal Access Token required'}
+            
+            url = "https://api.github.com/user"
+            req = urllib.request.Request(url, data=json.dumps({'login': handle}).encode('utf-8'), headers={
+                'Authorization': f'Bearer {token}',
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+                'User-Agent': 'ONYX-APEX-Sniper'
+            }, method='PATCH')
+
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                latency_ms = int((time.time() - start_time) * 1000)
+                return {
+                    'success': True,
+                    'platform': 'github',
+                    'handle': handle,
+                    'latencyMs': latency_ms,
+                    'message': f"Successfully renamed GitHub username to @{handle}!",
+                    'data': data
+                }
+
+        else:
+            return {'success': False, 'message': f'Auto-claim API not implemented for platform {platform}'}
+
+    except urllib.error.HTTPError as e:
+        latency_ms = int((time.time() - start_time) * 1000)
+        err_body = e.read().decode('utf-8', errors='replace')
+        try:
+            err_json = json.loads(err_body)
+            msg = err_json.get('message') or err_json.get('error') or f'HTTP {e.code}'
+        except Exception:
+            msg = f'HTTP {e.code}: {err_body[:100]}'
+        return {'success': False, 'status': e.code, 'latencyMs': latency_ms, 'message': msg}
+    except Exception as e:
+        latency_ms = int((time.time() - start_time) * 1000)
+        return {'success': False, 'latencyMs': latency_ms, 'message': str(e)}
+
 class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -757,6 +1029,55 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
+                return
+
+        # 4. Target Account Verification Endpoint
+        if clean_path == '/api/verify-account':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                payload = json.loads(post_data.decode('utf-8'))
+                platform = payload.get('platform', 'discord')
+                token = payload.get('token')
+                cookie = payload.get('cookie')
+                proxy = payload.get('proxy')
+                res = verify_target_account(platform, token, cookie, proxy)
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode('utf-8'))
+                return
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'valid': False, 'message': str(e)}).encode('utf-8'))
+                return
+
+        # 5. Instant Auto-Claim / Sniper Endpoint
+        if clean_path == '/api/claim-username':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                payload = json.loads(post_data.decode('utf-8'))
+                platform = payload.get('platform', 'discord')
+                handle = payload.get('handle', '')
+                token = payload.get('token')
+                password = payload.get('password')
+                cookie = payload.get('cookie')
+                proxy = payload.get('proxy')
+
+                res = claim_username_on_platform(platform, handle, token, password, cookie, proxy)
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode('utf-8'))
+                return
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'success': False, 'message': str(e)}).encode('utf-8'))
                 return
 
         self.send_response(404)

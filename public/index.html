@@ -872,6 +872,13 @@
           </div>
         </button>
 
+        <button class="nav-tab-btn" onclick="navigateView('autoclaim', this)">
+          <div class="nav-tab-inner">
+            <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
+            <span>🎯 Auto-Sniper</span>
+          </div>
+        </button>
+
         <button class="nav-tab-btn" onclick="navigateView('proxies', this)">
           <div class="nav-tab-inner">
             <svg fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
@@ -1021,6 +1028,33 @@
             <div class="stat-card-sub">
               <span>Checks per second</span>
             </div>
+          </div>
+        </div>
+
+        <!-- QUICK AUTO-SNIPER & AUTO-STOP BANNER -->
+        <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: var(--radius-card); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 1.4rem; background: rgba(139, 92, 246, 0.2); width: 38px; height: 38px; border-radius: var(--radius-bubble); display: flex; align-items: center; justify-content: center;">🎯</div>
+            <div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.88rem; display: flex; align-items: center; gap: 8px;">
+                <span>Auto-Claim Sniper & Auto-Stop</span>
+                <span id="quickSniperStatusBadge" style="font-size: 0.65rem; background: rgba(239,68,68,0.2); color: var(--rose-danger); border: 1px solid rgba(239,68,68,0.3); padding: 2px 8px; border-radius: var(--radius-pill); font-weight: 800;">OFF</span>
+              </div>
+              <div style="font-size: 0.68rem; color: var(--text-dim); margin-top: 2px;" id="quickSniperAccountText">
+                Automatically claims discovered rare usernames on your target account and halts scanner immediately on hit.
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; color: #fff; cursor: pointer;">
+              <input type="checkbox" id="toggleQuickAutoClaim" onchange="window.handleSniperToggleChange(this.checked, 'claim')" style="accent-color: var(--purple-accent); transform: scale(1.2);">
+              <span>⚡ Auto-Claim on Hit</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; color: #fff; cursor: pointer;">
+              <input type="checkbox" id="toggleQuickAutoStop" checked onchange="window.handleSniperToggleChange(this.checked, 'stop')" style="accent-color: var(--rose-danger); transform: scale(1.2);">
+              <span>🛑 Stop Scanner on Hit</span>
+            </label>
+            <button class="btn-action-copy" onclick="navigateView('autoclaim')" style="padding: 6px 12px; font-size: 0.72rem; border-color: rgba(139, 92, 246, 0.4); color: #c084fc;">⚙️ Target Account Config</button>
           </div>
         </div>
 
@@ -3006,6 +3040,6 @@
     });
   </script>
 
-  <script src="app.js?v=2.5.0"></script>
+  <script src="app.js?v=2.6.0"></script>
 </body>
 </html>
