@@ -559,24 +559,33 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
         if clean_path == '/api/fetch-free-proxies':
             free_urls = [
                 'https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=5000&country=all&ssl=all&anonymity=all',
-                'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt'
+                'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/http.txt',
+                'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
+                'https://raw.githubusercontent.com/roosterkid/openproxylist/main/HTTPS_RAW.txt',
+                'https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt'
             ]
             fetched = []
+            import random
             for u in free_urls:
                 try:
-                    req = urllib.request.Request(u, headers={'User-Agent': 'Mozilla/5.0'})
-                    with urllib.request.urlopen(req, timeout=5) as resp:
+                    req = urllib.request.Request(u, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                    with urllib.request.urlopen(req, timeout=6) as resp:
                         text = resp.read().decode('utf-8', errors='ignore')
-                        lines = [l.strip() for l in text.splitlines() if l.strip() and ':' in l]
-                        if lines:
-                            fetched = lines[:60]
+                        lines = [l.strip() for l in text.splitlines() if l.strip() and ':' in l and not l.startswith('#')]
+                        for l in lines:
+                            if l not in fetched:
+                                fetched.append(l)
+                        if len(fetched) >= 100:
                             break
                 except Exception:
                     continue
+            
+            random.shuffle(fetched)
+            result_list = fetched[:100]
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({'proxies': fetched, 'count': len(fetched)}).encode('utf-8'))
+            self.wfile.write(json.dumps({'proxies': result_list, 'count': len(result_list)}).encode('utf-8'))
             return
 
         # GET /api/platforms - List all supported platforms
