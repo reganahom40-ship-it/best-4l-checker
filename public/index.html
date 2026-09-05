@@ -844,7 +844,7 @@
             <span id="sidebarBrandTitle">ONYX APEX</span>
             <span class="version-tag" id="sidebarBrandVersion">v2.4</span>
           </div>
-          <div class="brand-subtitle" id="sidebarBrandSubtitle">Multi-Platform Engine</div>
+          <div class="brand-subtitle" id="sidebarBrandSubtitle">17-Platform Precision Engine</div>
         </div>
       </div>
 
@@ -1041,25 +1041,73 @@
                 <span>🎯</span> Target Platform:
               </span>
               
-              <div class="presets-pill-strip">
-                <button class="preset-chip-btn active" onclick="switchPreset('tiktok', this)">
-                  <span>📱</span> TikTok
-                </button>
-                <button class="preset-chip-btn" onclick="switchPreset('instagram', this)">
-                  <span>📸</span> Instagram
-                </button>
-                <button class="preset-chip-btn" onclick="switchPreset('kick', this)">
-                  <span>🟢</span> Kick
-                </button>
-                <button class="preset-chip-btn" onclick="switchPreset('twitch', this)">
-                  <span>🟣</span> Twitch
-                </button>
-                <button class="preset-chip-btn" onclick="switchPreset('twitter', this)">
-                  <span>🐦</span> X / Twitter
-                </button>
-                <button class="preset-chip-btn" onclick="switchPreset('discord', this)">
-                  <span>💬</span> Discord
-                </button>
+              <!-- Category Filter & 17 Platforms Strip -->
+              <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                <!-- Category Tabs -->
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <span style="font-size: 0.65rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Category:</span>
+                  <button class="preset-chip-btn cat-filter-btn active" onclick="filterPlatformPills('all', this)" style="padding: 3px 10px; font-size: 0.65rem;">All (17)</button>
+                  <button class="preset-chip-btn cat-filter-btn" onclick="filterPlatformPills('Social', this)" style="padding: 3px 10px; font-size: 0.65rem;">Social</button>
+                  <button class="preset-chip-btn cat-filter-btn" onclick="filterPlatformPills('Streaming', this)" style="padding: 3px 10px; font-size: 0.65rem;">Streaming</button>
+                  <button class="preset-chip-btn cat-filter-btn" onclick="filterPlatformPills('Gaming', this)" style="padding: 3px 10px; font-size: 0.65rem;">Gaming</button>
+                  <button class="preset-chip-btn cat-filter-btn" onclick="filterPlatformPills('Dev', this)" style="padding: 3px 10px; font-size: 0.65rem;">Dev</button>
+                  <button class="preset-chip-btn cat-filter-btn" onclick="filterPlatformPills('Messenger', this)" style="padding: 3px 10px; font-size: 0.65rem;">Messenger</button>
+                </div>
+
+                <!-- 17 Platform Chips Strip -->
+                <div class="presets-pill-strip" id="dashboardPlatformPillStrip" style="flex-wrap: wrap; gap: 6px; max-height: 110px; overflow-y: auto;">
+                  <button class="preset-chip-btn platform-pill-btn active" data-platform="tiktok" data-category="Social" onclick="switchPreset('tiktok', this)">
+                    <span>📱</span> TikTok
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="discord" data-category="Messenger" onclick="switchPreset('discord', this)">
+                    <span>💬</span> Discord
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="kick" data-category="Streaming" onclick="switchPreset('kick', this)">
+                    <span>🟢</span> Kick
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="twitch" data-category="Streaming" onclick="switchPreset('twitch', this)">
+                    <span>🟣</span> Twitch
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="instagram" data-category="Social" onclick="switchPreset('instagram', this)">
+                    <span>📸</span> Instagram
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="twitter" data-category="Social" onclick="switchPreset('twitter', this)">
+                    <span>🐦</span> X / Twitter
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="youtube" data-category="Streaming" onclick="switchPreset('youtube', this)">
+                    <span>▶️</span> YouTube
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="roblox" data-category="Gaming" onclick="switchPreset('roblox', this)">
+                    <span>🧱</span> Roblox
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="minecraft" data-category="Gaming" onclick="switchPreset('minecraft', this)">
+                    <span>⛏️</span> Minecraft
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="github" data-category="Dev" onclick="switchPreset('github', this)">
+                    <span>🐙</span> GitHub
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="steam" data-category="Gaming" onclick="switchPreset('steam', this)">
+                    <span>💨</span> Steam
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="telegram" data-category="Messenger" onclick="switchPreset('telegram', this)">
+                    <span>✈️</span> Telegram
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="gitlab" data-category="Dev" onclick="switchPreset('gitlab', this)">
+                    <span>🦊</span> GitLab
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="chess" data-category="Gaming" onclick="switchPreset('chess', this)">
+                    <span>♟️</span> Chess.com
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="docker" data-category="Dev" onclick="switchPreset('docker', this)">
+                    <span>🐳</span> Docker Hub
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="devto" data-category="Dev" onclick="switchPreset('devto', this)">
+                    <span>👩‍💻</span> Dev.to
+                  </button>
+                  <button class="preset-chip-btn platform-pill-btn" data-platform="mastodon" data-category="Social" onclick="switchPreset('mastodon', this)">
+                    <span>🐘</span> Mastodon
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1184,15 +1232,49 @@
 
       </div>
 
-      <!-- ==========================================
-           VIEW: MULTI-CHECKERS
+            <!-- ==========================================
+           VIEW: MULTI-CHECKERS (17 PLATFORM MATRIX)
            ========================================== -->
       <div id="view-scanners" class="view-panel-container">
+        
+        <!-- 1. Cross-Platform Matrix Checker Card -->
         <div class="workspace-panel" style="padding: 20px; gap: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 12px;">
+            <div>
+              <div style="font-weight: 800; font-size: 1.05rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>🌐</span> Cross-Platform Universal Matrix Scanner
+              </div>
+              <div style="font-size: 0.70rem; color: var(--text-dim); margin-top: 2px;">
+                Check any single username across all 17 platforms simultaneously with 100% precision.
+              </div>
+            </div>
+            <span style="font-size: 0.65rem; font-family: var(--font-mono); color: var(--emerald-success); background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald-success); padding: 3px 10px; border-radius: var(--radius-pill);">17 Targets Live</span>
+          </div>
+
+          <!-- Search Input Bar -->
+          <div style="display: flex; gap: 10px;">
+            <div style="flex: 1; position: relative;">
+              <input type="text" id="matrixInputHandle" class="infra-textarea" style="height: 44px; min-height: 44px; padding: 10px 16px; font-size: 0.90rem; font-family: var(--font-mono);" placeholder="Enter target handle to check across all 17 platforms (e.g. apex, neon, void, 777)...">
+            </div>
+            <button class="btn-main-cta" onclick="runMultiMatrixCheck()" style="padding: 10px 24px; font-size: 0.84rem;">
+              <span>⚡</span> Scan All 17 Platforms
+            </button>
+          </div>
+
+          <!-- Matrix Results Grid -->
+          <div id="matrixResultsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 6px;">
+            <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--text-dim); font-size: 0.78rem;">
+              <span>⚡ Enter a username above and click "Scan All 17 Platforms" to run live parallel checks across TikTok, Discord, Kick, Twitch, Instagram, Twitter, YouTube, Roblox, Minecraft, GitHub, Steam, Telegram, GitLab, Chess, Docker, Dev.to & Mastodon!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. High-Throughput Generator Suites -->
+        <div class="workspace-panel" style="padding: 20px; gap: 16px; margin-top: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 12px;">
             <div style="font-weight: 800; font-size: 0.96rem; color: #fff;">⚡ High-Throughput Identifier Generators</div>
             <div style="display: flex; gap: 8px;">
-              <button class="btn-export-blue" onclick="startScannerEngine()">Start All</button>
+              <button class="btn-export-blue" onclick="startScannerEngine()">Start Active Engine</button>
               <button class="btn-dead-action" onclick="stopScannerEngine()">Stop</button>
             </div>
           </div>
@@ -1201,19 +1283,19 @@
             <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main); display: flex; flex-direction: column; gap: 8px;">
               <span style="font-weight: 800; color: #fff; font-size: 0.82rem;">3-Letter Letters Only (AAA-ZZZ)</span>
               <span style="font-size: 0.68rem; color: var(--text-dim);">17,576 ultra-rare combinations</span>
-              <button class="btn-action-copy" onclick="loadGeneratorPattern('3L_ALPHA')" style="margin-top: 6px;">Load Generator</button>
+              <button class="btn-action-copy" onclick="selectGenPattern('3L_ALPHA'); navigateView('dashboard');" style="margin-top: 6px;">Load & Scan 3L</button>
             </div>
 
             <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main); display: flex; flex-direction: column; gap: 8px;">
               <span style="font-weight: 800; color: #fff; font-size: 0.82rem;">4-Letter Pure Letters (AAAA-ZZZZ)</span>
               <span style="font-size: 0.68rem; color: var(--text-dim);">456,976 commercial 4L handles</span>
-              <button class="btn-action-copy" onclick="loadGeneratorPattern('4L_ALPHA')" style="margin-top: 6px;">Load Generator</button>
+              <button class="btn-action-copy" onclick="selectGenPattern('4L_ALPHA'); navigateView('dashboard');" style="margin-top: 6px;">Load & Scan 4L</button>
             </div>
 
             <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: var(--radius-bubble); border: 1px solid var(--border-main); display: flex; flex-direction: column; gap: 8px;">
               <span style="font-weight: 800; color: #fff; font-size: 0.82rem;">4-Letter Alphanumeric (A-Z, 0-9)</span>
               <span style="font-size: 0.68rem; color: var(--text-dim);">1,679,616 high-velocity patterns</span>
-              <button class="btn-action-copy" onclick="loadGeneratorPattern('4L_ALPHANUM')" style="margin-top: 6px;">Load Generator</button>
+              <button class="btn-action-copy" onclick="selectGenPattern('4L_ALPHANUM'); navigateView('dashboard');" style="margin-top: 6px;">Load & Scan 4L Alphanum</button>
             </div>
           </div>
 
@@ -1227,8 +1309,8 @@
         </div>
       </div>
 
-      <!-- ==========================================
-           VIEW: QUICK TUTORIALS & GUIDES (NOT BORING)
+            <!-- ==========================================
+           VIEW: QUICK TUTORIALS & GUIDES (17 PLATFORMS)
            ========================================== -->
       <div id="view-guides" class="view-panel-container">
         
@@ -1236,195 +1318,343 @@
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 12px;">
             <div>
               <div style="font-weight: 800; font-size: 1.05rem; color: #fff; display: flex; align-items: center; gap: 8px;">
-                <span>📚</span> Fast & Easy Platform Guides
+                <span>📚</span> Fast & Easy Platform Guides (17 Checkers)
               </div>
               <div style="font-size: 0.70rem; color: var(--text-dim); margin-top: 2px;">
-                Master every identifier checker in under 30 seconds. Zero fluff, pure execution.
+                Master every identifier checker in under 30 seconds. Zero fluff, 1-click test launches.
               </div>
             </div>
-            <button class="btn-export-blue" onclick="navigateView('scanners')">🚀 Open Scanner Studio</button>
+            <button class="btn-export-blue" onclick="navigateView('dashboard')">🚀 Open Dashboard Studio</button>
           </div>
 
-          <!-- 6 PLATFORM GUIDES GRID -->
+          <!-- 17 PLATFORMS GUIDES GRID -->
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
             
-            <!-- 1. TIKTOK GUIDE -->
+            <!-- 1. TIKTOK -->
             <div class="guide-card-bubbly" style="border-left: 4px solid #38BDF8;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                   <span style="font-size: 1.5rem;">📱</span>
                   <div>
                     <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">TikTok Checker Setup</div>
-                    <div style="font-size: 0.65rem; color: #7DD3FC;">High-speed unauthed availability verification</div>
+                    <div style="font-size: 0.65rem; color: #7DD3FC;">ByteDance rehydration state parsing (Zero false positives)</div>
                   </div>
                 </div>
                 <button class="btn-action-copy" onclick="switchPreset('tiktok'); navigateView('dashboard');">▶ Test TikTok</button>
               </div>
-
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="guide-step-row">
-                  <div class="guide-step-num">1</div>
-                  <div><strong>Add Rotating Proxies:</strong> Go to <em>Proxy Grid</em> and paste HTTP/SOCKS5 proxies to bypass regional anti-bot rate-limits.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">2</div>
-                  <div><strong>Select Handle Pattern:</strong> Choose <strong>3L Letters (AAA-ZZZ)</strong> or <strong>4L Alphanumeric</strong> under <em>Multi-Checkers</em>.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">3</div>
-                  <div><strong>Hit Start:</strong> Click <strong>Start Multi-Scanner</strong>. Discovered unclaimed TikTok usernames trigger instant audio chimes & Webhooks!</div>
-                </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Rule:</strong> TikTok policy restricts all 3L handles. 4L+ is claimable.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Precision:</strong> Decodes exact <code>statusCode: 10221</code> for genuine hits.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Start:</strong> Pick <strong>4L Clean Letters</strong> & hit Start.</div></div>
               </div>
             </div>
 
-            <!-- 2. INSTAGRAM GUIDE -->
-            <div class="guide-card-bubbly" style="border-left: 4px solid #EC4899;">
+            <!-- 2. DISCORD -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #6366F1;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                  <span style="font-size: 1.5rem;">📸</span>
+                  <span style="font-size: 1.5rem;">💬</span>
                   <div>
-                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Instagram Checker Setup</div>
-                    <div style="font-size: 0.65rem; color: #F472B6;">Profile query & deleted handle lookup</div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Discord Pomelo Checker</div>
+                    <div style="font-size: 0.65rem; color: #A5B4FC;">Unique username registration attempt API</div>
                   </div>
                 </div>
-                <button class="btn-action-copy" onclick="switchPreset('instagram'); navigateView('dashboard');">▶ Test Insta</button>
+                <button class="btn-action-copy" onclick="switchPreset('discord'); navigateView('dashboard');">▶ Test Discord</button>
               </div>
-
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="guide-step-row">
-                  <div class="guide-step-num">1</div>
-                  <div><strong>Session Cookies / Tokens:</strong> Paste Instagram <code>sessionid</code> values in <em>API Engine</em> for authenticated checks (or run unauthed).</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">2</div>
-                  <div><strong>Auto-Backoff Active:</strong> Keep <em>Adaptive Rate-Limit Auto-Backoff</em> enabled in Settings to protect token health.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">3</div>
-                  <div><strong>Stream Discoveries:</strong> Watch real-time hits appear with rarity scores in the <em>Discovered Hits Ledger</em>.</div>
-                </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Unauthed Lookup:</strong> Validates claimability directly via Pomelo endpoint.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Rate Handling:</strong> Auto back-off delay preserves IP health.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Discoveries:</strong> Rare 2L/3L/4L hits stream into the Ledger.</div></div>
               </div>
             </div>
 
-            <!-- 3. KICK GUIDE -->
+            <!-- 3. KICK -->
             <div class="guide-card-bubbly" style="border-left: 4px solid #10B981;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                   <span style="font-size: 1.5rem;">🟢</span>
                   <div>
-                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Kick.com Checker Setup</div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Kick.com Channel Checker</div>
                     <div style="font-size: 0.65rem; color: #6EE7B7;">Zero-auth channel availability lookup</div>
                   </div>
                 </div>
                 <button class="btn-action-copy" onclick="switchPreset('kick'); navigateView('dashboard');">▶ Test Kick</button>
               </div>
-
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="guide-step-row">
-                  <div class="guide-step-num">1</div>
-                  <div><strong>Zero Auth Needed:</strong> Kick channels can be verified rapidly via public API endpoints without logging into accounts.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">2</div>
-                  <div><strong>High Worker Threads:</strong> Boost throughput by setting 50+ concurrent async workers.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">3</div>
-                  <div><strong>Instant Claiming:</strong> Copy unclaimed Kick channel handles directly with 1-click.</div>
-                </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Zero Auth:</strong> Query public channel APIs without login or tokens.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>High Throughput:</strong> Run 60+ async workers for rapid 4L sweeps.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>1-Click Claim:</strong> Copy unclaimed Kick channel handles directly.</div></div>
               </div>
             </div>
 
-            <!-- 4. TWITCH GUIDE -->
+            <!-- 4. TWITCH -->
             <div class="guide-card-bubbly" style="border-left: 4px solid #8B5CF6;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                   <span style="font-size: 1.5rem;">🟣</span>
                   <div>
-                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Twitch Helix Batch Checker</div>
-                    <div style="font-size: 0.65rem; color: #C4B5FD;">Batch up to 100 handles per single HTTP call</div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Twitch Passport Checker</div>
+                    <div style="font-size: 0.65rem; color: #C4B5FD;">Passport authentication & username lookup</div>
                   </div>
                 </div>
                 <button class="btn-action-copy" onclick="switchPreset('twitch'); navigateView('dashboard');">▶ Test Twitch</button>
               </div>
-
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="guide-step-row">
-                  <div class="guide-step-num">1</div>
-                  <div><strong>Twitch App Tokens:</strong> Put Client-ID and OAuth Bearer in <em>API Engine</em> for official Helix API batching.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">2</div>
-                  <div><strong>Batch Mode:</strong> 100 usernames are verified per HTTP round-trip (up to 5,000 CPS).</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">3</div>
-                  <div><strong>Export Clean Lists:</strong> Filter banned vs unclaimed handles and export to CSV.</div>
-                </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Passport Endpoint:</strong> Instant availability check via passport.twitch.tv.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Batch Ready:</strong> Supports rapid concurrent requests.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Export:</strong> Download verified available handles as CSV.</div></div>
               </div>
             </div>
 
-            <!-- 5. X / TWITTER GUIDE -->
+            <!-- 5. INSTAGRAM -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #EC4899;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">📸</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Instagram Profile Checker</div>
+                    <div style="font-size: 0.65rem; color: #F472B6;">Meta web_profile_info query</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('instagram'); navigateView('dashboard');">▶ Test Insta</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Meta Header:</strong> Queries internal profile endpoint with app-id header.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Anti-Challenge:</strong> WAF challenges safely treated as rate limits.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Hits:</strong> True 404s captured and saved to ledger.</div></div>
+              </div>
+            </div>
+
+            <!-- 6. X / TWITTER -->
             <div class="guide-card-bubbly" style="border-left: 4px solid #06B6D4;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                   <span style="font-size: 1.5rem;">🐦</span>
                   <div>
                     <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">X / Twitter Handle Checker</div>
-                    <div style="font-size: 0.65rem; color: #67E8F9;">GraphQL & Guest Token endpoint scanner</div>
+                    <div style="font-size: 0.65rem; color: #67E8F9;">Official username_available API</div>
                   </div>
                 </div>
                 <button class="btn-action-copy" onclick="switchPreset('twitter'); navigateView('dashboard');">▶ Test X</button>
               </div>
-
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="guide-step-row">
-                  <div class="guide-step-num">1</div>
-                  <div><strong>Guest Token Generator:</strong> Automatic guest-token generation handles unauthenticated lookups.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">2</div>
-                  <div><strong>Residential IP Binding:</strong> Rotate IPs every 25 requests for maximum longevity.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">3</div>
-                  <div><strong>Real-time Alerting:</strong> Broadcast freshly dropped 4L handles to Discord instantly.</div>
-                </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Direct Endpoint:</strong> Uses Twitter's official availability validation API.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Handle Rules:</strong> 1-15 characters, letters, numbers, underscores.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Instant Alerts:</strong> Discord webhook triggers when clean handles drop.</div></div>
               </div>
             </div>
 
-            <!-- 6. DISCORD POMELO GUIDE -->
+            <!-- 7. YOUTUBE -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #EF4444;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">▶️</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">YouTube Handle Checker</div>
+                    <div style="font-size: 0.65rem; color: #FCA5A5;">@handle system availability check</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('youtube'); navigateView('dashboard');">▶ Test YouTube</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Handle Format:</strong> 3-30 characters, alphanumeric with dots/hyphens.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Verification:</strong> Validates channel existence vs HTTP 404.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Claiming:</strong> Fast claiming on studio.youtube.com.</div></div>
+              </div>
+            </div>
+
+            <!-- 8. ROBLOX -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #E11D48;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">🧱</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Roblox Username Checker</div>
+                    <div style="font-size: 0.65rem; color: #FDA4AF;">Official users.roblox.com API</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('roblox'); navigateView('dashboard');">▶ Test Roblox</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Official API:</strong> Queries Roblox user database via batch JSON endpoint.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Format:</strong> 3-20 characters, single underscore allowed.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>High Speed:</strong> Ultra-fast zero-block rate limits.</div></div>
+              </div>
+            </div>
+
+            <!-- 9. MINECRAFT -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #16A34A;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">⛏️</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Minecraft (Mojang) IGN Checker</div>
+                    <div style="font-size: 0.65rem; color: #86EFAC;">Mojang profile UUID validator</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('minecraft'); navigateView('dashboard');">▶ Test Minecraft</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Mojang Profiles:</strong> Direct UUID verification via api.mojang.com.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Rules:</strong> 3-16 characters, letters, numbers, underscores.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Sniper Ready:</strong> 204/404 confirms instantly claimable IGN.</div></div>
+              </div>
+            </div>
+
+            <!-- 10. GITHUB -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #64748B;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">🐙</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">GitHub Developer Checker</div>
+                    <div style="font-size: 0.65rem; color: #CBD5E1;">GitHub API user availability lookup</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('github'); navigateView('dashboard');">▶ Test GitHub</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Official API:</strong> Checks api.github.com/users/{handle}.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>1-39 Chars:</strong> Supports ultra-rare 2L, 3L & 4L usernames.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Clean Hits:</strong> 404 verifies unregistered developer handles.</div></div>
+              </div>
+            </div>
+
+            <!-- 11. STEAM -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #0284C7;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">💨</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Steam Custom URL Checker</div>
+                    <div style="font-size: 0.65rem; color: #7DD3FC;">Steam Community vanity URL scanner</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('steam'); navigateView('dashboard');">▶ Test Steam</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Custom Vanity:</strong> Checks steamcommunity.com/id/{handle}.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Marker Parsing:</strong> Detects "profile could not be found" for true hits.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Instant Claim:</strong> Set custom URL directly on your Steam profile.</div></div>
+              </div>
+            </div>
+
+            <!-- 12. TELEGRAM -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #2563EB;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">✈️</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Telegram Handle Checker</div>
+                    <div style="font-size: 0.65rem; color: #93C5FD;">t.me public username & channel lookup</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('telegram'); navigateView('dashboard');">▶ Test Telegram</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>5-32 Chars:</strong> Standard Telegram username requirements.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Meta Parsing:</strong> Validates channel / user markers vs clean hit.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Claiming:</strong> Set @handle directly in Telegram settings.</div></div>
+              </div>
+            </div>
+
+            <!-- 13. GITLAB -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #F97316;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">🦊</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">GitLab User Checker</div>
+                    <div style="font-size: 0.65rem; color: #FDBA74;">Official GitLab v4 REST API</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('gitlab'); navigateView('dashboard');">▶ Test GitLab</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>REST API:</strong> Queries gitlab.com/api/v4/users?username={handle}.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Array Return:</strong> Empty list `[]` confirms unregistered handle.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Claiming:</strong> Instant registration on gitlab.com.</div></div>
+              </div>
+            </div>
+
+            <!-- 14. CHESS.COM -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #10B981;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">♟️</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Chess.com Player Checker</div>
+                    <div style="font-size: 0.65rem; color: #6EE7B7;">Official Pub API player lookup</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('chess'); navigateView('dashboard');">▶ Test Chess</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Pub API:</strong> Queries api.chess.com/pub/player/{handle}.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>3-30 Chars:</strong> Clean 404 response on available player names.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>High Speed:</strong> Official open API with high rate limits.</div></div>
+              </div>
+            </div>
+
+            <!-- 15. DOCKER HUB -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #0EA5E9;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">🐳</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Docker Hub Namespace Checker</div>
+                    <div style="font-size: 0.65rem; color: #7DD3FC;">Docker Hub v2 users endpoint</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('docker'); navigateView('dashboard');">▶ Test Docker</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Namespace API:</strong> Queries hub.docker.com/v2/users/{handle}.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Rules:</strong> 4-30 characters lowercase alphanumeric.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Claiming:</strong> Claim clean developer and organization IDs.</div></div>
+              </div>
+            </div>
+
+            <!-- 16. DEV.TO -->
+            <div class="guide-card-bubbly" style="border-left: 4px solid #8B5CF6;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 1.5rem;">👩‍💻</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Dev.to Developer Community</div>
+                    <div style="font-size: 0.65rem; color: #C4B5FD;">Official Dev.to REST API</div>
+                  </div>
+                </div>
+                <button class="btn-action-copy" onclick="switchPreset('devto'); navigateView('dashboard');">▶ Test Dev.to</button>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Forem API:</strong> Queries dev.to/api/users/by_username.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Fast 404:</strong> 404 confirms available tech creator handle.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Claiming:</strong> Register profile instantly on dev.to.</div></div>
+              </div>
+            </div>
+
+            <!-- 17. MASTODON -->
             <div class="guide-card-bubbly" style="border-left: 4px solid #6366F1;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                  <span style="font-size: 1.5rem;">💬</span>
+                  <span style="font-size: 1.5rem;">🐘</span>
                   <div>
-                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Discord Pomelo Username Checker</div>
-                    <div style="font-size: 0.65rem; color: #A5B4FC;">Unique username attempt API endpoint</div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Mastodon Fediverse Checker</div>
+                    <div style="font-size: 0.65rem; color: #A5B4FC;">Social federation account lookup API</div>
                   </div>
                 </div>
-                <button class="btn-action-copy" onclick="switchPreset('discord'); navigateView('dashboard');">▶ Test Discord</button>
+                <button class="btn-action-copy" onclick="switchPreset('mastodon'); navigateView('dashboard');">▶ Test Mastodon</button>
               </div>
-
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="guide-step-row">
-                  <div class="guide-step-num">1</div>
-                  <div><strong>Multi-Token Rotation:</strong> Paste Discord bot or user tokens in <em>API Engine</em> for 75+ parallel workers.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">2</div>
-                  <div><strong>Rate Limit Cooldown:</strong> 429 responses auto-pause individual tokens for 15s without stopping other workers.</div>
-                </div>
-                <div class="guide-step-row">
-                  <div class="guide-step-num">3</div>
-                  <div><strong>Hit Discovery:</strong> Real-time hits pop directly into the Master Ledger.</div>
-                </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
+                <div class="guide-step-row"><div class="guide-step-num">1</div><div><strong>Fediverse API:</strong> Queries mastodon.social/api/v1/accounts/lookup.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">2</div><div><strong>Zero Auth:</strong> Public endpoint allows instant verification.</div></div>
+                <div class="guide-step-row"><div class="guide-step-num">3</div><div><strong>Claiming:</strong> Register on mastodon.social or custom instance.</div></div>
               </div>
             </div>
 
           </div>
         </div>
-
       </div>
 
       <!-- ==========================================

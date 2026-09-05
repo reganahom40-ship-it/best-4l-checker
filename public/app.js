@@ -1,6 +1,6 @@
 // ==========================================================
 // ONYX APEX v2.4 — Master Commercial Checker Engine
-// Direct integration with precision /api/check-handle
+// 17-Platform Precision Scanner Suite (Zero False Positives)
 // ==========================================================
 
 // Global State
@@ -20,7 +20,32 @@ let cpsTimer = null;
 let customHandlesList = [];
 
 // ----------------------------------------------------------
-// 1. GENERATOR ENGINES (3L, 4L, Alphanum, Semi-OG, Patterns)
+// 1. COMPREHENSIVE 17-PLATFORM REGISTRY
+// ----------------------------------------------------------
+const PLATFORMS = {
+  tiktok: { id: 'tiktok', name: 'TikTok', icon: '📱', category: 'Social', badge: 'ByteDance', min: 4, max: 24, desc: 'Rehydration engine availability' },
+  discord: { id: 'discord', name: 'Discord', icon: '💬', category: 'Messenger', badge: 'Pomelo API', min: 2, max: 32, desc: 'Unauthed username attempt API' },
+  kick: { id: 'kick', name: 'Kick', icon: '🟢', category: 'Streaming', badge: 'Live Stream', min: 3, max: 25, desc: 'Public channel endpoint' },
+  twitch: { id: 'twitch', name: 'Twitch', icon: '🟣', category: 'Streaming', badge: 'Helix Auth', min: 4, max: 25, desc: 'Passport auth verification' },
+  instagram: { id: 'instagram', name: 'Instagram', icon: '📸', category: 'Social', badge: 'Meta Profile', min: 1, max: 30, desc: 'Web profile info API' },
+  twitter: { id: 'twitter', name: 'X / Twitter', icon: '🐦', category: 'Social', badge: 'GraphQL / X', min: 1, max: 15, desc: 'Live handle validator' },
+  youtube: { id: 'youtube', name: 'YouTube', icon: '▶️', category: 'Streaming', badge: 'Handles @', min: 3, max: 30, desc: 'Channel handle system' },
+  roblox: { id: 'roblox', name: 'Roblox', icon: '🧱', category: 'Gaming', badge: 'User API', min: 3, max: 20, desc: 'Official user validation API' },
+  minecraft: { id: 'minecraft', name: 'Minecraft', icon: '⛏️', category: 'Gaming', badge: 'Mojang IGN', min: 3, max: 16, desc: 'Mojang profiles API' },
+  github: { id: 'github', name: 'GitHub', icon: '🐙', category: 'Dev', badge: 'Git Developer', min: 1, max: 39, desc: 'Official user profile API' },
+  steam: { id: 'steam', name: 'Steam', icon: '💨', category: 'Gaming', badge: 'Custom Vanity', min: 3, max: 32, desc: 'Community vanity URL check' },
+  telegram: { id: 'telegram', name: 'Telegram', icon: '✈️', category: 'Messenger', badge: 'MTProto @', min: 5, max: 32, desc: 'Messenger handle lookup' },
+  gitlab: { id: 'gitlab', name: 'GitLab', icon: '🦊', category: 'Dev', badge: 'DevOps API', min: 2, max: 255, desc: 'Official users API' },
+  chess: { id: 'chess', name: 'Chess.com', icon: '♟️', category: 'Gaming', badge: 'Player API', min: 3, max: 30, desc: 'Official player pub API' },
+  docker: { id: 'docker', name: 'Docker Hub', icon: '🐳', category: 'Dev', badge: 'Registry ID', min: 4, max: 30, desc: 'Docker v2 user API' },
+  devto: { id: 'devto', name: 'Dev.to', icon: '👩‍💻', category: 'Dev', badge: 'Community API', min: 1, max: 30, desc: 'Official developer API' },
+  mastodon: { id: 'mastodon', name: 'Mastodon', icon: '🐘', category: 'Social', badge: 'Fediverse', min: 1, max: 30, desc: 'Social federation lookup' }
+};
+
+window.PLATFORMS = PLATFORMS;
+
+// ----------------------------------------------------------
+// 2. GENERATOR ENGINES (3L, 4L, Alphanum, Semi-OG, Patterns)
 // ----------------------------------------------------------
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
 const ALPHANUM = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -33,23 +58,34 @@ const SEMI_OG_WORDS = [
 
 function buildQueueForPattern(pattern) {
   const queue = [];
+  const minLen = (PLATFORMS[window.activePlatform] && PLATFORMS[window.activePlatform].min) || 4;
   
   if (pattern === '3L_ALPHA') {
     // 3-Letter Letters (AAA-ZZZ) - 17,576
-    for (let i = 0; i < 2000; i++) {
-      let s = '';
-      for (let j = 0; j < 3; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
-      queue.push(s);
+    const count = minLen > 3 ? 0 : 2500;
+    if (minLen > 3) {
+      showToast(`⚠️ Note: ${window.activePlatform.toUpperCase()} requires min ${minLen} chars. Generating ${minLen}L instead.`);
+      for (let i = 0; i < 2500; i++) {
+        let s = '';
+        for (let j = 0; j < minLen; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
+        queue.push(s);
+      }
+    } else {
+      for (let i = 0; i < 2500; i++) {
+        let s = '';
+        for (let j = 0; j < 3; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
+        queue.push(s);
+      }
     }
   } else if (pattern === '4L_ALPHA') {
-    // 4-Letter Pure Letters (AAAA-ZZZZ) - 456,976
+    // 4-Letter Pure Letters (AAAA-ZZZZ)
     for (let i = 0; i < 3500; i++) {
       let s = '';
       for (let j = 0; j < 4; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
       queue.push(s);
     }
   } else if (pattern === '4L_ALPHANUM') {
-    // 4-Letter Alphanumeric (A-Z, 0-9) - 1.68M
+    // 4-Letter Alphanumeric (A-Z, 0-9)
     for (let i = 0; i < 4000; i++) {
       let s = '';
       for (let j = 0; j < 4; j++) s += ALPHANUM[Math.floor(Math.random() * ALPHANUM.length)];
@@ -68,7 +104,7 @@ function buildQueueForPattern(pattern) {
     queue.sort(() => Math.random() - 0.5);
   } else if (pattern === 'REPEATING') {
     // Repeating & Double Patterns (e.g. xxab, aaxx, 99ab)
-    for (let i = 0; i < 2000; i++) {
+    for (let i = 0; i < 2500; i++) {
       const c1 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
       const c2 = LETTERS[Math.floor(Math.random() * LETTERS.length)];
       const mode = Math.floor(Math.random() * 4);
@@ -92,7 +128,7 @@ function buildQueueForPattern(pattern) {
 }
 
 // ----------------------------------------------------------
-// 2. SCANNER ENGINE EXECUTION & CONTROLS
+// 3. SCANNER ENGINE EXECUTION & CONTROLS
 // ----------------------------------------------------------
 window.startScannerEngine = function() {
   if (window.isScanning) return;
@@ -106,8 +142,9 @@ window.startScannerEngine = function() {
   if (cpsTimer) clearInterval(cpsTimer);
   cpsTimer = setInterval(updateVelocityStats, 500);
 
-  logMessage('SYS', `Engine started for [${window.activePlatform.toUpperCase()}] with pattern [${window.currentGenPattern}] (${window.scannerQueue.length} queued).`);
-  showToast(`⚡ Scanner Active: ${window.activePlatform.toUpperCase()} (${window.activeWorkerThreads} Workers)`);
+  const pData = PLATFORMS[window.activePlatform] || { name: window.activePlatform.toUpperCase() };
+  logMessage('SYS', `Engine started for [${pData.name}] with pattern [${window.currentGenPattern}] (${window.scannerQueue.length} queued).`);
+  showToast(`⚡ Scanner Active: ${pData.name} (${window.activeWorkerThreads} Workers)`);
 
   const threads = Math.min(window.activeWorkerThreads || 45, 150);
   for (let i = 0; i < threads; i++) {
@@ -154,13 +191,14 @@ function toggleScannerUIState(scanning) {
   if (btnDashStop) btnDashStop.style.display = scanning ? 'flex' : 'none';
 
   if (statusBadge) {
-    statusBadge.textContent = scanning ? `SCANNING @${window.activePlatform.toUpperCase()}` : 'ENGINE READY';
+    const pData = PLATFORMS[window.activePlatform] || { name: window.activePlatform.toUpperCase() };
+    statusBadge.textContent = scanning ? `SCANNING @${pData.name.toUpperCase()}` : 'ENGINE READY';
     statusBadge.style.color = scanning ? 'var(--emerald-success)' : 'var(--blue-primary)';
   }
 }
 
 // ----------------------------------------------------------
-// 3. ASYNC WORKER THREAD POOL
+// 4. ASYNC WORKER THREAD POOL
 // ----------------------------------------------------------
 async function spawnScannerWorker(workerId) {
   while (window.isScanning && window.queueCursor < window.scannerQueue.length) {
@@ -182,7 +220,7 @@ async function spawnScannerWorker(workerId) {
 }
 
 // ----------------------------------------------------------
-// 4. PRECISION BACKEND CHECK DISPATCHER (ZERO FALSE POSITIVES)
+// 5. PRECISION BACKEND CHECK DISPATCHER
 // ----------------------------------------------------------
 async function executeHandleCheck(handle) {
   window.totalCheckedCount++;
@@ -212,7 +250,6 @@ async function executeHandleCheck(handle) {
     }
 
   } catch(err) {
-    // Zero fake hits on network error
     isAvailable = false;
   }
 
@@ -248,7 +285,72 @@ function handleDiscoveryHit(handle, platform) {
 }
 
 // ----------------------------------------------------------
-// 5. LIVE METRICS & FEED RENDERING
+// 6. MULTI-PLATFORM MATRIX SCANNER (CHECK 1 USER ACROSS ALL 17)
+// ----------------------------------------------------------
+window.runMultiMatrixCheck = async function() {
+  const input = document.getElementById('matrixInputHandle');
+  if (!input || !input.value.trim()) {
+    showToast('⚠️ Enter a username to run multi-checker matrix');
+    return;
+  }
+
+  const handle = input.value.trim().lstrip ? input.value.trim().lstrip('@') : input.value.trim().replace(/^@+/, '');
+  const container = document.getElementById('matrixResultsGrid');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: var(--blue-primary); font-weight: 800;">
+      ⚡ Running precision check for @${handle} across all 17 platforms simultaneously...
+    </div>
+  `;
+
+  const platformsList = Object.keys(PLATFORMS);
+  const results = await Promise.all(platformsList.map(async (pKey) => {
+    try {
+      const res = await fetch('/api/check-handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform: pKey, handle: handle })
+      });
+      const data = await res.json();
+      return { platform: pKey, ...data };
+    } catch(err) {
+      return { platform: pKey, available: false, status: 'error', reason: String(err) };
+    }
+  }));
+
+  container.innerHTML = results.map(r => {
+    const pInfo = PLATFORMS[r.platform] || { name: r.platform, icon: '⚡', category: 'General' };
+    const isAvail = r.available === true || r.status === 'available';
+    const isRestricted = r.status === 'restricted';
+    const statusColor = isAvail ? 'var(--emerald-success)' : (isRestricted ? '#F59E0B' : 'var(--rose-danger)');
+    const statusText = isAvail ? 'Available' : (isRestricted ? 'Restricted' : 'Taken / Lock');
+    const badgeIcon = isAvail ? '✓' : (isRestricted ? '⚠️' : '🔒');
+
+    return `
+      <div style="background: var(--bg-surface-alt); padding: 14px; border-radius: var(--radius-card); border: 1px solid ${isAvail ? 'var(--emerald-success)' : 'var(--border-main)'}; display: flex; flex-direction: column; gap: 8px; box-shadow: ${isAvail ? '0 0 15px rgba(16, 185, 129, 0.25)' : 'none'};">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.2rem;">${pInfo.icon}</span>
+            <div>
+              <div style="font-weight: 800; color: #fff; font-size: 0.82rem;">${pInfo.name}</div>
+              <div style="font-size: 0.60rem; color: var(--text-dim);">${pInfo.category}</div>
+            </div>
+          </div>
+          <span style="font-size: 0.65rem; font-weight: 800; color: ${statusColor}; background: rgba(0,0,0,0.3); border: 1px solid ${statusColor}; padding: 2px 8px; border-radius: var(--radius-pill);">
+            ${badgeIcon} ${statusText}
+          </span>
+        </div>
+        <div style="font-size: 0.64rem; color: var(--text-dim); font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          ${r.reason || (isAvail ? 'Clean claimable handle' : 'Registered profile')}
+        </div>
+      </div>
+    `;
+  }).join('');
+};
+
+// ----------------------------------------------------------
+// 7. LIVE METRICS & FEED RENDERING
 // ----------------------------------------------------------
 function updateVelocityStats() {
   const now = Date.now();
@@ -284,26 +386,29 @@ function renderDiscoveredFeed() {
     return;
   }
 
-  container.innerHTML = window.availableHits.slice(0, 50).map(hit => `
-    <div class="handle-card-item">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="width: 34px; height: 34px; border-radius: 50%; background: var(--accent-subtle-bg); border: 1px solid var(--accent-subtle-border); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff;">
-          ${(hit.handle[0] || 'A').toUpperCase()}
+  container.innerHTML = window.availableHits.slice(0, 50).map(hit => {
+    const pData = PLATFORMS[hit.platform] || { name: hit.platform.toUpperCase(), icon: '⚡' };
+    return `
+      <div class="handle-card-item">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 34px; height: 34px; border-radius: 50%; background: var(--accent-subtle-bg); border: 1px solid var(--accent-subtle-border); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 1.1rem;">
+            ${pData.icon}
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <div class="handle-name-badge">@${hit.handle}</div>
+            <div style="font-size: 0.64rem; color: var(--text-dim);">${hit.len}-letter • ${pData.name} • ${hit.timestamp}</div>
+          </div>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 2px;">
-          <div class="handle-name-badge">@${hit.handle}</div>
-          <div style="font-size: 0.64rem; color: var(--text-dim);">${hit.len}-letter • ${hit.platform.toUpperCase()} • ${hit.timestamp}</div>
-        </div>
-      </div>
 
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 0.66rem; font-weight: 800; color: var(--blue-primary); background: var(--accent-subtle-bg); padding: 3px 10px; border-radius: var(--radius-pill);">${hit.rarity}</span>
-        <span class="badge-available">Verified Available</span>
-        <button class="btn-action-copy" onclick="copyHandleToClipboard('${hit.handle}', this)">Copy</button>
-        <button class="btn-action-copy" onclick="openInspectorModal('${hit.handle}', '${hit.rarity}', ${hit.len})">Inspect</button>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 0.66rem; font-weight: 800; color: var(--blue-primary); background: var(--accent-subtle-bg); padding: 3px 10px; border-radius: var(--radius-pill);">${hit.rarity}</span>
+          <span class="badge-available">Verified Available</span>
+          <button class="btn-action-copy" onclick="copyHandleToClipboard('${hit.handle}', this)">Copy</button>
+          <button class="btn-action-copy" onclick="openInspectorModal('${hit.handle}', '${hit.rarity}', ${hit.len})">Inspect</button>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function renderMasterLedger() {
@@ -321,23 +426,26 @@ function renderMasterLedger() {
     return;
   }
 
-  container.innerHTML = window.availableHits.map(hit => `
-    <div class="handle-card-item">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-family: var(--font-mono); font-weight: 800; color: #fff; font-size: 0.88rem;">@${hit.handle}</span>
-        <span style="font-size: 0.65rem; color: var(--text-dim);">${hit.platform.toUpperCase()}</span>
+  container.innerHTML = window.availableHits.map(hit => {
+    const pData = PLATFORMS[hit.platform] || { name: hit.platform.toUpperCase(), icon: '⚡' };
+    return `
+      <div class="handle-card-item">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-family: var(--font-mono); font-weight: 800; color: #fff; font-size: 0.88rem;">@${hit.handle}</span>
+          <span style="font-size: 0.65rem; color: var(--text-dim);">${pData.icon} ${pData.name}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="badge-available">Verified Available</span>
+          <span style="font-size: 0.65rem; color: var(--text-dim); font-family: var(--font-mono);">${hit.timestamp}</span>
+          <button class="btn-action-copy" onclick="copyHandleToClipboard('${hit.handle}', this)">Copy</button>
+        </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span class="badge-available">Verified Available</span>
-        <span style="font-size: 0.65rem; color: var(--text-dim); font-family: var(--font-mono);">${hit.timestamp}</span>
-        <button class="btn-action-copy" onclick="copyHandleToClipboard('${hit.handle}', this)">Copy</button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // ----------------------------------------------------------
-// 6. DASHBOARD PRESET & WORDLIST HANDLERS
+// 8. DASHBOARD PRESET & PLATFORM SWITCHERS
 // ----------------------------------------------------------
 window.selectGenPattern = function(pattern, btnEl) {
   window.currentGenPattern = pattern;
@@ -347,12 +455,39 @@ window.selectGenPattern = function(pattern, btnEl) {
   logMessage('SYS', `Selected generator pattern: ${pattern}`);
 };
 
-window.setActiveTargetPlatform = function(platform) {
-  window.activePlatform = platform;
-  const statusBadge = document.getElementById('scannerStatusBadge');
-  if (statusBadge && window.isScanning) {
-    statusBadge.textContent = `SCANNING @${platform.toUpperCase()}`;
+window.switchPreset = function(platform, btnEl) {
+  window.activePlatform = platform.toLowerCase();
+  
+  document.querySelectorAll('.platform-pill-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) {
+    btnEl.classList.add('active');
+  } else {
+    const matchingBtn = document.querySelector(`.platform-pill-btn[data-platform="${window.activePlatform}"]`);
+    if (matchingBtn) matchingBtn.classList.add('active');
   }
+
+  const pData = PLATFORMS[window.activePlatform] || { name: window.activePlatform.toUpperCase() };
+  const statusBadge = document.getElementById('scannerStatusBadge');
+  if (statusBadge) {
+    statusBadge.textContent = window.isScanning ? `SCANNING @${pData.name.toUpperCase()}` : 'ENGINE READY';
+  }
+
+  showToast(`Target Set: ${pData.name}`);
+  logMessage('SYS', `Switched target platform to ${pData.name}`);
+};
+
+window.filterPlatformPills = function(category, btnEl) {
+  document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  document.querySelectorAll('.platform-pill-btn').forEach(btn => {
+    const cat = btn.getAttribute('data-category');
+    if (category === 'all' || cat === category) {
+      btn.style.display = 'inline-flex';
+    } else {
+      btn.style.display = 'none';
+    }
+  });
 };
 
 window.injectCustomWordlist = function() {
@@ -393,7 +528,12 @@ window.openInspectorModal = function(handle, rarity, len) {
   if (m) m.style.display = 'flex';
 };
 
-window.setWorkerThreads = function(val, lblEl) {
+window.closeInspectorModal = function() {
+  const m = document.getElementById('inspectorModal');
+  if (m) m.style.display = 'none';
+};
+
+window.setWorkerThreads = function(val) {
   window.activeWorkerThreads = parseInt(val, 10);
   const lbl = document.getElementById('lblWorkerThreads');
   if (lbl) lbl.textContent = `${val} Workers`;
@@ -406,34 +546,55 @@ window.setWorkerDelay = function(val) {
 };
 
 // ----------------------------------------------------------
-// 7. AUDIO & WEBHOOKS
+// 9. EXPORTS & DISCORD WEBHOOKS
 // ----------------------------------------------------------
-function playDiscoveryChime() {
-  const soundToggle = document.getElementById('settingSoundToggle');
-  if (soundToggle && !soundToggle.checked) return;
+window.exportResultsCSV = function() {
+  if (window.availableHits.length === 0) {
+    showToast('⚠️ No records to export');
+    return;
+  }
+  let csv = 'Handle,Platform,Length,Rarity,Timestamp\n';
+  window.availableHits.forEach(h => {
+    csv += `${h.handle},${h.platform},${h.len},${h.rarity.replace(/,/g, '')},${h.timestamp}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `onyx_apex_hits_${Date.now()}.csv`;
+  a.click();
+  showToast('✓ Exported CSV Ledger');
+};
 
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.35, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.38);
-  } catch(e) {}
-}
+window.exportResultsJSON = function() {
+  if (window.availableHits.length === 0) {
+    showToast('⚠️ No records to export');
+    return;
+  }
+  const blob = new Blob([JSON.stringify(window.availableHits, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `onyx_apex_hits_${Date.now()}.json`;
+  a.click();
+  showToast('✓ Exported JSON Ledger');
+};
 
-function dispatchDiscordWebhookHit(handle, platform, score) {
-  const urlInput = document.getElementById('settingWebhookUrlInput');
-  const toggle = document.getElementById('settingWebhookHitsToggle');
-  if (!urlInput || !toggle || !toggle.checked) return;
+window.exportResultsTXT = function() {
+  if (window.availableHits.length === 0) {
+    showToast('⚠️ No records to export');
+    return;
+  }
+  const txt = window.availableHits.map(h => h.handle).join('\n');
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `onyx_apex_handles_${Date.now()}.txt`;
+  a.click();
+  showToast('✓ Exported .TXT Wordlist');
+};
 
-  const url = urlInput.value.trim();
+function dispatchDiscordWebhookHit(handle, platform, rarity) {
+  const urlInput = document.getElementById('webhookUrlInput');
+  const url = urlInput ? urlInput.value.trim() : '';
   if (!url) return;
 
   fetch('/api/discord-test', {
@@ -441,64 +602,85 @@ function dispatchDiscordWebhookHit(handle, platform, score) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       url: url,
-      content: `🎯 **VERIFIED AVAILABLE HANDLE DISCOVERED!**\n• Handle: \`@${handle}\`\n• Platform: **${platform.toUpperCase()}**\n• Rarity: **${score}**`
+      content: `🎯 **ONYX APEX DISCOVERY HIT**\n• Handle: **@${handle}**\n• Platform: **${platform.toUpperCase()}**\n• Rarity: **${rarity}**\n• Timestamp: **${new Date().toLocaleTimeString()}**`
     })
   }).catch(() => {});
 }
 
-function logMessage(type, msg) {
-  const stream = document.getElementById('telemetryLogStream');
-  if (!stream) return;
+window.testDiscordWebhook = function() {
+  const urlInput = document.getElementById('webhookUrlInput');
+  const url = urlInput ? urlInput.value.trim() : '';
+  if (!url) {
+    showToast('⚠️ Please enter a Discord Webhook URL first');
+    return;
+  }
+  fetch('/api/discord-test', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: url, content: '⚡ **ONYX APEX** — Discord Webhook Connected & Verified!' })
+  }).then(() => showToast('✓ Test message sent to Discord!'))
+    .catch(() => showToast('⚠️ Failed to deliver to Webhook'));
+};
 
-  const time = new Date().toLocaleTimeString();
-  const line = document.createElement('div');
-  
-  let color = '#94A3B8';
-  if (type === 'HIT') color = '#10B981';
-  else if (type === 'SYS') color = '#38BDF8';
-  else if (type === 'WARN') color = '#F59E0B';
-
-  line.innerHTML = `<span style="color: #64748B;">[${time}]</span> <span style="color: ${color}; font-weight: 800;">[${type}]</span> <span style="color: #F1F5F9;">${msg}</span>`;
-  stream.appendChild(line);
-  stream.scrollTop = stream.scrollHeight;
+function playDiscoveryChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  } catch(e) {}
 }
 
 // ----------------------------------------------------------
-// 8. EXPORTS
+// 10. LOGGER & UTILITIES
 // ----------------------------------------------------------
-window.exportResultsCSV = function() {
-  if (window.availableHits.length === 0) {
-    showToast('⚠️ No available hits to export.');
-    return;
-  }
-  const rows = [['Handle', 'Platform', 'Length', 'Rarity', 'Timestamp']];
-  window.availableHits.forEach(h => {
-    rows.push([h.handle, h.platform, h.len, h.rarity, h.timestamp]);
-  });
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `onyx-apex-hits-${Date.now()}.csv`;
-  a.click();
-  showToast('📥 CSV Ledger Downloaded!');
+function logMessage(level, text) {
+  const container = document.getElementById('logViewerArea');
+  if (!container) return;
+
+  const row = document.createElement('div');
+  row.className = 'log-line-row';
+  const color = level === 'HIT' ? 'var(--emerald-success)' : (level === 'WARN' ? '#F59E0B' : (level === 'SYS' ? 'var(--blue-primary)' : 'var(--text-dim)'));
+  row.innerHTML = `<span style="color: ${color}; font-weight: 800;">[${level}]</span> <span style="color: var(--text-dim); font-size: 0.68rem;">${new Date().toLocaleTimeString()}</span> <span style="color: #fff;">${text}</span>`;
+  container.appendChild(row);
+  container.scrollTop = container.scrollHeight;
+}
+
+window.clearSystemLogs = function() {
+  const container = document.getElementById('logViewerArea');
+  if (container) container.innerHTML = '';
+  showToast('✓ Logs cleared');
 };
 
-window.exportResultsJSON = function() {
-  if (window.availableHits.length === 0) {
-    showToast('⚠️ No available hits to export.');
-    return;
-  }
-  const blob = new Blob([JSON.stringify(window.availableHits, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `onyx-apex-hits-${Date.now()}.json`;
-  a.click();
-  showToast('📥 JSON Ledger Downloaded!');
+function showToast(msg) {
+  const toast = document.getElementById('toastPill');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ----------------------------------------------------------
+// 11. NAVIGATION & INITIALIZATION
+// ----------------------------------------------------------
+window.navigateView = function(viewId, btnEl) {
+  document.querySelectorAll('.view-panel-container').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+
+  const targetView = document.getElementById(`view-${viewId}`);
+  if (targetView) targetView.classList.add('active');
+  if (btnEl) btnEl.classList.add('active');
 };
 
-window.clearLiveLogs = function() {
-  const stream = document.getElementById('telemetryLogStream');
-  if (stream) stream.innerHTML = '<div><span style="color: var(--blue-primary);">[SYSTEM]</span> Logs cleared.</div>';
-  showToast('Logs cleared');
-};
+document.addEventListener('DOMContentLoaded', () => {
+  logMessage('SYS', 'ONYX APEX 17-Platform Engine initialized.');
+  updateDashboardMetrics();
+});

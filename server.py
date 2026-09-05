@@ -11,12 +11,20 @@ import re
 PORT = int(os.environ.get('PORT', 3000))
 PUBLIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public')
 
+def get_opener(proxy=None):
+    if proxy:
+        if not proxy.startswith('http://') and not proxy.startswith('https://'):
+            proxy = 'http://' + proxy
+        return urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
+    return urllib.request.build_opener()
+
+# 1. TIKTOK
 def check_tiktok_live(handle, proxy=None):
-    handle = handle.strip().lower()
-    
-    # Policy Rule 1: TikTok strictly restricts/bans all 3-character usernames from claim/registration
+    handle = handle.strip().lower().lstrip('@')
     if len(handle) < 4:
         return {'available': False, 'status': 'restricted', 'reason': 'TikTok restricts all 3L handles from registration'}
+    if not re.match(r'^[a-z0-9_.]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for TikTok'}
 
     url = f"https://www.tiktok.com/@{handle}"
     req = urllib.request.Request(url, headers={
@@ -24,13 +32,7 @@ def check_tiktok_live(handle, proxy=None):
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9'
     })
-    
-    opener = urllib.request.build_opener()
-    if proxy:
-        if not proxy.startswith('http://') and not proxy.startswith('https://'):
-            proxy = 'http://' + proxy
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
-
+    opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=8) as resp:
             data = resp.read().decode('utf-8', errors='replace')
@@ -41,7 +43,6 @@ def check_tiktok_live(handle, proxy=None):
                 status_code = detail.get('statusCode')
                 user_info = detail.get('userInfo')
 
-                # Strict Rule: Only statusCode 10221 represents a completely clean, unregistered, claimable handle
                 if status_code == 10221:
                     return {'available': True, 'status': 'available', 'reason': 'Clean unregistered handle'}
                 elif status_code == 10202:
@@ -55,7 +56,6 @@ def check_tiktok_live(handle, proxy=None):
 
             if 'verify-bar' in data or 'captcha' in data or 'tiktok-waf' in data:
                 return {'available': False, 'status': 'rate_limited', 'reason': 'WAF / Captcha Challenge'}
-            
             return {'available': False, 'status': 'taken', 'reason': 'Profile exists'}
     except urllib.error.HTTPError as e:
         if e.code == 404:
@@ -66,19 +66,20 @@ def check_tiktok_live(handle, proxy=None):
     except Exception as e:
         return {'available': False, 'status': 'error', 'reason': str(e)}
 
+# 2. DISCORD
 def check_discord_live(handle, proxy=None):
-    handle = handle.strip().lower()
+    handle = handle.strip().lower().lstrip('@')
+    if len(handle) < 2 or len(handle) > 32:
+        return {'available': False, 'status': 'restricted', 'reason': 'Discord usernames must be 2-32 characters'}
+    if not re.match(r'^[a-z0-9_.]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for Discord'}
+
     url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
     req = urllib.request.Request(url, data=json.dumps({"username": handle}).encode('utf-8'), headers={
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     })
-    opener = urllib.request.build_opener()
-    if proxy:
-        if not proxy.startswith('http://') and not proxy.startswith('https://'):
-            proxy = 'http://' + proxy
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
-
+    opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=6) as resp:
             data = json.loads(resp.read().decode('utf-8'))
@@ -86,49 +87,45 @@ def check_discord_live(handle, proxy=None):
             return {'available': not is_taken, 'status': 'available' if not is_taken else 'taken', 'data': data}
     except urllib.error.HTTPError as e:
         if e.code == 429:
-            return {'available': False, 'status': 'rate_limited', 'reason': 'Discord 429'}
+            return {'available': False, 'status': 'rate_limited', 'reason': 'Discord 429 Rate Limited'}
         return {'available': False, 'status': 'taken' if e.code == 400 else 'error', 'reason': f'HTTP {e.code}'}
     except Exception as e:
         return {'available': False, 'status': 'error', 'reason': str(e)}
 
+# 3. KICK
 def check_kick_live(handle, proxy=None):
-    handle = handle.strip().lower()
+    handle = handle.strip().lower().lstrip('@')
+    if len(handle) < 3 or len(handle) > 25:
+        return {'available': False, 'status': 'restricted', 'reason': 'Kick usernames must be 3-25 characters'}
     url = f"https://kick.com/api/v2/channels/{handle}"
     req = urllib.request.Request(url, headers={
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json'
     })
-    opener = urllib.request.build_opener()
-    if proxy:
-        if not proxy.startswith('http://') and not proxy.startswith('https://'):
-            proxy = 'http://' + proxy
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
-
+    opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=6) as resp:
             return {'available': False, 'status': 'taken', 'reason': 'Channel active (HTTP 200)'}
     except urllib.error.HTTPError as e:
         if e.code == 404:
             return {'available': True, 'status': 'available', 'reason': 'Channel not found (HTTP 404)'}
-        elif e.code == 429 or e.code == 403:
+        elif e.code in [403, 429]:
             return {'available': False, 'status': 'rate_limited', 'reason': f'HTTP {e.code}'}
         return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
     except Exception as e:
         return {'available': False, 'status': 'error', 'reason': str(e)}
 
+# 4. TWITCH
 def check_twitch_live(handle, proxy=None):
-    handle = handle.strip().lower()
+    handle = handle.strip().lower().lstrip('@')
+    if len(handle) < 4 or len(handle) > 25:
+        return {'available': False, 'status': 'restricted', 'reason': 'Twitch usernames must be 4-25 characters'}
     url = f"https://passport.twitch.tv/usernames/{handle}"
     req = urllib.request.Request(url, headers={
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json'
     })
-    opener = urllib.request.build_opener()
-    if proxy:
-        if not proxy.startswith('http://') and not proxy.startswith('https://'):
-            proxy = 'http://' + proxy
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
-
+    opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=6) as resp:
             data = resp.read().decode('utf-8', errors='replace')
@@ -136,7 +133,7 @@ def check_twitch_live(handle, proxy=None):
                 return {'available': True, 'status': 'available', 'reason': 'Twitch username available'}
             return {'available': False, 'status': 'taken', 'reason': 'Username registered'}
     except urllib.error.HTTPError as e:
-        if e.code == 404 or e.code == 204:
+        if e.code in [404, 204]:
             return {'available': True, 'status': 'available', 'reason': 'Username available (404/204)'}
         elif e.code == 429:
             return {'available': False, 'status': 'rate_limited', 'reason': 'HTTP 429'}
@@ -144,20 +141,21 @@ def check_twitch_live(handle, proxy=None):
     except Exception as e:
         return {'available': False, 'status': 'error', 'reason': str(e)}
 
+# 5. INSTAGRAM
 def check_instagram_live(handle, proxy=None):
-    handle = handle.strip().lower()
+    handle = handle.strip().lower().lstrip('@')
+    if len(handle) < 1 or len(handle) > 30:
+        return {'available': False, 'status': 'restricted', 'reason': 'Instagram usernames must be 1-30 characters'}
+    if not re.match(r'^[a-z0-9_.]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for Instagram'}
+
     url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={handle}"
     req = urllib.request.Request(url, headers={
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'x-ig-app-id': '936619743392459',
         'Accept': 'application/json'
     })
-    opener = urllib.request.build_opener()
-    if proxy:
-        if not proxy.startswith('http://') and not proxy.startswith('https://'):
-            proxy = 'http://' + proxy
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
-
+    opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=6) as resp:
             data = json.loads(resp.read().decode('utf-8'))
@@ -174,19 +172,20 @@ def check_instagram_live(handle, proxy=None):
     except Exception as e:
         return {'available': False, 'status': 'error', 'reason': str(e)}
 
+# 6. TWITTER / X
 def check_twitter_live(handle, proxy=None):
-    handle = handle.strip().lower()
+    handle = handle.strip().lower().lstrip('@')
+    if len(handle) < 1 or len(handle) > 15:
+        return {'available': False, 'status': 'restricted', 'reason': 'Twitter handles must be 1-15 characters'}
+    if not re.match(r'^[a-z0-9_]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for Twitter'}
+
     url = f"https://api.twitter.com/i/users/username_available.json?username={handle}"
     req = urllib.request.Request(url, headers={
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json'
     })
-    opener = urllib.request.build_opener()
-    if proxy:
-        if not proxy.startswith('http://') and not proxy.startswith('https://'):
-            proxy = 'http://' + proxy
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
-
+    opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=6) as resp:
             data = json.loads(resp.read().decode('utf-8'))
@@ -200,6 +199,286 @@ def check_twitter_live(handle, proxy=None):
         return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
     except Exception as e:
         return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 7. YOUTUBE
+def check_youtube_live(handle, proxy=None):
+    handle = handle.strip().lower().lstrip('@')
+    if len(handle) < 3 or len(handle) > 30:
+        return {'available': False, 'status': 'restricted', 'reason': 'YouTube handles must be 3-30 characters'}
+    if not re.match(r'^[a-z0-9_.-]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for YouTube handle'}
+
+    url = f"https://www.youtube.com/@{handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = resp.read().decode('utf-8', errors='ignore')
+            if 'canonicalBaseUrl' in data or 'channelId' in data or f'@{handle}' in data.lower():
+                return {'available': False, 'status': 'taken', 'reason': 'Active YouTube channel'}
+            return {'available': False, 'status': 'taken', 'reason': 'Profile exists (HTTP 200)'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Handle available on YouTube (404)'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 8. ROBLOX
+def check_roblox_live(handle, proxy=None):
+    handle = handle.strip()
+    if len(handle) < 3 or len(handle) > 20:
+        return {'available': False, 'status': 'restricted', 'reason': 'Roblox usernames must be 3-20 characters'}
+    if not re.match(r'^[a-zA-Z0-9_]+$', handle) or handle.startswith('_') or handle.endswith('_') or handle.count('_') > 1:
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid Roblox username format'}
+
+    url = 'https://users.roblox.com/v1/usernames/users'
+    payload = json.dumps({'usernames': [handle], 'excludeBannedUsers': False}).encode('utf-8')
+    req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            users = data.get('data', [])
+            if len(users) > 0:
+                return {'available': False, 'status': 'taken', 'reason': f"Roblox user active (ID: {users[0].get('id')})"}
+            return {'available': True, 'status': 'available', 'reason': 'Roblox username available'}
+    except urllib.error.HTTPError as e:
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 9. MINECRAFT (MOJANG)
+def check_minecraft_live(handle, proxy=None):
+    handle = handle.strip()
+    if len(handle) < 3 or len(handle) > 16:
+        return {'available': False, 'status': 'restricted', 'reason': 'Minecraft usernames must be 3-16 characters'}
+    if not re.match(r'^[a-zA-Z0-9_]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for Minecraft IGN'}
+
+    url = f"https://api.mojang.com/users/profiles/minecraft/{handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            if resp.status == 204:
+                return {'available': True, 'status': 'available', 'reason': 'Minecraft IGN available (204 No Content)'}
+            data = json.loads(resp.read().decode('utf-8'))
+            if data.get('id'):
+                return {'available': False, 'status': 'taken', 'reason': f"Active Mojang profile (UUID: {data.get('id')})"}
+            return {'available': True, 'status': 'available', 'reason': 'Minecraft IGN available'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Minecraft IGN available (404)'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 10. GITHUB
+def check_github_live(handle, proxy=None):
+    handle = handle.strip()
+    if len(handle) < 1 or len(handle) > 39:
+        return {'available': False, 'status': 'restricted', 'reason': 'GitHub usernames must be 1-39 characters'}
+    if not re.match(r'^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid GitHub username format'}
+
+    url = f"https://api.github.com/users/{handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if data.get('login'):
+                return {'available': False, 'status': 'taken', 'reason': 'Active GitHub account'}
+            return {'available': False, 'status': 'taken', 'reason': 'Profile exists'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'GitHub username available (404)'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 11. STEAM
+def check_steam_live(handle, proxy=None):
+    handle = handle.strip()
+    if len(handle) < 3 or len(handle) > 32:
+        return {'available': False, 'status': 'restricted', 'reason': 'Steam custom URLs must be 3-32 characters'}
+    if not re.match(r'^[a-zA-Z0-9_\-]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid Steam URL format'}
+
+    url = f"https://steamcommunity.com/id/{handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            html = resp.read().decode('utf-8', errors='ignore')
+            if 'The specified profile could not be found' in html or 'No group could be found' in html:
+                return {'available': True, 'status': 'available', 'reason': 'Steam custom URL available'}
+            return {'available': False, 'status': 'taken', 'reason': 'Steam profile claimed'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Steam URL available (404)'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 12. TELEGRAM
+def check_telegram_live(handle, proxy=None):
+    handle = handle.strip().lstrip('@')
+    if len(handle) < 5 or len(handle) > 32:
+        return {'available': False, 'status': 'restricted', 'reason': 'Telegram handles must be 5-32 characters'}
+    if not re.match(r'^[a-zA-Z0-9_]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Invalid Telegram handle format'}
+
+    url = f"https://t.me/{handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            html = resp.read().decode('utf-8', errors='ignore')
+            has_title = 'tgme_page_title' in html
+            has_extra = 'tgme_page_extra' in html
+            if has_title or has_extra:
+                return {'available': False, 'status': 'taken', 'reason': 'Active Telegram username/channel'}
+            return {'available': True, 'status': 'available', 'reason': 'Telegram username available'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Telegram handle available (404)'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 13. GITLAB
+def check_gitlab_live(handle, proxy=None):
+    handle = handle.strip()
+    if len(handle) < 2 or len(handle) > 255:
+        return {'available': False, 'status': 'restricted', 'reason': 'GitLab usernames must be 2-255 characters'}
+    url = f"https://gitlab.com/api/v4/users?username={handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            users = json.loads(resp.read().decode('utf-8'))
+            if isinstance(users, list) and len(users) > 0:
+                return {'available': False, 'status': 'taken', 'reason': 'GitLab account exists'}
+            return {'available': True, 'status': 'available', 'reason': 'GitLab username available'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 14. CHESS.COM
+def check_chess_live(handle, proxy=None):
+    handle = handle.strip()
+    if len(handle) < 3 or len(handle) > 30:
+        return {'available': False, 'status': 'restricted', 'reason': 'Chess.com usernames must be 3-30 characters'}
+    url = f"https://api.chess.com/pub/player/{handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if data.get('username'):
+                return {'available': False, 'status': 'taken', 'reason': 'Active Chess.com player'}
+            return {'available': False, 'status': 'taken', 'reason': 'Player profile found'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Chess.com username available'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 15. DOCKER HUB
+def check_docker_live(handle, proxy=None):
+    handle = handle.strip().lower()
+    if len(handle) < 4 or len(handle) > 30:
+        return {'available': False, 'status': 'restricted', 'reason': 'Docker Hub usernames must be 4-30 characters'}
+    if not re.match(r'^[a-z0-9]+$', handle):
+        return {'available': False, 'status': 'restricted', 'reason': 'Docker Hub usernames must be lowercase alphanumeric'}
+    url = f"https://hub.docker.com/v2/users/{handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if data.get('username') or data.get('id'):
+                return {'available': False, 'status': 'taken', 'reason': 'Docker Hub user active'}
+            return {'available': False, 'status': 'taken', 'reason': 'User profile found'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Docker Hub username available'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 16. DEV.TO
+def check_devto_live(handle, proxy=None):
+    handle = handle.strip()
+    if len(handle) < 1:
+        return {'available': False, 'status': 'restricted', 'reason': 'Dev.to username required'}
+    url = f"https://dev.to/api/users/by_username?url={handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if data.get('id') or data.get('username'):
+                return {'available': False, 'status': 'taken', 'reason': 'Dev.to profile active'}
+            return {'available': False, 'status': 'taken', 'reason': 'Profile exists'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Dev.to username available'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# 17. MASTODON
+def check_mastodon_live(handle, proxy=None):
+    handle = handle.strip().lstrip('@')
+    if len(handle) < 1:
+        return {'available': False, 'status': 'restricted', 'reason': 'Mastodon username required'}
+    url = f"https://mastodon.social/api/v1/accounts/lookup?acct={handle}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    opener = get_opener(proxy)
+    try:
+        with opener.open(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if data.get('id') or data.get('username'):
+                return {'available': False, 'status': 'taken', 'reason': 'Mastodon account active'}
+            return {'available': False, 'status': 'taken', 'reason': 'Account found'}
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {'available': True, 'status': 'available', 'reason': 'Mastodon handle available'}
+        return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'available': False, 'status': 'error', 'reason': str(e)}
+
+# PLATFORM DISPATCH ROUTER
+PLATFORM_DISPATCH = {
+    'tiktok': check_tiktok_live,
+    'discord': check_discord_live,
+    'kick': check_kick_live,
+    'twitch': check_twitch_live,
+    'instagram': check_instagram_live,
+    'twitter': check_twitter_live,
+    'x': check_twitter_live,
+    'youtube': check_youtube_live,
+    'roblox': check_roblox_live,
+    'minecraft': check_minecraft_live,
+    'github': check_github_live,
+    'steam': check_steam_live,
+    'telegram': check_telegram_live,
+    'gitlab': check_gitlab_live,
+    'chess': check_chess_live,
+    'docker': check_docker_live,
+    'devto': check_devto_live,
+    'mastodon': check_mastodon_live
+}
+
+def dispatch_handle_check(platform, handle, proxy=None):
+    platform_key = platform.strip().lower()
+    fn = PLATFORM_DISPATCH.get(platform_key)
+    if fn:
+        return fn(handle, proxy)
+    return {'available': False, 'status': 'error', 'reason': f'Unknown platform: {platform}'}
 
 
 class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
@@ -232,10 +511,64 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
         
         return os.path.join(PUBLIC_DIR, 'index.html')
 
+    def do_GET(self):
+        clean_path = self.path.split('?')[0].rstrip('/')
+        
+        # GET /api/check-handle?platform=...&handle=...
+        if clean_path == '/api/check-handle':
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+            platform = params.get('platform', ['tiktok'])[0].lower()
+            handle = params.get('handle', [''])[0].strip()
+            proxy = params.get('proxy', [None])[0]
+
+            if not handle:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': 'Handle parameter required'}).encode('utf-8'))
+                return
+
+            result = dispatch_handle_check(platform, handle, proxy)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(result).encode('utf-8'))
+            return
+
+        # GET /api/platforms - List all supported platforms
+        if clean_path == '/api/platforms':
+            platforms_list = [
+                {'id': 'tiktok', 'name': 'TikTok', 'icon': '📱', 'category': 'Social'},
+                {'id': 'discord', 'name': 'Discord', 'icon': '💬', 'category': 'Messenger'},
+                {'id': 'kick', 'name': 'Kick', 'icon': '🟢', 'category': 'Streaming'},
+                {'id': 'twitch', 'name': 'Twitch', 'icon': '🟣', 'category': 'Streaming'},
+                {'id': 'instagram', 'name': 'Instagram', 'icon': '📸', 'category': 'Social'},
+                {'id': 'twitter', 'name': 'X / Twitter', 'icon': '🐦', 'category': 'Social'},
+                {'id': 'youtube', 'name': 'YouTube', 'icon': '▶️', 'category': 'Streaming'},
+                {'id': 'roblox', 'name': 'Roblox', 'icon': '🧱', 'category': 'Gaming'},
+                {'id': 'minecraft', 'name': 'Minecraft', 'icon': '⛏️', 'category': 'Gaming'},
+                {'id': 'github', 'name': 'GitHub', 'icon': '🐙', 'category': 'Dev'},
+                {'id': 'steam', 'name': 'Steam', 'icon': '💨', 'category': 'Gaming'},
+                {'id': 'telegram', 'name': 'Telegram', 'icon': '✈️', 'category': 'Messenger'},
+                {'id': 'gitlab', 'name': 'GitLab', 'icon': '🦊', 'category': 'Dev'},
+                {'id': 'chess', 'name': 'Chess.com', 'icon': '♟️', 'category': 'Gaming'},
+                {'id': 'docker', 'name': 'Docker Hub', 'icon': '🐳', 'category': 'Dev'},
+                {'id': 'devto', 'name': 'Dev.to', 'icon': '👩‍💻', 'category': 'Dev'},
+                {'id': 'mastodon', 'name': 'Mastodon', 'icon': '🐘', 'category': 'Social'}
+            ]
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'platforms': platforms_list, 'total': len(platforms_list)}).encode('utf-8'))
+            return
+
+        return super().do_GET()
+
     def do_POST(self):
         clean_path = self.path.split('?')[0].rstrip('/')
         
-        # 1. Dedicated Master Handle Check Endpoint (Absolute Precision)
+        # 1. Master Handle Check Endpoint
         if clean_path == '/api/check-handle':
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
@@ -253,20 +586,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({'error': 'Handle parameter required'}).encode('utf-8'))
                     return
 
-                if platform == 'tiktok':
-                    result = check_tiktok_live(handle, proxy)
-                elif platform == 'discord':
-                    result = check_discord_live(handle, proxy)
-                elif platform == 'kick':
-                    result = check_kick_live(handle, proxy)
-                elif platform == 'twitch':
-                    result = check_twitch_live(handle, proxy)
-                elif platform == 'instagram':
-                    result = check_instagram_live(handle, proxy)
-                elif platform == 'twitter':
-                    result = check_twitter_live(handle, proxy)
-                else:
-                    result = {'available': False, 'status': 'error', 'reason': f'Unknown platform: {platform}'}
+                result = dispatch_handle_check(platform, handle, proxy)
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
@@ -315,13 +635,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 req = urllib.request.Request(target_url, data=req_body, headers=headers, method=method)
                 
                 proxy = payload.get('proxy')
-                if proxy:
-                    if not proxy.startswith('http://') and not proxy.startswith('https://'):
-                        proxy = 'http://' + proxy
-                    proxy_handler = urllib.request.ProxyHandler({'http': proxy, 'https': proxy})
-                    opener = urllib.request.build_opener(proxy_handler)
-                else:
-                    opener = urllib.request.build_opener()
+                opener = get_opener(proxy)
 
                 try:
                     with opener.open(req, timeout=8) as resp:
@@ -358,7 +672,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({'error': 'Malformed JSON payload', 'message': str(e)}).encode('utf-8'))
                 return
 
-        # 3. Discord Test Webhook Endpoint
+        # 3. Discord Webhook Dispatch Endpoint
         if clean_path == '/api/discord-test':
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
@@ -399,7 +713,7 @@ if __name__ == '__main__':
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", PORT), handler) as httpd:
         print(f"==================================================")
-        print(f"ONYX APEX Master Engine Server running on port {PORT}")
+        print(f"ONYX APEX 17-Platform Checker Engine running on port {PORT}")
         print(f"Dashboard interface: http://localhost:{PORT}")
         print(f"==================================================")
         try:
