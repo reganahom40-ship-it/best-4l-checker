@@ -690,9 +690,10 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 
                 proxy = payload.get('proxy')
                 opener = get_opener(proxy)
+                timeout_val = float(payload.get('timeout', 3.5))
 
                 try:
-                    with opener.open(req, timeout=6) as resp:
+                    with opener.open(req, timeout=timeout_val) as resp:
                         resp_status = resp.status
                         resp_headers = dict(resp.headers)
                         resp_data = resp.read().decode('utf-8', errors='replace')
@@ -702,10 +703,10 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                     resp_headers = dict(e.headers)
                     resp_data = e.read().decode('utf-8', errors='replace')
                 except Exception as proxy_err:
-                    self.send_response(500)
+                    self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
                     self.end_headers()
-                    self.wfile.write(json.dumps({'error': 'Request failed', 'message': str(proxy_err)}).encode('utf-8'))
+                    self.wfile.write(json.dumps({'status': 504, 'error': 'Proxy connection timed out or failed', 'message': str(proxy_err)}).encode('utf-8'))
                     return
 
                 self.send_response(200)

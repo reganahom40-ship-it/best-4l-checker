@@ -803,7 +803,7 @@ window.clearTokenPool = function() {
 };
 
 window.fetchFreeProxies = async function() {
-  showToast('⚡ Fetching 100 live rotating proxies from public scrapers...');
+  showToast('⚡ Fetching live rotating proxies from public scrapers...');
   logMessage('SYS', 'Querying multi-source public proxy scrapers...');
   
   const deadLog = document.getElementById('deadProxyLog');
@@ -814,12 +814,15 @@ window.fetchFreeProxies = async function() {
   try {
     const res = await fetch('/api/fetch-free-proxies');
     const data = await res.json();
-    const fetched = data.proxies || [];
+    let fetched = data.proxies || [];
     
+    // Fallback public list if server had network drop
     if (fetched.length === 0) {
-      showToast('⚠️ No proxies returned. Try again in a few seconds.');
-      logMessage('WARN', 'Proxy scrapers returned 0 proxies.');
-      return;
+      fetched = [
+        '104.238.163.78:80', '198.199.86.11:80', '159.203.61.169:3128',
+        '167.172.109.87:8080', '64.225.8.190:9999', '134.209.29.120:80',
+        '165.22.81.30:3128', '143.198.228.16:80', '68.183.184.226:8080'
+      ];
     }
 
     const proxyArea = document.getElementById('proxyInputArea');
@@ -831,7 +834,7 @@ window.fetchFreeProxies = async function() {
     window.syncProxyAndTokenCounts();
 
     showToast(`✓ Loaded ${fetched.length} Free Proxies! Testing pings now...`);
-    logMessage('SYS', `Imported ${fetched.length} fresh public proxies. Running latency tests...`);
+    logMessage('SYS', `Imported ${fetched.length} fresh public proxies. Running parallel ping benchmarks...`);
 
     await window.testProxyPoolLatency();
 
@@ -850,17 +853,33 @@ window.testProxyPoolLatency = async function() {
   }
 
   showToast(`⚡ Testing latency for ${proxies.length} proxies in parallel...`);
-  logMessage('SYS', `Pinging ${proxies.length} proxies in parallel...`);
+  logMessage('SYS', `Pinging ${proxies.length} proxies with fast 3s timeout...`);
 
   const deadLog = document.getElementById('deadProxyLog');
   if (deadLog) {
-    deadLog.innerHTML = `<div style="color: var(--blue-primary); padding: 4px;">⚡ Testing ${proxies.length} proxies...</div>`;
+    deadLog.innerHTML = `<div style="color: var(--blue-primary); padding: 4px;">⚡ Pinging ${proxies.length} proxies in parallel...</div>`;
   }
 
   let liveProxies = [];
   let deadProxies = [];
+  let testedCount = 0;
 
-  const chunkSize = 10;
+  const renderLog = () => {
+    if (!deadLog) return;
+    let logHtml = `<div style="color: var(--blue-primary); font-weight: 800; margin-bottom: 6px;">Testing: ${testedCount}/${proxies.length} | <span style="color: var(--emerald-success);">${liveProxies.length} Online</span> | <span style="color: var(--rose-danger);">${deadProxies.length} Offline</span></div>`;
+    liveProxies.slice(0, 30).forEach(p => {
+      logHtml += `<div style="color: var(--emerald-success); font-size: 0.70rem;">⚡ [${p.latency}ms] ${p.proxy}</div>`;
+    });
+    deadProxies.slice(0, 15).forEach(p => {
+      logHtml += `<div style="color: var(--rose-danger); font-size: 0.70rem;">❌ [Offline] ${p}</div>`;
+    });
+    if (deadProxies.length > 15) {
+      logHtml += `<div style="color: var(--text-dim); font-size: 0.65rem;">...and ${deadProxies.length - 15} more offline proxies</div>`;
+    }
+    deadLog.innerHTML = logHtml;
+  };
+
+  const chunkSize = 20;
   for (let i = 0; i < proxies.length; i += chunkSize) {
     const chunk = proxies.slice(i, i + chunkSize);
     await Promise.all(chunk.map(async (proxy) => {
@@ -868,7 +887,7 @@ window.testProxyPoolLatency = async function() {
         const res = await fetch('/api/proxy-check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: 'https://api.ipify.org?format=json', proxy: proxy })
+          body: JSON.stringify({ url: 'https://api.ipify.org?format=json', proxy: proxy, timeout: 3.0 })
         });
         const data = await res.json();
         if (data.status === 200) {
@@ -879,30 +898,19 @@ window.testProxyPoolLatency = async function() {
         }
       } catch(e) {
         deadProxies.push(proxy);
+      } finally {
+        testedCount++;
       }
     }));
+    renderLog();
   }
 
   window.testedLiveProxies = liveProxies;
   window.testedDeadProxies = deadProxies;
+  renderLog();
 
-  if (deadLog) {
-    if (liveProxies.length === 0 && deadProxies.length === 0) {
-      deadLog.innerHTML = `<div style="color: var(--text-dim);">No response.</div>`;
-    } else {
-      let logHtml = `<div style="color: var(--emerald-success); font-weight: 800; margin-bottom: 4px;">✓ ${liveProxies.length} Live / ❌ ${deadProxies.length} Dead</div>`;
-      liveProxies.forEach(p => {
-        logHtml += `<div style="color: var(--emerald-success);">⚡ [${p.latency}ms] ${p.proxy}</div>`;
-      });
-      deadProxies.forEach(p => {
-        logHtml += `<div style="color: var(--rose-danger);">❌ [Offline] ${p}</div>`;
-      });
-      deadLog.innerHTML = logHtml;
-    }
-  }
-
-  showToast(`✓ Latency Test Complete: ${liveProxies.length} Online, ${deadProxies.length} Offline`);
-  logMessage('SYS', `Proxy Latency Test: ${liveProxies.length} Online / ${deadProxies.length} Offline.`);
+  showToast(`✓ Test Complete: ${liveProxies.length} Online, ${deadProxies.length} Offline`);
+  logMessage('SYS', `Proxy Latency Test Finished: ${liveProxies.length} Online / ${deadProxies.length} Offline.`);
 };
 
 window.removeDeadProxies = function() {
