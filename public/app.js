@@ -254,9 +254,15 @@ window.startScannerEngine = function() {
 
   const pData = PLATFORMS[window.activePlatform] || { name: window.activePlatform.toUpperCase() };
   logMessage('SYS', `Infinite Engine started for [${pData.name}] with pattern [${window.currentGenPattern}] (Non-stop streaming).`);
-  showToast(`⚡ Scanner Active: ${pData.name} — Infinite Continuous Mode`);
+  const hasProxies = window.proxyPoolList && window.proxyPoolList.length > 0;
+  if (!hasProxies) {
+    logMessage('WARN', `ℹ️ Scanning in Direct Server IP Mode (0 proxies). For high-speed non-stop scanning without rate limits, load proxies in Proxies & Tokens.`);
+  } else {
+    logMessage('SYS', `🌐 Rotating requests across ${window.proxyPoolList.length} active proxies.`);
+  }
 
-  const threads = Math.min(window.activeWorkerThreads || 45, 150);
+  const requestedThreads = window.activeWorkerThreads || 45;
+  const threads = hasProxies ? Math.min(requestedThreads, 150) : Math.min(requestedThreads, 8);
   for (let i = 0; i < threads; i++) {
     spawnScannerWorker(i + 1);
   }
@@ -338,15 +344,13 @@ async function spawnScannerWorker(workerId) {
 // 5. PRECISION BACKEND CHECK DISPATCHER
 // ----------------------------------------------------------
 async function executeHandleCheck(handle) {
-  window.totalCheckedCount++;
-  checkTimestamps.push(Date.now());
-
   const platform = window.activePlatform || 'tiktok';
   let isAvailable = false;
   let checkResult = null;
 
   // Pick rotating proxy if proxy pool is loaded
-  const rotatingProxy = window.proxyPoolList.length > 0 ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
+  const hasProxies = window.proxyPoolList && window.proxyPoolList.length > 0;
+  const rotatingProxy = hasProxies ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
 
   try {
     const res = await fetch('/api/check-handle', {
@@ -359,15 +363,22 @@ async function executeHandleCheck(handle) {
       })
     });
 
+    if (res.status === 429) {
+      logMessage('WARN', `⚠️ Rate-limit reached on ${platform.toUpperCase()}. ${hasProxies ? 'Rotating proxy...' : 'Paste proxies in Proxies & Tokens to bypass.'}`);
+      await new Promise(r => setTimeout(r, 600));
+      return;
+    }
+
     checkResult = await res.json();
 
     if (checkResult.available === true || checkResult.status === 'available') {
       isAvailable = true;
     } else if (checkResult.status === 'rate_limited') {
-      logMessage('WARN', `Rate-limit / Challenge on @${handle} (${platform.toUpperCase()})`);
-      isAvailable = false;
+      logMessage('WARN', `⚠️ Rate-limit on @${handle} (${platform.toUpperCase()}). ${hasProxies ? 'Rotating proxy...' : 'Add proxies to bypass.'}`);
+      await new Promise(r => setTimeout(r, 400));
+      return;
     } else if (checkResult.status === 'restricted') {
-      if (window.totalCheckedCount % 25 === 0) {
+      if (window.totalCheckedCount % 20 === 0) {
         logMessage('WARN', `@${handle} is restricted on ${platform.toUpperCase()}: ${checkResult.reason}`);
       }
       isAvailable = false;
@@ -376,15 +387,19 @@ async function executeHandleCheck(handle) {
     }
 
   } catch(err) {
-    isAvailable = false;
+    logMessage('WARN', `Network drop on @${handle} (${platform.toUpperCase()}): ${err.message}`);
+    return;
   }
+
+  window.totalCheckedCount++;
+  checkTimestamps.push(Date.now());
 
   if (isAvailable) {
     handleDiscoveryHit(handle.toLowerCase(), platform, checkResult);
   } else {
     window.takenCount++;
     if (window.totalCheckedCount % 3 === 0) {
-      logMessage('SCAN', `Checked @${handle.toLowerCase()} (${platform.toUpperCase()}) — Taken`);
+      logMessage('SCAN', `Checked @${handle.toLowerCase()} (${platform.toUpperCase()}) — Taken [${checkResult?.reason || 'Profile exists'}]`);
     }
   }
 
