@@ -1650,7 +1650,7 @@
         </div>
       </div>
 
-            <!-- ==========================================
+                  <!-- ==========================================
            VIEW: PROXIES & TOKEN POOL (UNIFIED)
            ========================================== -->
       <div id="view-proxies" class="view-panel-container">
@@ -1666,75 +1666,92 @@
             </div>
           </div>
           <div style="display: flex; gap: 8px;">
+            <button class="btn-action-copy" onclick="fetchFreeProxies()">⚡ 1-Click Free Proxies</button>
             <button class="btn-export-blue" onclick="window.syncProxyAndTokenCounts(); showToast('✓ Synced Proxy & Token Counts');">🔄 Refresh Counts</button>
           </div>
         </div>
 
         <!-- Dual Side-by-Side Cards -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+        <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 16px; margin-top: 16px;">
           
-          <!-- Card 1: Proxy Pool -->
+          <!-- Card 1: Proxy Pool & Live Tester -->
           <div class="workspace-panel" style="padding: 20px; gap: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 1.2rem;">🌐</span>
                 <div>
                   <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Live Proxy Pool (HTTP / SOCKS5)</div>
-                  <div style="font-size: 0.62rem; color: var(--text-dim);">Auto-rotates across checker workers</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">Supports <code>ip:port</code> and <code>ip:port:user:pass</code></div>
                 </div>
               </div>
               <span id="proxyPoolStatusBadge" style="font-size: 0.70rem; font-weight: 800; color: var(--blue-primary); background: var(--accent-subtle-bg); border: 1px solid var(--accent-subtle-border); padding: 3px 10px; border-radius: var(--radius-pill);">0 Loaded</span>
             </div>
 
-            <textarea id="proxyInputArea" class="infra-textarea" style="height: 180px; min-height: 140px; font-family: var(--font-mono); font-size: 0.75rem;" placeholder="ip:port:user:pass or ip:port (one per line)..." oninput="window.syncProxyAndTokenCounts()"></textarea>
+            <textarea id="proxyInputArea" class="infra-textarea" style="height: 160px; min-height: 130px; font-family: var(--font-mono); font-size: 0.75rem;" placeholder="ip:port or ip:port:username:password (one per line)..." oninput="window.syncProxyAndTokenCounts()"></textarea>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <button class="btn-action-copy" onclick="testProxyPoolLatency()">⚡ Test Latencies</button>
-              <div style="display: flex; gap: 8px;">
-                <button class="btn-dead-action" onclick="clearProxyPool()" style="padding: 6px 14px;">Clear</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+              <div style="display: flex; gap: 6px;">
+                <button class="btn-action-copy" onclick="testProxyPoolLatency()">⚡ Test Latencies</button>
+                <button class="btn-action-copy" onclick="removeDeadProxies()" style="color: var(--rose-danger); border-color: rgba(239,68,68,0.3);">🗑️ Remove Dead</button>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn-dead-action" onclick="clearProxyPool()" style="padding: 6px 12px;">Clear</button>
                 <button class="btn-export-blue" onclick="saveProxyPool()">Save Proxy Pool</button>
               </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
-              <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-dim);">Proxy Health & Quarantine Log:</span>
-              <div id="deadProxyLog" class="infra-textarea" style="height: 70px; min-height: 60px; overflow-y: auto; color: var(--text-dim); font-size: 0.68rem; padding: 8px;">
-                [Quarantine System Active — 0 failed proxies isolated]
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-dim);">Live Ping & Latency Results:</span>
+              </div>
+              <div id="deadProxyLog" class="infra-textarea" style="height: 95px; min-height: 80px; overflow-y: auto; color: var(--text-dim); font-size: 0.68rem; padding: 8px; font-family: var(--font-mono);">
+                [Click "⚡ Test Latencies" to test ping and auto-detect dead proxies]
               </div>
             </div>
           </div>
 
-          <!-- Card 2: Token Pool -->
-          <div class="workspace-panel" style="padding: 20px; gap: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.2rem;">🔑</span>
-                <div>
-                  <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Platform Authentication Tokens & API Keys</div>
-                  <div style="font-size: 0.62rem; color: var(--text-dim);">Discord bots, Twitch Client-IDs, Instagram sessions</div>
+          <!-- Card 2: Token Pool & Proxy Sources Guide -->
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            
+            <!-- Token Pool Card -->
+            <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.2rem;">🔑</span>
+                  <div>
+                    <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Platform Authentication Tokens</div>
+                    <div style="font-size: 0.62rem; color: var(--text-dim);">Discord bots, Twitch Client-IDs, Instagram sessions</div>
+                  </div>
+                </div>
+                <span id="tokenPoolStatusBadge" style="font-size: 0.70rem; font-weight: 800; color: var(--purple-accent); background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.35); padding: 3px 10px; border-radius: var(--radius-pill);">0 Loaded</span>
+              </div>
+
+              <textarea id="tokenPoolInputArea" class="infra-textarea" style="height: 90px; min-height: 80px; font-family: var(--font-mono); font-size: 0.75rem;" placeholder="Paste target platform tokens (one per line)..." oninput="window.syncProxyAndTokenCounts()"></textarea>
+
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.62rem; color: var(--text-dim);">Auto-rotates across workers</span>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn-dead-action" onclick="clearTokenPool()" style="padding: 6px 12px;">Clear</button>
+                  <button class="btn-export-blue" onclick="saveTokenPool()">Save Tokens</button>
                 </div>
               </div>
-              <span id="tokenPoolStatusBadge" style="font-size: 0.70rem; font-weight: 800; color: var(--purple-accent); background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.35); padding: 3px 10px; border-radius: var(--radius-pill);">0 Loaded</span>
             </div>
 
-            <textarea id="tokenPoolInputArea" class="infra-textarea" style="height: 180px; min-height: 140px; font-family: var(--font-mono); font-size: 0.75rem;" placeholder="Paste target platform tokens or session cookies (one per line)..." oninput="window.syncProxyAndTokenCounts()"></textarea>
-
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 0.65rem; color: var(--text-dim);">Auto-rotates across worker threads</span>
-              <div style="display: flex; gap: 8px;">
-                <button class="btn-dead-action" onclick="clearTokenPool()" style="padding: 6px 14px;">Clear</button>
-                <button class="btn-export-blue" onclick="saveTokenPool()">Save & Hot-Reload</button>
+            <!-- Best Proxy Sources Guide Card -->
+            <div class="workspace-panel" style="padding: 16px; gap: 10px; background: var(--bg-surface-alt);">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>💡</span>
+                <span style="font-weight: 800; color: #fff; font-size: 0.82rem;">Where to Get More High-Speed Proxies</span>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.68rem; color: var(--text-dim);">
+                <div>• <strong>Free Public Proxies:</strong> Click the <code style="color: var(--blue-primary);">⚡ 1-Click Free Proxies</code> button above to fetch 50+ free HTTP proxies instantly from ProxyScrape / OpenLists.</div>
+                <div>• <strong>Cheap Datacenter Rotation:</strong> <strong>Webshare.io</strong> ($1-$3/mo for 100 fast proxies with IP auth or user:pass) or <strong>Proxy-Cheap</strong>.</div>
+                <div>• <strong>Residential Proxies (Zero Rate Limits):</strong> <strong>IPRoyal</strong>, <strong>Smartproxy</strong>, or <strong>Bright Data</strong> (rotating residential IPs bypass all anti-bot limits).</div>
+                <div>• <strong>Supported Format:</strong> Paste directly as <code>ip:port</code> or <code>ip:port:user:pass</code>.</div>
               </div>
             </div>
 
-            <div style="background: var(--bg-surface-alt); padding: 12px; border-radius: var(--radius-card); border: 1px solid var(--border-main); margin-top: 6px;">
-              <div style="font-weight: 800; color: #fff; font-size: 0.74rem; margin-bottom: 4px;">💡 Supported Token Formats:</div>
-              <div style="font-size: 0.64rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 2px;">
-                <div>• <strong>Discord:</strong> Bot or User Auth Tokens (for Pomelo lookup)</div>
-                <div>• <strong>Twitch:</strong> Helix Client-ID:OAuthBearer token pairs</div>
-                <div>• <strong>Instagram:</strong> Session ID cookies for authenticated profile checks</div>
-              </div>
-            </div>
           </div>
 
         </div>

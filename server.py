@@ -11,11 +11,30 @@ import re
 PORT = int(os.environ.get('PORT', 3000))
 PUBLIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public')
 
+def format_proxy(raw):
+    if not raw:
+        return None
+    raw = raw.strip()
+    if not raw:
+        return None
+    if '://' in raw:
+        return raw
+    parts = raw.split(':')
+    if len(parts) == 4:
+        # ip:port:user:pass -> http://user:pass@ip:port
+        ip, port, user, pwd = parts
+        return f'http://{user}:{pwd}@{ip}:{port}'
+    elif len(parts) == 2:
+        return f'http://{raw}'
+    elif '@' in raw:
+        return f'http://{raw}'
+    return f'http://{raw}'
+
 def get_opener(proxy=None):
     if proxy:
-        if not proxy.startswith('http://') and not proxy.startswith('https://'):
-            proxy = 'http://' + proxy
-        return urllib.request.build_opener(urllib.request.ProxyHandler({'http': proxy, 'https': proxy}))
+        formatted = format_proxy(proxy)
+        if formatted:
+            return urllib.request.build_opener(urllib.request.ProxyHandler({'http': formatted, 'https': formatted}))
     return urllib.request.build_opener()
 
 # 1. TIKTOK
@@ -536,6 +555,30 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(result).encode('utf-8'))
             return
 
+        # GET /api/fetch-free-proxies
+        if clean_path == '/api/fetch-free-proxies':
+            free_urls = [
+                'https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=5000&country=all&ssl=all&anonymity=all',
+                'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt'
+            ]
+            fetched = []
+            for u in free_urls:
+                try:
+                    req = urllib.request.Request(u, headers={'User-Agent': 'Mozilla/5.0'})
+                    with urllib.request.urlopen(req, timeout=5) as resp:
+                        text = resp.read().decode('utf-8', errors='ignore')
+                        lines = [l.strip() for l in text.splitlines() if l.strip() and ':' in l]
+                        if lines:
+                            fetched = lines[:60]
+                            break
+                except Exception:
+                    continue
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'proxies': fetched, 'count': len(fetched)}).encode('utf-8'))
+            return
+
         # GET /api/platforms - List all supported platforms
         if clean_path == '/api/platforms':
             platforms_list = [
@@ -632,16 +675,19 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 if 'User-Agent' not in headers and 'user-agent' not in headers:
                     headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
+                import time
+                start_time = time.time()
                 req = urllib.request.Request(target_url, data=req_body, headers=headers, method=method)
                 
                 proxy = payload.get('proxy')
                 opener = get_opener(proxy)
 
                 try:
-                    with opener.open(req, timeout=8) as resp:
+                    with opener.open(req, timeout=6) as resp:
                         resp_status = resp.status
                         resp_headers = dict(resp.headers)
                         resp_data = resp.read().decode('utf-8', errors='replace')
+                        latency_ms = int((time.time() - start_time) * 1000)
                 except urllib.error.HTTPError as e:
                     resp_status = e.code
                     resp_headers = dict(e.headers)
@@ -660,6 +706,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 response_payload = {
                     'status': resp_status,
                     'statusText': 'OK' if resp_status == 200 else 'HTTP Error',
+                    'latencyMs': latency_ms if 'latency_ms' in locals() else 0,
                     'data': resp_data
                 }
                 self.wfile.write(json.dumps(response_payload).encode('utf-8'))
