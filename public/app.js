@@ -449,15 +449,23 @@ async function handleDiscoveryHit(handle, platform, checkResult) {
         })
       });
 
-      const claimData = await claimRes.json();
-      if (claimData.success) {
+      let claimData = null;
+      try {
+        claimData = await claimRes.json();
+      } catch(parseErr) {
+        const rawText = await claimRes.text().catch(() => '');
+        claimData = { success: false, message: 'Server response: ' + (rawText.slice(0, 80) || 'Connection drop') };
+      }
+
+      if (claimData && claimData.success) {
         showToast(`🏆 CLAIMED & SECURED @${handle} ON TARGET ACCOUNT!`);
-        logMessage('HIT', `🏆 USERNAME CLAIMED & SECURED: @${handle} (${claimData.latencyMs}ms)`);
-        window.logSniperConsole(`[SUCCESS] 🏆 SECURED @${handle} ON TARGET ACCOUNT! Latency: ${claimData.latencyMs}ms. ${claimData.message}`);
+        logMessage('HIT', `🏆 USERNAME CLAIMED & SECURED: @${handle} (${claimData.latencyMs || 0}ms)`);
+        window.logSniperConsole(`[SUCCESS] 🏆 SECURED @${handle} ON TARGET ACCOUNT! Latency: ${claimData.latencyMs || 0}ms. ${claimData.message}`);
       } else {
-        showToast(`⚠️ Auto-claim attempt for @${handle}: ${claimData.message}`);
-        logMessage('WARN', `Auto-claim attempt failed on @${handle}: ${claimData.message}`);
-        window.logSniperConsole(`[ERROR] ❌ Claim attempt for @${handle} rejected: ${claimData.message}`);
+        const msg = (claimData && claimData.message) || 'Platform rejected swap request';
+        showToast(`⚠️ Auto-claim: ${msg}`);
+        logMessage('WARN', `Auto-claim attempt on @${handle}: ${msg}`);
+        window.logSniperConsole(`[ERROR] ❌ Claim attempt for @${handle}: ${msg}`);
       }
     } catch(err) {
       window.logSniperConsole(`[ERROR] ❌ Auto-claim network error on @${handle}: ${err.message}`);
@@ -1091,7 +1099,7 @@ window.testProxyPoolLatency = async function() {
         const res = await fetch('/api/proxy-check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: 'https://api.ipify.org?format=json', proxy: proxy, timeout: 3.0 })
+          body: JSON.stringify({ url: 'http://ip-api.com/json', proxy: proxy, timeout: 4.5 })
         });
         const data = await res.json();
         if (data.status === 200) {
@@ -1366,15 +1374,22 @@ window.testManualSniperSwap = async function() {
       })
     });
 
-    const data = await res.json();
-    if (data.success) {
+    let data = null;
+    try {
+      data = await res.json();
+    } catch(err) {
+      data = { success: false, message: 'Server returned non-JSON response' };
+    }
+
+    if (data && data.success) {
       showToast(`🏆 Successfully swapped username to @${testHandle}!`);
-      logMessage('HIT', `Manual swap successful: @${testHandle} (${data.latencyMs}ms)`);
-      window.logSniperConsole(`[SWAP_SUCCESS] 🏆 USERNAME SWAPPED TO @${testHandle}! Latency: ${data.latencyMs}ms. Response: ${data.message}`);
+      logMessage('HIT', `Manual swap successful: @${testHandle} (${data.latencyMs || 0}ms)`);
+      window.logSniperConsole(`[SWAP_SUCCESS] 🏆 USERNAME SWAPPED TO @${testHandle}! Latency: ${data.latencyMs || 0}ms. Response: ${data.message}`);
     } else {
-      showToast(`⚠️ Swap failed: ${data.message}`);
-      logMessage('WARN', `Manual swap failed for @${testHandle}: ${data.message}`);
-      window.logSniperConsole(`[SWAP_FAILED] ❌ Swap rejected: ${data.message}`);
+      const msg = (data && data.message) || 'Swap request failed';
+      showToast(`⚠️ Swap failed: ${msg}`);
+      logMessage('WARN', `Manual swap failed for @${testHandle}: ${msg}`);
+      window.logSniperConsole(`[SWAP_FAILED] ❌ Swap rejected: ${msg}`);
     }
   } catch(e) {
     showToast(`⚠️ Swap error: ${e.message}`);

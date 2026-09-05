@@ -655,25 +655,33 @@ def claim_username_on_platform(platform, handle, token, password=None, cookie=No
             if not session_val:
                 return {'success': False, 'message': 'TikTok sessionid cookie required'}
             
-            url = "https://www.tiktok.com/api/user/info/edit/"
-            post_data = urllib.parse.urlencode({'login_name': handle}).encode('utf-8')
+            url = "https://www.tiktok.com/api/user/info/edit/?aid=1988&app_language=en&app_name=tiktok_web"
+            post_data = urllib.parse.urlencode({'unique_id': handle, 'login_name': handle}).encode('utf-8')
             req = urllib.request.Request(url, data=post_data, headers={
                 'Cookie': f'sessionid={session_val};',
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://www.tiktok.com/',
+                'Origin': 'https://www.tiktok.com'
             }, method='POST')
 
-            with opener.open(req, timeout=6) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
+            with opener.open(req, timeout=5) as resp:
+                raw_body = resp.read().decode('utf-8', errors='replace')
                 latency_ms = int((time.time() - start_time) * 1000)
+                try:
+                    data = json.loads(raw_body)
+                except Exception:
+                    data = {'raw': raw_body}
+
                 status_code = data.get('status_code', 0)
-                if status_code == 0 or data.get('message') == 'success':
+                msg = data.get('status_msg') or data.get('message') or 'Updated'
+                if status_code == 0 and ('success' in str(msg).lower() or 'ok' in str(msg).lower()):
                     return {
                         'success': True,
                         'platform': 'tiktok',
                         'handle': handle,
                         'latencyMs': latency_ms,
-                        'message': f"Successfully updated TikTok username to @{handle}!",
+                        'message': f"Successfully claimed TikTok username @{handle}!",
                         'data': data
                     }
                 else:
@@ -682,7 +690,7 @@ def claim_username_on_platform(platform, handle, token, password=None, cookie=No
                         'platform': 'tiktok',
                         'handle': handle,
                         'latencyMs': latency_ms,
-                        'message': data.get('message', f'TikTok status {status_code}'),
+                        'message': f"TikTok API response: {msg}",
                         'data': data
                     }
 
