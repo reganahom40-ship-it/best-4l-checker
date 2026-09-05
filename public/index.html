@@ -1385,6 +1385,138 @@
       </div>
 
             <!-- ==========================================
+           VIEW: AUTO-CLAIM SNIPER & ACCOUNT SWAPPER
+           ========================================== -->
+      <div id="view-autoclaim" class="view-panel-container">
+        <!-- Top Title Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div style="font-weight: 800; font-size: 1.15rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+              <span>🎯</span> Auto-Claim Sniper & Account Swapper
+              <span id="sniperMainStatusBadge" style="font-size: 0.68rem; background: rgba(239,68,68,0.2); color: var(--rose-danger); border: 1px solid rgba(239,68,68,0.3); padding: 3px 10px; border-radius: var(--radius-pill); font-weight: 800;">DISARMED</span>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 4px;">
+              Plug in your account login session token or authorization header. The millisecond the scanner verifies an available handle, it executes an instant sub-millisecond API swap to change your username and automatically halts the scanner.
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-action-copy" onclick="window.verifySniperAccount()">🔍 Verify Target Account</button>
+            <button class="btn-export-blue" onclick="window.saveSniperConfig()">💾 Save Sniper Settings</button>
+          </div>
+        </div>
+
+        <!-- Dual Grid: Target Config & Live Execution Console -->
+        <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 16px; margin-top: 16px;">
+          
+          <!-- Card 1: Target Account Credentials & Switches -->
+          <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🔑</span>
+                <div>
+                  <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Target Account Authentication</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">The account that will receive and claim the rare handle</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Platform Selector -->
+            <div>
+              <label style="font-size: 0.68rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Target Platform:</label>
+              <select id="sniperPlatformSelect" class="infra-textarea" style="height: 38px; min-height: 38px; padding: 6px 12px; margin-top: 4px; font-weight: 700;" onchange="window.updateSniperPlaceholder()">
+                <option value="discord">💬 Discord (User Authorization Token)</option>
+                <option value="tiktok">📱 TikTok (sessionid Cookie)</option>
+                <option value="roblox">🧱 Roblox (.ROBLOSECURITY Cookie)</option>
+                <option value="github">🐙 GitHub (Personal Access Token / ghp_...)</option>
+                <option value="twitch">🟣 Twitch (OAuth User Token)</option>
+                <option value="generic">🌐 Custom API / Generic Webhook</option>
+              </select>
+            </div>
+
+            <!-- Token / Session Input -->
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label id="sniperAuthInputLabel" style="font-size: 0.68rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Session Token / Auth Header:</label>
+                <span style="font-size: 0.62rem; color: var(--purple-accent); font-weight: 700;">Stored safely in local browser storage</span>
+              </div>
+              <textarea id="sniperAuthToken" class="infra-textarea" style="height: 75px; min-height: 60px; font-size: 0.72rem; margin-top: 4px;" placeholder="Paste Discord User Token or sessionid cookie..."></textarea>
+            </div>
+
+            <!-- Password Input (if needed by platform) -->
+            <div>
+              <label style="font-size: 0.68rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Account Password (Required for Discord/Roblox rename confirmation):</label>
+              <input type="password" id="sniperAccountPassword" class="infra-textarea" style="height: 36px; min-height: 36px; padding: 6px 12px; margin-top: 4px;" placeholder="Account password (for Discord/Roblox username change auth)...">
+            </div>
+
+            <!-- Sniper Automation Toggles -->
+            <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+              <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                <div>
+                  <div style="font-weight: 800; font-size: 0.78rem; color: #fff;">⚡ Auto-Claim Sniper on Hit</div>
+                  <div style="font-size: 0.64rem; color: var(--text-dim);">Fires sub-millisecond username swap API request the moment an available handle is verified.</div>
+                </div>
+                <input type="checkbox" id="toggleMainAutoClaim" onchange="window.handleSniperToggleChange(this.checked, 'claim')" style="accent-color: var(--purple-accent); transform: scale(1.3); margin-right: 4px;">
+              </label>
+
+              <div style="border-top: 1px solid var(--border-main);"></div>
+
+              <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                <div>
+                  <div style="font-weight: 800; font-size: 0.78rem; color: #fff;">🛑 Auto-Stop Scanner on Hit</div>
+                  <div style="font-size: 0.64rem; color: var(--text-dim);">Immediately pauses/stops the infinite scanner loop when a hit is discovered to prevent rate-limits and preserve the claim.</div>
+                </div>
+                <input type="checkbox" id="toggleMainAutoStop" checked onchange="window.handleSniperToggleChange(this.checked, 'stop')" style="accent-color: var(--rose-danger); transform: scale(1.3); margin-right: 4px;">
+              </label>
+            </div>
+
+            <!-- Manual Test Swap Section -->
+            <div style="display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--border-main); padding-top: 10px;">
+              <input type="text" id="sniperManualTestHandle" class="infra-textarea" style="height: 36px; min-height: 36px; padding: 6px 12px; font-size: 0.72rem; flex: 1;" placeholder="Test handle to swap (e.g. onyx_test)...">
+              <button class="btn-action-copy" onclick="window.testManualSniperSwap()" style="padding: 8px 14px; font-size: 0.72rem; white-space: nowrap;">⚡ 1-Click Manual Swap</button>
+            </div>
+          </div>
+
+          <!-- Card 2: Connected Target Account Info & Live Execution Stream -->
+          <div class="workspace-panel" style="padding: 20px; gap: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">📡</span>
+                <div>
+                  <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">Target Account Status & Sniper Telemetry</div>
+                  <div style="font-size: 0.62rem; color: var(--text-dim);">Live handshake verification and payload execution trace</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Verified Account Card -->
+            <div id="sniperAccountStatusCard" style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 14px; display: flex; align-items: center; gap: 12px;">
+              <div id="sniperAccountAvatar" style="width: 42px; height: 42px; border-radius: 50%; background: rgba(139, 92, 246, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1px solid rgba(139, 92, 246, 0.4);">🎯</div>
+              <div style="flex: 1;">
+                <div id="sniperAccountName" style="font-weight: 800; color: #fff; font-size: 0.85rem;">No Target Account Verified</div>
+                <div id="sniperAccountId" style="font-size: 0.66rem; color: var(--text-dim); margin-top: 2px;">Enter token/cookie and click "Verify Target Account"</div>
+              </div>
+              <div id="sniperAccountBadge" style="font-size: 0.65rem; color: var(--text-dim); background: rgba(255,255,255,0.05); padding: 3px 8px; border-radius: var(--radius-pill); font-weight: 700;">STANDBY</div>
+            </div>
+
+            <!-- Live Sniper Execution Log -->
+            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.68rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Sniper Execution Logs:</span>
+                <button class="btn-action-copy" onclick="document.getElementById('sniperConsoleLog').innerHTML='<div style=\'color: var(--text-dim);\'>[Sniper Log Cleared]</div>'" style="padding: 2px 8px; font-size: 0.60rem;">Clear</button>
+              </div>
+              <div id="sniperConsoleLog" class="infra-textarea" style="height: 190px; min-height: 160px; overflow-y: auto; color: var(--text-dim); font-size: 0.68rem; padding: 10px; font-family: var(--font-mono); line-height: 1.5;">
+                <div style="color: var(--text-dim);">[SYSTEM] Sniper Engine Initialized in Standby Mode.</div>
+                <div style="color: var(--text-dim);">[SYSTEM] Configure target login credentials and arm the sniper.</div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ==========================================
            VIEW: QUICK TUTORIALS & GUIDES (17 PLATFORMS)
            ========================================== -->
       <div id="view-guides" class="view-panel-container">
@@ -3088,6 +3220,6 @@
     });
   </script>
 
-  <script src="app.js?v=2.7.0"></script>
+  <script src="app.js?v=2.8.0"></script>
 </body>
 </html>
