@@ -3288,28 +3288,20 @@
       <div id="tokenHelpContent_tiktok" class="token-help-content-pane" style="display: none;">
         <div style="font-weight: 800; color: #fff; font-size: 0.88rem; margin-bottom: 6px;">📱 TikTok sessionid Cookie:</div>
         <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px;">
-          The <code style="color:#67E8F9;">sessionid</code> cookie proves you are logged into your TikTok account and allows the auto-claim API to update your username.
+          The <code style="color:#67E8F9;">sessionid</code> cookie proves you are logged into your target TikTok account so the sniper can swap your username.
         </div>
 
-        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px; margin-bottom: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="font-size: 0.68rem; font-weight: 800; color: #c084fc;">METHOD 1: Instant Console Snippet</span>
-            <button class="btn-action-copy" onclick="window.copySnippet('tiktok_snippet')" style="padding: 3px 8px; font-size: 0.62rem;">📋 Copy Snippet</button>
-          </div>
-          <div style="font-size: 0.66rem; color: var(--text-dim); margin-bottom: 6px;">
-            1. Log in to <strong style="color:#fff;">tiktok.com</strong> in your browser.<br>
-            2. Press <strong style="color:#fff;">F12</strong> -> <strong style="color:#fff;">Console</strong> tab.<br>
-            3. Paste this command and hit <strong style="color:#fff;">Enter</strong>:
-          </div>
-          <textarea id="snippet_tiktok_snippet" readonly class="infra-textarea" style="height: 45px; min-height: 40px; font-size: 0.68rem; padding: 6px; color: var(--emerald-success);">document.cookie.split('; ').find(row => row.startsWith('sessionid='))?.split('=')[1] || localStorage.getItem('sessionid')</textarea>
-        </div>
-
-        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px;">
-          <div style="font-size: 0.68rem; font-weight: 800; color: #fff; margin-bottom: 4px;">METHOD 2: Application / Cookies Tab</div>
-          <div style="font-size: 0.66rem; color: var(--text-dim); line-height: 1.5;">
-            1. On tiktok.com, press <strong style="color:#fff;">F12</strong> -> go to <strong style="color:#fff;">Application</strong> tab (or <strong style="color:#fff;">Storage</strong> in Firefox).<br>
-            2. Expand <strong style="color:#fff;">Cookies</strong> -> click <strong style="color:#fff;">https://www.tiktok.com</strong>.<br>
-            3. Find the cookie named <code style="color:#67E8F9;">sessionid</code> and copy its Value (long 32+ character hex string).
+        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 14px; margin-bottom: 12px;">
+          <div style="font-size: 0.72rem; font-weight: 800; color: #c084fc; margin-bottom: 6px;">📋 How to Copy Your TikTok sessionid Cookie (Application Tab):</div>
+          <div style="font-size: 0.68rem; color: var(--text-dim); line-height: 1.6;">
+            <strong style="color: var(--rose-danger);">Note:</strong> TikTok marks <code style="color:#67E8F9;">sessionid</code> with the <code style="color:#fff;">HttpOnly</code> security flag, meaning browser console scripts cannot read it. You copy it directly from DevTools:<br><br>
+            1. Open <strong style="color:#fff;">tiktok.com</strong> in Chrome/Edge and log into the <strong style="color:var(--emerald-success);">exact TikTok account</strong> you want to sniper onto.<br>
+            2. Press <strong style="color:#fff;">F12</strong> (or right-click anywhere -> Inspect).<br>
+            3. Click the <strong style="color:#fff;">Application</strong> tab at top (click the <code>&gt;&gt;</code> double arrow if hidden).<br>
+            4. In the left sidebar, expand <strong style="color:#fff;">Cookies</strong> -> click <strong style="color:#fff;">https://www.tiktok.com</strong>.<br>
+            5. In the cookie table, click on the row named <strong style="color:#67E8F9;">sessionid</strong>.<br>
+            6. At the bottom, copy the entire 32-character <strong style="color:#fff;">Cookie Value</strong> (e.g. <code>8e8b0359ec2ff5961e5f...</code>).<br>
+            7. Paste it into the Sniper Token box and click <strong style="color:#c084fc;">Verify Target Account</strong>!
           </div>
         </div>
       </div>

@@ -541,13 +541,19 @@ def verify_target_account(platform, token, cookie=None, proxy=None):
             try:
                 with opener.open(req, timeout=6) as resp:
                     data = json.loads(resp.read().decode('utf-8'))
-                    uname = data.get('data', {}).get('username') or data.get('data', {}).get('screen_name') or 'TikTok User'
+                    user_data = data.get('data', {})
+                    uname = user_data.get('username') or user_data.get('screen_name') or 'TikTok User'
+                    sname = user_data.get('screen_name', '')
+                    user_id = user_data.get('user_id_str') or str(user_data.get('user_id', 'Active'))
+                    avatar = user_data.get('avatar_url', '')
                     return {
                         'valid': True,
                         'platform': 'tiktok',
                         'username': uname,
-                        'id': data.get('data', {}).get('user_id', 'Session-Active'),
-                        'message': f"TikTok session active (Target user: @{uname})"
+                        'screenName': sname,
+                        'id': user_id,
+                        'avatar': avatar,
+                        'message': f"Connected to TikTok @{uname} ({sname}) — ID: {user_id}"
                     }
             except Exception:
                 return {
