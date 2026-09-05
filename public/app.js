@@ -445,16 +445,20 @@ async function handleDiscoveryHit(handle, platform, checkResult) {
           token: window.sniperToken,
           password: window.sniperPassword,
           cookie: window.sniperToken,
-          proxy: rotatingProxy
+          proxy: (window.sniperPlatform === 'tiktok' ? null : rotatingProxy)
         })
       });
 
       let claimData = null;
       try {
-        claimData = await claimRes.json();
-      } catch(parseErr) {
-        const rawText = await claimRes.text().catch(() => '');
-        claimData = { success: false, message: 'Server response: ' + (rawText.slice(0, 80) || 'Connection drop') };
+        const rawText = await claimRes.text();
+        try {
+          claimData = JSON.parse(rawText);
+        } catch(jsonErr) {
+          claimData = { success: false, message: rawText ? rawText.slice(0, 120) : `HTTP ${claimRes.status}` };
+        }
+      } catch(streamErr) {
+        claimData = { success: false, message: `Network/Stream error: ${streamErr.message}` };
       }
 
       if (claimData && claimData.success) {
@@ -1410,15 +1414,20 @@ window.testManualSniperSwap = async function() {
         token: window.sniperToken,
         password: window.sniperPassword,
         cookie: window.sniperToken,
-        proxy: rotatingProxy
+        proxy: (window.sniperPlatform === 'tiktok' ? null : rotatingProxy)
       })
     });
 
     let data = null;
     try {
-      data = await res.json();
+      const rawText = await res.text();
+      try {
+        data = JSON.parse(rawText);
+      } catch(jsonErr) {
+        data = { success: false, message: rawText ? rawText.slice(0, 120) : `HTTP ${res.status}` };
+      }
     } catch(err) {
-      data = { success: false, message: 'Server returned non-JSON response' };
+      data = { success: false, message: 'Failed to read server response' };
     }
 
     if (data && data.success) {
