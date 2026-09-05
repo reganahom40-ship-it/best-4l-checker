@@ -207,13 +207,17 @@ async function executeHandleCheck(handle) {
   let isAvailable = false;
   let checkResult = null;
 
+  // Pick rotating proxy if proxy pool is loaded
+  const rotatingProxy = window.proxyPoolList.length > 0 ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
+
   try {
     const res = await fetch('/api/check-handle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         platform: platform,
-        handle: handle.toLowerCase()
+        handle: handle.toLowerCase(),
+        proxy: rotatingProxy
       })
     });
 
@@ -666,7 +670,135 @@ window.navigateView = function(viewId, btnEl) {
   if (btnEl) btnEl.classList.add('active');
 };
 
+
+// ----------------------------------------------------------
+// PROXY & TOKEN POOL MANAGEMENT (REAL LIVE DYNAMIC COUNTS)
+// ----------------------------------------------------------
+window.proxyPoolList = [];
+window.tokenPoolList = [];
+
+window.initProxyAndTokenPool = function() {
+  const savedProxies = localStorage.getItem('onyx_proxy_pool') || '';
+  const savedTokens = localStorage.getItem('onyx_token_pool') || '';
+
+  const proxyArea = document.getElementById('proxyInputArea');
+  const tokenArea = document.getElementById('tokenPoolInputArea');
+
+  if (proxyArea && savedProxies) proxyArea.value = savedProxies;
+  if (tokenArea && savedTokens) tokenArea.value = savedTokens;
+
+  window.syncProxyAndTokenCounts();
+};
+
+window.syncProxyAndTokenCounts = function() {
+  const proxyArea = document.getElementById('proxyInputArea');
+  const tokenArea = document.getElementById('tokenPoolInputArea');
+
+  const proxyText = proxyArea ? proxyArea.value : (localStorage.getItem('onyx_proxy_pool') || '');
+  const tokenText = tokenArea ? tokenArea.value : (localStorage.getItem('onyx_token_pool') || '');
+
+  window.proxyPoolList = proxyText.split('\n').map(l => l.trim()).filter(Boolean);
+  window.tokenPoolList = tokenText.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const proxyCount = window.proxyPoolList.length;
+  const tokenCount = window.tokenPoolList.length;
+
+  // Update Top Header Badges
+  const topProxyBadge = document.getElementById('topProxyCountBadge');
+  if (topProxyBadge) topProxyBadge.textContent = `${proxyCount} ${proxyCount === 1 ? 'Proxy' : 'Proxies'}`;
+
+  const topTokenBadge = document.getElementById('topTokenCountBadge');
+  if (topTokenBadge) topTokenBadge.textContent = `${tokenCount} ${tokenCount === 1 ? 'Token' : 'Tokens'}`;
+
+  // Update Sidebar Unified Badge
+  const sidebarTokenBadge = document.getElementById('sidebarTokenBadge');
+  if (sidebarTokenBadge) sidebarTokenBadge.textContent = `${proxyCount} Proxies • ${tokenCount} Tokens`;
+
+  // Update Card Badges
+  const proxyPoolBadge = document.getElementById('proxyPoolStatusBadge');
+  if (proxyPoolBadge) proxyPoolBadge.textContent = `${proxyCount} Loaded`;
+
+  const tokenPoolBadge = document.getElementById('tokenPoolStatusBadge');
+  if (tokenPoolBadge) tokenPoolBadge.textContent = `${tokenCount} Loaded`;
+};
+
+window.saveProxyPool = function() {
+  const proxyArea = document.getElementById('proxyInputArea');
+  if (!proxyArea) return;
+  const text = proxyArea.value;
+  localStorage.setItem('onyx_proxy_pool', text);
+  window.syncProxyAndTokenCounts();
+  showToast(`✓ Saved ${window.proxyPoolList.length} proxies to pool!`);
+  logMessage('SYS', `Proxy pool updated: ${window.proxyPoolList.length} active proxies.`);
+};
+
+window.clearProxyPool = function() {
+  const proxyArea = document.getElementById('proxyInputArea');
+  if (proxyArea) proxyArea.value = '';
+  localStorage.removeItem('onyx_proxy_pool');
+  window.syncProxyAndTokenCounts();
+  showToast('✓ Proxy pool cleared');
+  logMessage('SYS', 'Proxy pool cleared (0 proxies).');
+};
+
+window.saveTokenPool = function() {
+  const tokenArea = document.getElementById('tokenPoolInputArea');
+  if (!tokenArea) return;
+  const text = tokenArea.value;
+  localStorage.setItem('onyx_token_pool', text);
+  window.syncProxyAndTokenCounts();
+  showToast(`✓ Saved ${window.tokenPoolList.length} tokens to pool!`);
+  logMessage('SYS', `Token pool updated: ${window.tokenPoolList.length} active tokens.`);
+};
+
+window.clearTokenPool = function() {
+  const tokenArea = document.getElementById('tokenPoolInputArea');
+  if (tokenArea) tokenArea.value = '';
+  localStorage.removeItem('onyx_token_pool');
+  window.syncProxyAndTokenCounts();
+  showToast('✓ Token pool cleared');
+  logMessage('SYS', 'Token pool cleared (0 tokens).');
+};
+
+window.testProxyPoolLatency = async function() {
+  if (window.proxyPoolList.length === 0) {
+    showToast('⚠️ No proxies loaded to test');
+    return;
+  }
+  showToast(`⚡ Testing latency for ${window.proxyPoolList.length} proxies...`);
+  logMessage('SYS', `Pinging ${window.proxyPoolList.length} proxies...`);
+
+  let liveCount = 0;
+  let deadCount = 0;
+  const deadLog = document.getElementById('deadProxyLog');
+  if (deadLog) deadLog.innerHTML = '';
+
+  for (const proxy of window.proxyPoolList) {
+    try {
+      const res = await fetch('/api/proxy-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: 'https://api.ipify.org?format=json', proxy: proxy })
+      });
+      const data = await res.json();
+      if (data.status === 200) {
+        liveCount++;
+      } else {
+        deadCount++;
+        if (deadLog) deadLog.innerHTML += `<div>❌ Dead/Timeout: ${proxy}</div>`;
+      }
+    } catch(e) {
+      deadCount++;
+      if (deadLog) deadLog.innerHTML += `<div>❌ Dead/Timeout: ${proxy}</div>`;
+    }
+  }
+
+  showToast(`✓ Tested: ${liveCount} Online, ${deadCount} Offline`);
+  logMessage('SYS', `Proxy Test Complete: ${liveCount} Online / ${deadCount} Offline.`);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
+  window.initProxyAndTokenPool();
   logMessage('SYS', 'ONYX APEX 17-Platform Engine initialized in Infinite Streaming mode.');
   updateDashboardMetrics();
 });
