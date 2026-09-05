@@ -1316,16 +1316,26 @@ window.verifySniperAccount = async function() {
     const avatarEl = document.getElementById('sniperAccountAvatar');
 
     if (data.valid) {
-      if (nameEl) nameEl.textContent = `Connected: @${data.username || 'Target Account'}`;
-      if (idEl) idEl.textContent = data.message || `Account ID: ${data.id || 'Verified'}`;
+      const uHandle = data.username ? `@${data.username}` : '';
+      const sName = data.screenName ? `(${data.screenName})` : '';
+      const fullLabel = uHandle ? `${uHandle} ${sName}` : (data.screenName || 'Verified Target Account');
+      
+      if (nameEl) nameEl.textContent = `Connected: ${fullLabel}`;
+      if (idEl) idEl.textContent = `Account ID: ${data.id || 'Active'} • Platform: ${window.sniperPlatform.toUpperCase()}`;
       if (badgeEl) {
         badgeEl.textContent = 'ONLINE 🟢';
         badgeEl.style = 'font-size: 0.65rem; color: var(--emerald-success); background: rgba(16,185,129,0.2); padding: 3px 8px; border-radius: var(--radius-pill); font-weight: 800; border: 1px solid rgba(16,185,129,0.3);';
       }
-      if (avatarEl) avatarEl.textContent = '👤';
-      showToast(`✓ Connected as @${data.username || 'User'}!`);
-      logMessage('SYS', `Target account verified: @${data.username} on ${window.sniperPlatform.toUpperCase()}`);
-      window.logSniperConsole(`[SUCCESS] 🟢 Verified target account: @${data.username} (ID: ${data.id}). Ready for auto-claim.`);
+      if (avatarEl) {
+        if (data.avatar) {
+          avatarEl.innerHTML = `<img src="${data.avatar}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        } else {
+          avatarEl.textContent = '👤';
+        }
+      }
+      showToast(`✓ Connected as ${fullLabel}!`);
+      logMessage('SYS', `Target account verified: ${fullLabel} on ${window.sniperPlatform.toUpperCase()}`);
+      window.logSniperConsole(`[SUCCESS] 🟢 Verified target account: ${fullLabel} (ID: ${data.id}). Ready for auto-claim.`);
     } else {
       if (nameEl) nameEl.textContent = 'Authentication Failed';
       if (idEl) idEl.textContent = data.message || 'Invalid token or session expired';
