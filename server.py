@@ -680,9 +680,53 @@ def claim_username_on_platform(platform, handle, token, password=None, cookie=No
             if not session_val:
                 return {'success': False, 'message': 'TikTok sessionid cookie required'}
             
-            url = "https://www.tiktok.com/api/user/info/edit/?aid=1988&app_language=en&app_name=tiktok_web"
+            # Stage A: Try Passport Web Login Name update
+            url_passport = "https://www.tiktok.com/passport/web/login_name/update/"
+            passport_payload = urllib.parse.urlencode({
+                'login_name': handle,
+                'aid': '1459',
+                'account_sdk_version': '465',
+                'service': 'https://www.tiktok.com',
+                'language': 'en',
+                'platform': 'web'
+            }).encode('utf-8')
+
+            req_passport = urllib.request.Request(url_passport, data=passport_payload, headers={
+                'Cookie': f'sessionid={session_val};',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Referer': 'https://www.tiktok.com/',
+                'Origin': 'https://www.tiktok.com'
+            }, method='POST')
+
+            try:
+                with opener.open(req_passport, timeout=6) as resp:
+                    raw_body = resp.read().decode('utf-8', errors='replace')
+                    latency_ms = int((time.time() - start_time) * 1000)
+                    try:
+                        data = json.loads(raw_body)
+                    except Exception:
+                        data = {'raw': raw_body}
+
+                    err_code = data.get('data', {}).get('error_code')
+                    msg = data.get('message') or data.get('data', {}).get('description') or 'OK'
+
+                    if msg == 'success' or err_code == 0:
+                        return {
+                            'success': True,
+                            'platform': 'tiktok',
+                            'handle': handle,
+                            'latencyMs': latency_ms,
+                            'message': f"Successfully claimed TikTok username @{handle}!",
+                            'data': data
+                        }
+            except Exception:
+                pass
+
+            # Stage B: Fallback to Profile Edit Web Endpoint
+            url_edit = "https://www.tiktok.com/api/user/info/edit/?aid=1988&app_language=en&app_name=tiktok_web"
             post_data = urllib.parse.urlencode({'unique_id': handle, 'login_name': handle}).encode('utf-8')
-            req = urllib.request.Request(url, data=post_data, headers={
+            req_edit = urllib.request.Request(url_edit, data=post_data, headers={
                 'Cookie': f'sessionid={session_val};',
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -690,34 +734,47 @@ def claim_username_on_platform(platform, handle, token, password=None, cookie=No
                 'Origin': 'https://www.tiktok.com'
             }, method='POST')
 
-            with opener.open(req, timeout=5) as resp:
-                raw_body = resp.read().decode('utf-8', errors='replace')
-                latency_ms = int((time.time() - start_time) * 1000)
-                try:
-                    data = json.loads(raw_body)
-                except Exception:
-                    data = {'raw': raw_body}
+            try:
+                with opener.open(req_edit, timeout=5) as resp:
+                    raw_body = resp.read().decode('utf-8', errors='replace')
+                    latency_ms = int((time.time() - start_time) * 1000)
+                    try:
+                        data = json.loads(raw_body)
+                    except Exception:
+                        data = {'raw': raw_body}
 
-                status_code = data.get('status_code', 0)
-                msg = data.get('status_msg') or data.get('message') or 'Updated'
-                if status_code == 0 and ('success' in str(msg).lower() or 'ok' in str(msg).lower()):
-                    return {
-                        'success': True,
-                        'platform': 'tiktok',
-                        'handle': handle,
-                        'latencyMs': latency_ms,
-                        'message': f"Successfully claimed TikTok username @{handle}!",
-                        'data': data
-                    }
-                else:
-                    return {
-                        'success': False,
-                        'platform': 'tiktok',
-                        'handle': handle,
-                        'latencyMs': latency_ms,
-                        'message': f"TikTok API response: {msg}",
-                        'data': data
-                    }
+                    status_code = data.get('status_code', 0)
+                    msg = data.get('status_msg') or data.get('message') or 'Updated'
+                    if status_code == 0 and ('success' in str(msg).lower() or 'ok' in str(msg).lower()):
+                        return {
+                            'success': True,
+                            'platform': 'tiktok',
+                            'handle': handle,
+                            'latencyMs': latency_ms,
+                            'message': f"Successfully claimed TikTok username @{handle}!",
+                            'data': data
+                        }
+                    else:
+                        clean_err = msg
+                        if "url doesn't match" in str(msg):
+                            clean_err = "TikTok requires direct browser session or recent security verification. (30-day username cooldown active or captcha challenge required)."
+                        return {
+                            'success': False,
+                            'platform': 'tiktok',
+                            'handle': handle,
+                            'latencyMs': latency_ms,
+                            'message': clean_err,
+                            'data': data
+                        }
+            except Exception as e:
+                latency_ms = int((time.time() - start_time) * 1000)
+                return {
+                    'success': False,
+                    'platform': 'tiktok',
+                    'handle': handle,
+                    'latencyMs': latency_ms,
+                    'message': f"TikTok API Error: {str(e)}"
+                }
 
         # 3. ROBLOX AUTO-CLAIM
         elif platform == 'roblox':
