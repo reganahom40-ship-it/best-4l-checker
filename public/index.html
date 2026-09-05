@@ -1436,8 +1436,11 @@
             <!-- Token / Session Input -->
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <label id="sniperAuthInputLabel" style="font-size: 0.68rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Session Token / Auth Header:</label>
-                <span style="font-size: 0.62rem; color: var(--purple-accent); font-weight: 700;">Stored safely in local browser storage</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <label id="sniperAuthInputLabel" style="font-size: 0.68rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Session Token / Auth Header:</label>
+                  <button type="button" class="btn-action-copy" onclick="window.openTokenHelpModal()" style="padding: 2px 7px; font-size: 0.65rem; border-color: rgba(139, 92, 246, 0.4); color: #c084fc; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800;" title="How to get your token/cookie">❓</button>
+                </div>
+                <button type="button" class="btn-action-copy" onclick="window.openTokenHelpModal()" style="padding: 2px 8px; font-size: 0.62rem; color: #c084fc; border-color: rgba(139, 92, 246, 0.3);">📖 How to get Token / Cookie</button>
               </div>
               <textarea id="sniperAuthToken" class="infra-textarea" style="height: 75px; min-height: 60px; font-size: 0.72rem; margin-top: 4px;" placeholder="Paste Discord User Token or sessionid cookie..."></textarea>
             </div>
@@ -3220,6 +3223,151 @@
     });
   </script>
 
-  <script src="app.js?v=2.8.0"></script>
+  <script src="app.js?v=2.9.0"></script>
+
+  <!-- ==========================================
+       MODAL: HOW TO GET TOKEN & COOKIE HELPER
+       ========================================== -->
+  <div id="tokenHelpModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--bg-surface); border: 1px solid rgba(139, 92, 246, 0.4); border-radius: var(--radius-card); max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); display: flex; flex-direction: column; gap: 16px;">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-main); padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.4rem;">🔑</span>
+          <div>
+            <div style="font-weight: 800; color: #fff; font-size: 1.05rem;">How to Get Your Account Token / Cookie</div>
+            <div style="font-size: 0.68rem; color: var(--text-dim);">Step-by-step instructions & 1-click DevTools console snippets</div>
+          </div>
+        </div>
+        <button class="btn-dead-action" onclick="window.closeTokenHelpModal()" style="padding: 4px 10px; font-size: 0.85rem; border-radius: 50%;">✕</button>
+      </div>
+
+      <!-- Platform Tabs Inside Modal -->
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--border-main); padding-bottom: 10px;">
+        <button class="preset-chip-btn token-tab-btn active" onclick="window.switchTokenHelpTab('discord', this)" style="padding: 4px 12px; font-size: 0.72rem;">💬 Discord</button>
+        <button class="preset-chip-btn token-tab-btn" onclick="window.switchTokenHelpTab('tiktok', this)" style="padding: 4px 12px; font-size: 0.72rem;">📱 TikTok</button>
+        <button class="preset-chip-btn token-tab-btn" onclick="window.switchTokenHelpTab('roblox', this)" style="padding: 4px 12px; font-size: 0.72rem;">🧱 Roblox</button>
+        <button class="preset-chip-btn token-tab-btn" onclick="window.switchTokenHelpTab('github', this)" style="padding: 4px 12px; font-size: 0.72rem;">🐙 GitHub</button>
+        <button class="preset-chip-btn token-tab-btn" onclick="window.switchTokenHelpTab('twitch', this)" style="padding: 4px 12px; font-size: 0.72rem;">🟣 Twitch</button>
+      </div>
+
+      <!-- Tab 1: Discord Content -->
+      <div id="tokenHelpContent_discord" class="token-help-content-pane">
+        <div style="font-weight: 800; color: #fff; font-size: 0.88rem; margin-bottom: 6px;">💬 Discord User Authorization Token:</div>
+        <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px;">
+          Your user token authenticates API requests directly to your Discord account so the sniper can execute the username claim immediately.
+        </div>
+
+        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 0.68rem; font-weight: 800; color: #c084fc;">METHOD 1: Instant Browser Console Snippet (Fastest)</span>
+            <button class="btn-action-copy" onclick="window.copySnippet('discord_snippet')" style="padding: 3px 8px; font-size: 0.62rem;">📋 Copy Snippet</button>
+          </div>
+          <div style="font-size: 0.66rem; color: var(--text-dim); margin-bottom: 6px;">
+            1. Open <strong style="color:#fff;">discord.com/app</strong> in Chrome/Edge/Firefox and log in.<br>
+            2. Press <strong style="color:#fff;">F12</strong> (or <strong style="color:#fff;">Ctrl+Shift+I</strong>) and click the <strong style="color:#fff;">Console</strong> tab.<br>
+            3. Paste this command and press <strong style="color:#fff;">Enter</strong>:
+          </div>
+          <textarea id="snippet_discord_snippet" readonly class="infra-textarea" style="height: 50px; min-height: 45px; font-size: 0.68rem; padding: 6px; color: var(--emerald-success);">(webpackChunkdiscord_app.push([[''],{},e=>{m=[];for(let c in e.c)m.push(e.c[c])}]),m).find(m=>m?.exports?.default?.getToken!==void 0).exports.default.getToken()</textarea>
+          <div style="font-size: 0.64rem; color: var(--text-dim); margin-top: 4px;">4. It will output your token string (e.g. <code>MTM0...</code>). Copy it and paste it into the Sniper Token box.</div>
+        </div>
+
+        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px;">
+          <div style="font-size: 0.68rem; font-weight: 800; color: #fff; margin-bottom: 4px;">METHOD 2: DevTools Network Tab</div>
+          <div style="font-size: 0.66rem; color: var(--text-dim); line-height: 1.5;">
+            1. On Discord web, press <strong style="color:#fff;">F12</strong> -> go to <strong style="color:#fff;">Network</strong> tab.<br>
+            2. Click on any channel or message in Discord.<br>
+            3. Click any request named <code style="color:#67E8F9;">messages</code> or <code style="color:#67E8F9;">@me</code>.<br>
+            4. In Request Headers, copy the value of <code style="color:#67E8F9;">authorization</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: TikTok Content -->
+      <div id="tokenHelpContent_tiktok" class="token-help-content-pane" style="display: none;">
+        <div style="font-weight: 800; color: #fff; font-size: 0.88rem; margin-bottom: 6px;">📱 TikTok sessionid Cookie:</div>
+        <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px;">
+          The <code style="color:#67E8F9;">sessionid</code> cookie proves you are logged into your TikTok account and allows the auto-claim API to update your username.
+        </div>
+
+        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 0.68rem; font-weight: 800; color: #c084fc;">METHOD 1: Instant Console Snippet</span>
+            <button class="btn-action-copy" onclick="window.copySnippet('tiktok_snippet')" style="padding: 3px 8px; font-size: 0.62rem;">📋 Copy Snippet</button>
+          </div>
+          <div style="font-size: 0.66rem; color: var(--text-dim); margin-bottom: 6px;">
+            1. Log in to <strong style="color:#fff;">tiktok.com</strong> in your browser.<br>
+            2. Press <strong style="color:#fff;">F12</strong> -> <strong style="color:#fff;">Console</strong> tab.<br>
+            3. Paste this command and hit <strong style="color:#fff;">Enter</strong>:
+          </div>
+          <textarea id="snippet_tiktok_snippet" readonly class="infra-textarea" style="height: 45px; min-height: 40px; font-size: 0.68rem; padding: 6px; color: var(--emerald-success);">document.cookie.split('; ').find(row => row.startsWith('sessionid='))?.split('=')[1] || localStorage.getItem('sessionid')</textarea>
+        </div>
+
+        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px;">
+          <div style="font-size: 0.68rem; font-weight: 800; color: #fff; margin-bottom: 4px;">METHOD 2: Application / Cookies Tab</div>
+          <div style="font-size: 0.66rem; color: var(--text-dim); line-height: 1.5;">
+            1. On tiktok.com, press <strong style="color:#fff;">F12</strong> -> go to <strong style="color:#fff;">Application</strong> tab (or <strong style="color:#fff;">Storage</strong> in Firefox).<br>
+            2. Expand <strong style="color:#fff;">Cookies</strong> -> click <strong style="color:#fff;">https://www.tiktok.com</strong>.<br>
+            3. Find the cookie named <code style="color:#67E8F9;">sessionid</code> and copy its Value (long 32+ character hex string).
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Roblox Content -->
+      <div id="tokenHelpContent_roblox" class="token-help-content-pane" style="display: none;">
+        <div style="font-weight: 800; color: #fff; font-size: 0.88rem; margin-bottom: 6px;">🧱 Roblox .ROBLOSECURITY Cookie:</div>
+        <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px;">
+          The <code style="color:#67E8F9;">.ROBLOSECURITY</code> cookie holds your Roblox session token.
+        </div>
+
+        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px;">
+          <div style="font-size: 0.68rem; font-weight: 800; color: #fff; margin-bottom: 4px;">How to Copy .ROBLOSECURITY:</div>
+          <div style="font-size: 0.66rem; color: var(--text-dim); line-height: 1.6;">
+            1. Log in to <strong style="color:#fff;">roblox.com</strong>.<br>
+            2. Press <strong style="color:#fff;">F12</strong> -> go to <strong style="color:#fff;">Application</strong> tab (in Chrome/Edge).<br>
+            3. Expand <strong style="color:#fff;">Cookies</strong> -> click <strong style="color:#fff;">https://www.roblox.com</strong>.<br>
+            4. Click the row named <code style="color:#67E8F9;">.ROBLOSECURITY</code> and copy the entire Value (starts with <code>_|WARNING:-DO-NOT-SHARE...</code>).<br>
+            5. Paste it into the Token box. (Also enter your Roblox password in the password field for change confirmation).
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: GitHub Content -->
+      <div id="tokenHelpContent_github" class="token-help-content-pane" style="display: none;">
+        <div style="font-weight: 800; color: #fff; font-size: 0.88rem; margin-bottom: 6px;">🐙 GitHub Personal Access Token (PAT):</div>
+        <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px;">
+          GitHub Personal Access Tokens give direct authenticated access to the GitHub user profile API.
+        </div>
+
+        <div style="background: var(--bg-input); border: 1px solid var(--border-main); border-radius: var(--radius-bubble); padding: 12px;">
+          <div style="font-size: 0.68rem; font-weight: 800; color: #fff; margin-bottom: 4px;">How to Generate a Token:</div>
+          <div style="font-size: 0.66rem; color: var(--text-dim); line-height: 1.6;">
+            1. Open <strong style="color:#fff;">github.com/settings/tokens</strong> in your browser.<br>
+            2. Click <strong style="color:#fff;">Generate new token (classic)</strong>.<br>
+            3. Give it a note (e.g. <code>ONYX-Sniper</code>) and check the <strong style="color:#fff;">user</strong> checkbox.<br>
+            4. Click <strong style="color:#fff;">Generate token</strong> at bottom and copy the token starting with <code>ghp_...</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 5: Twitch Content -->
+      <div id="tokenHelpContent_twitch" class="token-help-content-pane" style="display: none;">
+        <div style="font-weight: 800; color: #fff; font-size: 0.88rem; margin-bottom: 6px;">🟣 Twitch OAuth User Token:</div>
+        <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px;">
+          1. Log in to <strong style="color:#fff;">twitch.tv</strong> in your browser.<br>
+          2. Press <strong style="color:#fff;">F12</strong> -> go to <strong style="color:#fff;">Application</strong> -> <strong style="color:#fff;">Cookies</strong> -> <strong style="color:#fff;">https://www.twitch.tv</strong>.<br>
+          3. Copy the value of cookie <code style="color:#67E8F9;">auth-token</code> (or OAuth token).
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border-main); padding-top: 12px;">
+        <button class="btn-export-blue" onclick="window.closeTokenHelpModal()">Got It, Back to Sniper</button>
+      </div>
+
+    </div>
+  </div>
+
 </body>
 </html>

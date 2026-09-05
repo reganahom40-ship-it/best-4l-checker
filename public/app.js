@@ -1387,3 +1387,47 @@ window.logSniperConsole = function(msg) {
   line.textContent = `[${time}] ${msg}`;
   consoleEl.prepend(line);
 };
+
+
+// ==========================================================
+// TOKEN & COOKIE EXTRACTION HELPER MODAL
+// ==========================================================
+window.openTokenHelpModal = function() {
+  const modal = document.getElementById('tokenHelpModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+
+  const currentPlat = window.sniperPlatform || 'discord';
+  const matchingBtn = document.querySelector(`.token-tab-btn[onclick*="'${currentPlat}'"]`);
+  if (matchingBtn) {
+    window.switchTokenHelpTab(currentPlat, matchingBtn);
+  } else {
+    window.switchTokenHelpTab('discord', document.querySelector('.token-tab-btn'));
+  }
+};
+
+window.closeTokenHelpModal = function() {
+  const modal = document.getElementById('tokenHelpModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.switchTokenHelpTab = function(plat, btnEl) {
+  document.querySelectorAll('.token-tab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  document.querySelectorAll('.token-help-content-pane').forEach(p => p.style.display = 'none');
+  const targetPane = document.getElementById('tokenHelpContent_' + plat);
+  if (targetPane) targetPane.style.display = 'block';
+};
+
+window.copySnippet = function(snippetId) {
+  const el = document.getElementById('snippet_' + snippetId);
+  if (!el) return;
+  navigator.clipboard.writeText(el.value).then(() => {
+    showToast('✓ Console Snippet copied to clipboard! Paste it into browser DevTools (F12 -> Console).');
+  }).catch(() => {
+    el.select();
+    document.execCommand('copy');
+    showToast('✓ Copied snippet!');
+  });
+};
