@@ -245,7 +245,7 @@ async function executeHandleCheck(handle) {
     handleDiscoveryHit(handle.toLowerCase(), platform, checkResult);
   } else {
     window.takenCount++;
-    if (window.totalCheckedCount % 15 === 0) {
+    if (window.totalCheckedCount % 3 === 0) {
       logMessage('SCAN', `Checked @${handle.toLowerCase()} (${platform.toUpperCase()}) — Taken`);
     }
   }
@@ -630,24 +630,60 @@ function playDiscoveryChime() {
 }
 
 // ----------------------------------------------------------
-// 10. LOGGER & UTILITIES
+// 10. REAL-TIME TELEMETRY LOGGER & UTILITIES
 // ----------------------------------------------------------
 function logMessage(level, text) {
-  const container = document.getElementById('logViewerArea');
+  const container = document.getElementById('telemetryLogStream') || document.getElementById('logViewerArea');
   if (!container) return;
 
   const row = document.createElement('div');
   row.className = 'log-line-row';
-  const color = level === 'HIT' ? 'var(--emerald-success)' : (level === 'WARN' ? '#F59E0B' : (level === 'SYS' ? 'var(--blue-primary)' : 'var(--text-dim)'));
-  row.innerHTML = `<span style="color: ${color}; font-weight: 800;">[${level}]</span> <span style="color: var(--text-dim); font-size: 0.68rem;">${new Date().toLocaleTimeString()}</span> <span style="color: #fff;">${text}</span>`;
+  row.style.display = 'flex';
+  row.style.alignItems = 'center';
+  row.style.gap = '8px';
+  row.style.fontFamily = 'var(--font-mono)';
+  row.style.fontSize = '0.74rem';
+  row.style.padding = '3px 0';
+  row.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+
+  let color = 'var(--text-dim)';
+  let bg = 'transparent';
+  if (level === 'HIT') { color = 'var(--emerald-success)'; bg = 'rgba(16, 185, 129, 0.15)'; }
+  else if (level === 'WARN') { color = '#F59E0B'; }
+  else if (level === 'SYS') { color = 'var(--blue-primary)'; }
+  else if (level === 'SCAN') { color = '#38BDF8'; }
+  else if (level === 'TAKEN') { color = 'var(--text-dim)'; }
+
+  row.innerHTML = `<span style="color: ${color}; font-weight: 800; background: ${bg}; padding: 1px 6px; border-radius: 4px; font-size: 0.68rem;">[${level}]</span> <span style="color: var(--text-dim); font-size: 0.65rem;">${new Date().toLocaleTimeString()}</span> <span style="color: #fff;">${text}</span>`;
   container.appendChild(row);
+
+  // Keep up to 350 lines in buffer to avoid DOM memory slow down
+  if (container.children.length > 350) {
+    container.removeChild(container.children[0]);
+  }
   container.scrollTop = container.scrollHeight;
 }
 
-window.clearSystemLogs = function() {
-  const container = document.getElementById('logViewerArea');
-  if (container) container.innerHTML = '';
-  showToast('✓ Logs cleared');
+window.clearLiveLogs = function() {
+  const container = document.getElementById('telemetryLogStream') || document.getElementById('logViewerArea');
+  if (container) container.innerHTML = '<div style="color: var(--text-dim); padding: 8px; font-family: var(--font-mono); font-size: 0.72rem;">[Telemetry buffer cleared]</div>';
+  showToast('✓ Telemetry logs cleared');
+};
+
+window.clearSystemLogs = window.clearLiveLogs;
+
+window.exportLiveLogs = function() {
+  const container = document.getElementById('telemetryLogStream') || document.getElementById('logViewerArea');
+  if (!container || !container.innerText.trim()) {
+    showToast('⚠️ No log entries to export');
+    return;
+  }
+  const blob = new Blob([container.innerText], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `onyx_apex_telemetry_${Date.now()}.txt`;
+  a.click();
+  showToast('✓ Exported telemetry log file');
 };
 
 function showToast(msg) {
