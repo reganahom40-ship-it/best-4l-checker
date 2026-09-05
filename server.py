@@ -1176,15 +1176,18 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
 if __name__ == '__main__':
     if not os.path.exists(PUBLIC_DIR):
         os.makedirs(PUBLIC_DIR)
         
     handler = SafeProxyHandler
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), handler) as httpd:
+    with ThreadedTCPServer(("", PORT), handler) as httpd:
         print(f"==================================================")
-        print(f"ONYX APEX 17-Platform Checker Engine running on port {PORT}")
+        print(f"ONYX APEX 17-Platform Multi-Threaded Checker Engine running on port {PORT}")
         print(f"Dashboard interface: http://localhost:{PORT}")
         print(f"==================================================")
         try:

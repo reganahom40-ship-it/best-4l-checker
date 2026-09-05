@@ -369,7 +369,18 @@ async function executeHandleCheck(handle) {
       return;
     }
 
-    checkResult = await res.json();
+    const rawText = await res.text().catch(() => '');
+    if (!rawText || !rawText.trim()) {
+      // Empty response or proxy connection drop — silently retry on next cycle
+      return;
+    }
+
+    try {
+      checkResult = JSON.parse(rawText);
+    } catch(jsonErr) {
+      // Non-JSON response from proxy gateway
+      return;
+    }
 
     if (checkResult.available === true || checkResult.status === 'available') {
       isAvailable = true;
@@ -387,7 +398,7 @@ async function executeHandleCheck(handle) {
     }
 
   } catch(err) {
-    logMessage('WARN', `Network drop on @${handle} (${platform.toUpperCase()}): ${err.message}`);
+    // Network level abort or connection drop
     return;
   }
 
