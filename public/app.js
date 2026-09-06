@@ -195,11 +195,27 @@ function generateNextHandle(pattern) {
     return c1 + v1 + c2 + v2 + c3;
   }
 
-  // 7. OG Real Dictionary Words
+  // 7. OG Real Dictionary Words & Affixes (dev, og, ltc, btc, eth, sol, etc.)
   if (pattern === 'OG_HANDLES' || pattern === 'OG_DICTIONARY') {
-    const word = OG_DICTIONARY_WORDS[ogWordIndex % OG_DICTIONARY_WORDS.length];
-    ogWordIndex++;
-    return word;
+    const roll = Math.random();
+    // 35% chance: pure dictionary word
+    if (roll < 0.35) {
+      const word = OG_DICTIONARY_WORDS[ogWordIndex % OG_DICTIONARY_WORDS.length];
+      ogWordIndex++;
+      return word;
+    }
+    // 35% chance: prefix + base word (e.g. devzen, ognova, btcapex, ltcflux, solvoid)
+    else if (roll < 0.70) {
+      const base = AFFIX_BASE_WORDS[Math.floor(Math.random() * AFFIX_BASE_WORDS.length)];
+      const prefix = OG_PREFIXES[Math.floor(Math.random() * OG_PREFIXES.length)];
+      return prefix + base;
+    }
+    // 30% chance: base word + suffix (e.g. zendev, novabtc, apexeth, riftog, fluxltc)
+    else {
+      const base = AFFIX_BASE_WORDS[Math.floor(Math.random() * AFFIX_BASE_WORDS.length)];
+      const suffix = OG_SUFFIXES[Math.floor(Math.random() * OG_SUFFIXES.length)];
+      return base + suffix;
+    }
   }
 
   // 7b. OG Prefixes & Suffixes (dev, og, ltc, btc, eth, sol, pro, god, etc.)
@@ -289,9 +305,23 @@ window.selectGenPattern = function(pattern, el) {
 window.loadPresetOGHandles = function() {
   const area = document.getElementById('dashWordlistArea');
   if (area) {
-    area.value = OG_DICTIONARY_WORDS.join('\n');
+    const list = [...OG_DICTIONARY_WORDS];
+    const set = new Set(list);
+    
+    // Add top dev, og, crypto, and god affixes
+    const fastAffixes = ['dev', 'og', 'ltc', 'btc', 'eth', 'sol', 'god', 'pro'];
+    for (const base of AFFIX_BASE_WORDS.slice(0, 45)) {
+      for (const aff of fastAffixes) {
+        const pfx = aff + base;
+        const sfx = base + aff;
+        if (!set.has(pfx)) { set.add(pfx); list.push(pfx); }
+        if (!set.has(sfx)) { set.add(sfx); list.push(sfx); }
+      }
+    }
+
+    area.value = list.join('\n');
     window.injectCustomWordlist();
-    showToast(`👑 Loaded ${OG_DICTIONARY_WORDS.length} Pure OG Dictionary Handles into queue!`);
+    showToast(`👑 Loaded ${list.length} Pure OG & Affix Handles into queue!`);
   }
 };
 
