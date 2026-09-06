@@ -38,7 +38,7 @@ def get_opener(proxy=None):
     return urllib.request.build_opener()
 
 # 1. TIKTOK
-def check_tiktok_live(handle, proxy=None):
+def check_tiktok_live(handle, proxy=None, token=None):
     handle = handle.strip().lower().lstrip('@')
     if len(handle) < 4:
         return {'available': False, 'status': 'restricted', 'reason': 'TikTok restricts all 3L handles from registration'}
@@ -46,11 +46,16 @@ def check_tiktok_live(handle, proxy=None):
         return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for TikTok'}
 
     url = f"https://www.tiktok.com/@{handle}"
-    req = urllib.request.Request(url, headers={
+    headers = {
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9'
-    })
+    }
+    if token:
+        clean_tok = token.split(':')[-1].strip() if ':' in token else token.strip()
+        headers['Cookie'] = f'sessionid={clean_tok};'
+
+    req = urllib.request.Request(url, headers=headers)
     opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=3.5) as resp:
@@ -86,7 +91,7 @@ def check_tiktok_live(handle, proxy=None):
         return {'available': False, 'status': 'error', 'reason': str(e)}
 
 # 2. DISCORD
-def check_discord_live(handle, proxy=None):
+def check_discord_live(handle, proxy=None, token=None):
     handle = handle.strip().lower().lstrip('@')
     if len(handle) < 2 or len(handle) > 32:
         return {'available': False, 'status': 'restricted', 'reason': 'Discord usernames must be 2-32 characters'}
@@ -94,16 +99,21 @@ def check_discord_live(handle, proxy=None):
         return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for Discord'}
 
     url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
-    req = urllib.request.Request(url, data=json.dumps({"username": handle}).encode('utf-8'), headers={
+    headers = {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    })
+    }
+    if token:
+        clean_tok = token.split(':')[-1].strip() if ':' in token else token.strip()
+        headers['Authorization'] = clean_tok
+
+    req = urllib.request.Request(url, data=json.dumps({"username": handle}).encode('utf-8'), headers=headers)
     opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=3.5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             is_taken = data.get('taken', True)
-            return {'available': not is_taken, 'status': 'available' if not is_taken else 'taken', 'data': data}
+            return {'available': not is_taken, 'status': 'available' if not is_taken else 'taken', 'data': data, 'tokenUsed': bool(token)}
     except urllib.error.HTTPError as e:
         if e.code == 429:
             return {'available': False, 'status': 'rate_limited', 'reason': 'Discord 429 Rate Limited'}
@@ -294,7 +304,7 @@ def check_minecraft_live(handle, proxy=None):
         return {'available': False, 'status': 'error', 'reason': str(e)}
 
 # 10. GITHUB
-def check_github_live(handle, proxy=None):
+def check_github_live(handle, proxy=None, token=None):
     handle = handle.strip()
     if len(handle) < 1 or len(handle) > 39:
         return {'available': False, 'status': 'restricted', 'reason': 'GitHub usernames must be 1-39 characters'}
@@ -302,7 +312,11 @@ def check_github_live(handle, proxy=None):
         return {'available': False, 'status': 'restricted', 'reason': 'Invalid GitHub username format'}
 
     url = f"https://api.github.com/users/{handle}"
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    if token:
+        clean_tok = token.split(':')[-1].strip() if ':' in token else token.strip()
+        headers['Authorization'] = f'Bearer {clean_tok}' if not clean_tok.startswith('Bearer ') else clean_tok
+    req = urllib.request.Request(url, headers=headers)
     opener = get_opener(proxy)
     try:
         with opener.open(req, timeout=6) as resp:
@@ -313,6 +327,8 @@ def check_github_live(handle, proxy=None):
     except urllib.error.HTTPError as e:
         if e.code == 404:
             return {'available': True, 'status': 'available', 'reason': 'GitHub username available (404)'}
+        elif e.code == 429 or e.code == 403:
+            return {'available': False, 'status': 'rate_limited', 'reason': f'GitHub HTTP {e.code} Rate Limit'}
         return {'available': False, 'status': 'error', 'reason': f'HTTP {e.code}'}
     except Exception as e:
         return {'available': False, 'status': 'error', 'reason': str(e)}
@@ -492,11 +508,15 @@ PLATFORM_DISPATCH = {
     'mastodon': check_mastodon_live
 }
 
-def dispatch_handle_check(platform, handle, proxy=None):
+def dispatch_handle_check(platform, handle, proxy=None, token=None):
     platform_key = platform.strip().lower()
     fn = PLATFORM_DISPATCH.get(platform_key)
     if fn:
-        return fn(handle, proxy)
+        import inspect
+        sig = inspect.signature(fn)
+        if 'token' in sig.parameters:
+            return fn(handle, proxy=proxy, token=token)
+        return fn(handle, proxy=proxy)
     return {'available': False, 'status': 'error', 'reason': f'Unknown platform: {platform}'}
 
 
@@ -1123,6 +1143,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
             platform = params.get('platform', ['tiktok'])[0].lower()
             handle = params.get('handle', [''])[0].strip()
             proxy = params.get('proxy', [None])[0]
+            token = params.get('token', [None])[0]
 
             if not handle:
                 self.send_response(400)
@@ -1131,7 +1152,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({'error': 'Handle parameter required'}).encode('utf-8'))
                 return
 
-            result = dispatch_handle_check(platform, handle, proxy)
+            result = dispatch_handle_check(platform, handle, proxy, token)
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -1213,6 +1234,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 platform = payload.get('platform', 'tiktok').lower()
                 handle = payload.get('handle', '').strip()
                 proxy = payload.get('proxy')
+                token = payload.get('token')
 
                 if not handle:
                     self.send_response(400)
@@ -1221,7 +1243,7 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({'error': 'Handle parameter required'}).encode('utf-8'))
                     return
 
-                result = dispatch_handle_check(platform, handle, proxy)
+                result = dispatch_handle_check(platform, handle, proxy, token)
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')

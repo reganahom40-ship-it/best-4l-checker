@@ -397,6 +397,17 @@ async function executeHandleCheck(handle) {
   const hasProxies = window.proxyPoolList && window.proxyPoolList.length > 0;
   const rotatingProxy = hasProxies ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
 
+  // Pick rotating token if token pool is loaded
+  const hasTokens = window.tokenPoolList && window.tokenPoolList.length > 0;
+  let rotatingToken = null;
+  if (hasTokens) {
+    const rawTok = window.tokenPoolList[Math.floor(Math.random() * window.tokenPoolList.length)];
+    rotatingToken = rawTok.includes(':') ? rawTok.split(':').pop().trim() : rawTok.trim();
+  } else if (window.sniperToken && window.sniperToken.trim()) {
+    const rawTok = window.sniperToken.trim();
+    rotatingToken = rawTok.includes(':') ? rawTok.split(':').pop().trim() : rawTok;
+  }
+
   try {
     const res = await fetch('/api/check-handle', {
       method: 'POST',
@@ -405,7 +416,8 @@ async function executeHandleCheck(handle) {
       body: JSON.stringify({
         platform: platform,
         handle: handle.toLowerCase(),
-        proxy: rotatingProxy
+        proxy: rotatingProxy,
+        token: rotatingToken
       })
     });
 
