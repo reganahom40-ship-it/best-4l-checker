@@ -250,6 +250,8 @@ window.selectGenPattern = function(pattern, el) {
   logMessage('SYS', `Active handle generator pattern changed to [${pattern}].`);
 };
 
+let scannerAbortController = null;
+
 // ----------------------------------------------------------
 // 3. SCANNER ENGINE EXECUTION & INFINITE STREAMING
 // ----------------------------------------------------------
@@ -257,6 +259,7 @@ window.startScannerEngine = function() {
   if (window.isScanning) return;
   window.isScanning = true;
   customQueueIndex = 0;
+  scannerAbortController = new AbortController();
 
   toggleScannerUIState(true);
 
@@ -267,13 +270,13 @@ window.startScannerEngine = function() {
   logMessage('SYS', `Infinite Engine started for [${pData.name}] with pattern [${window.currentGenPattern}] (Non-stop streaming).`);
   const hasProxies = window.proxyPoolList && window.proxyPoolList.length > 0;
   if (!hasProxies) {
-    logMessage('WARN', `ℹ️ Scanning in Direct Server IP Mode (0 proxies). For high-speed non-stop scanning without rate limits, load proxies in Proxies & Tokens.`);
+    logMessage('WARN', `ℹ️ Scanning in Direct Server IP Mode (0 proxies). For ultra-fast multi-hundred CPS, load proxies in Proxies & Tokens.`);
   } else {
     logMessage('SYS', `🌐 Rotating requests across ${window.proxyPoolList.length} active proxies.`);
   }
 
   const requestedThreads = window.activeWorkerThreads || 45;
-  const threads = hasProxies ? Math.min(requestedThreads, 150) : Math.min(requestedThreads, 8);
+  const threads = hasProxies ? Math.min(requestedThreads, 150) : Math.min(requestedThreads, 35);
   for (let i = 0; i < threads; i++) {
     spawnScannerWorker(i + 1);
   }
@@ -281,13 +284,17 @@ window.startScannerEngine = function() {
 
 window.stopScannerEngine = function() {
   window.isScanning = false;
+  if (scannerAbortController) {
+    try { scannerAbortController.abort(); } catch(e) {}
+    scannerAbortController = null;
+  }
   toggleScannerUIState(false);
   if (cpsTimer) clearInterval(cpsTimer);
 
   const statCps = document.getElementById('statCps');
   if (statCps) statCps.innerHTML = `0 <span style="font-size: 0.85rem; color: var(--text-dim);">CPS</span>`;
 
-  logMessage('SYS', `Engine stopped by user.`);
+  logMessage('SYS', `Engine stopped by user. All inflight requests terminated.`);
   showToast('🛑 Scanner Engine Stopped');
 };
 
@@ -342,9 +349,11 @@ async function spawnScannerWorker(workerId) {
       break;
     }
 
+    if (!window.isScanning) break;
     await executeHandleCheck(handle);
 
-    const delay = window.workerDelayMs || 20;
+    if (!window.isScanning) break;
+    const delay = window.workerDelayMs || 0;
     if (delay > 0) {
       await new Promise(r => setTimeout(r, delay));
     }
@@ -355,6 +364,7 @@ async function spawnScannerWorker(workerId) {
 // 5. PRECISION BACKEND CHECK DISPATCHER
 // ----------------------------------------------------------
 async function executeHandleCheck(handle) {
+  if (!window.isScanning) return;
   const platform = window.activePlatform || 'tiktok';
   let isAvailable = false;
   let checkResult = null;
@@ -367,6 +377,7 @@ async function executeHandleCheck(handle) {
     const res = await fetch('/api/check-handle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: scannerAbortController ? scannerAbortController.signal : undefined,
       body: JSON.stringify({
         platform: platform,
         handle: handle.toLowerCase(),
@@ -374,22 +385,22 @@ async function executeHandleCheck(handle) {
       })
     });
 
+    if (!window.isScanning) return;
+
     if (res.status === 429) {
       logMessage('WARN', `⚠️ Rate-limit reached on ${platform.toUpperCase()}. ${hasProxies ? 'Rotating proxy...' : 'Paste proxies in Proxies & Tokens to bypass.'}`);
-      await new Promise(r => setTimeout(r, 600));
+      if (window.isScanning) await new Promise(r => setTimeout(r, 400));
       return;
     }
 
     const rawText = await res.text().catch(() => '');
-    if (!rawText || !rawText.trim()) {
-      // Empty response or proxy connection drop — silently retry on next cycle
+    if (!window.isScanning || !rawText || !rawText.trim()) {
       return;
     }
 
     try {
       checkResult = JSON.parse(rawText);
     } catch(jsonErr) {
-      // Non-JSON response from proxy gateway
       return;
     }
 
@@ -397,7 +408,7 @@ async function executeHandleCheck(handle) {
       isAvailable = true;
     } else if (checkResult.status === 'rate_limited') {
       logMessage('WARN', `⚠️ Rate-limit on @${handle} (${platform.toUpperCase()}). ${hasProxies ? 'Rotating proxy...' : 'Add proxies to bypass.'}`);
-      await new Promise(r => setTimeout(r, 400));
+      if (window.isScanning) await new Promise(r => setTimeout(r, 300));
       return;
     } else if (checkResult.status === 'restricted') {
       if (window.totalCheckedCount % 20 === 0) {
@@ -409,9 +420,10 @@ async function executeHandleCheck(handle) {
     }
 
   } catch(err) {
-    // Network level abort or connection drop
     return;
   }
+
+  if (!window.isScanning) return;
 
   window.totalCheckedCount++;
   checkTimestamps.push(Date.now());
@@ -420,7 +432,7 @@ async function executeHandleCheck(handle) {
     handleDiscoveryHit(handle.toLowerCase(), platform, checkResult);
   } else {
     window.takenCount++;
-    if (window.totalCheckedCount % 3 === 0) {
+    if (window.totalCheckedCount % 2 === 0) {
       logMessage('SCAN', `Checked @${handle.toLowerCase()} (${platform.toUpperCase()}) — Taken [${checkResult?.reason || 'Profile exists'}]`);
     }
   }

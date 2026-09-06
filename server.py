@@ -53,7 +53,7 @@ def check_tiktok_live(handle, proxy=None):
     })
     opener = get_opener(proxy)
     try:
-        with opener.open(req, timeout=8) as resp:
+        with opener.open(req, timeout=3.5) as resp:
             data = resp.read().decode('utf-8', errors='replace')
             m = re.search(r'<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">([\s\S]*?)</script>', data)
             if m:
@@ -100,7 +100,7 @@ def check_discord_live(handle, proxy=None):
     })
     opener = get_opener(proxy)
     try:
-        with opener.open(req, timeout=6) as resp:
+        with opener.open(req, timeout=3.5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             is_taken = data.get('taken', True)
             return {'available': not is_taken, 'status': 'available' if not is_taken else 'taken', 'data': data}
@@ -123,7 +123,7 @@ def check_kick_live(handle, proxy=None):
     })
     opener = get_opener(proxy)
     try:
-        with opener.open(req, timeout=6) as resp:
+        with opener.open(req, timeout=3.5) as resp:
             return {'available': False, 'status': 'taken', 'reason': 'Channel active (HTTP 200)'}
     except urllib.error.HTTPError as e:
         if e.code == 404:
