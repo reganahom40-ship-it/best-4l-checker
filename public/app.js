@@ -132,6 +132,25 @@ const REPEATING_SYMMETRICAL_LIST = [
   'rrrr', 'ssss', 'tttt', 'wwww'
 ];
 
+const OG_PREFIXES = ['dev', 'og', 'ltc', 'btc', 'eth', 'sol', 'god', 'pro', 'mr', 'dr', 'real', 'the', 'its', 'iam', 'im', 'hey', 'yo', 'go', 'my', 'get', 'try', 'use', 'bad', 'top', 'big', 'lil', 'not', 'rip', 'vip', 'raw', 'neo', 'zen', 'bot'];
+const OG_SUFFIXES = ['dev', 'og', 'ltc', 'btc', 'eth', 'sol', 'god', 'pro', 'bot', 'hub', 'lab', 'app', 'ai', 'io', 'gg', 'cc', 'hq', 'xyz', 'vip', 'tv', 'yt', 'tt', 'fx', 'os', 'db', 'pay', 'dex', 'eth', 'nft', 'dao', 'web', 'box', 'api'];
+
+const AFFIX_BASE_WORDS = [
+  'zen', 'onyx', 'apex', 'grim', 'dusk', 'nova', 'rift', 'flux', 'glow', 'soul',
+  'pure', 'zero', 'neon', 'fade', 'dark', 'cult', 'mint', 'wave', 'sage', 'lust',
+  'vibe', 'hype', 'bolt', 'sync', 'myth', 'evil', 'holy', 'rare', 'drip', 'crave',
+  'bliss', 'saint', 'curse', 'spell', 'charm', 'witch', 'devil', 'skull', 'knife',
+  'sword', 'crown', 'throne', 'spark', 'flash', 'smoke', 'mist', 'orbit', 'ocean',
+  'river', 'cliff', 'stone', 'flint', 'steel', 'iron', 'gold', 'silk', 'pearl',
+  'ruby', 'amber', 'jade', 'opal', 'frost', 'blaze', 'venom', 'shade', 'haven',
+  'karma', 'wrath', 'envy', 'pride', 'greed', 'sloth', 'glory', 'mercy', 'grace',
+  'faith', 'truth', 'trust', 'valor', 'vigor', 'vital', 'vivid', 'panic', 'frenzy',
+  'chaos', 'reign', 'havoc', 'abyss', 'titan', 'relic', 'arcane', 'purge', 'bane',
+  'omen', 'haze', 'echo', 'void', 'jack', 'luke', 'alex', 'noah', 'liam', 'kai',
+  'cole', 'milo', 'zane', 'kyle', 'dean', 'troy', 'jake', 'sam', 'max', 'ben',
+  'dan', 'ian', 'eli', 'ryan', 'eric', 'sean', 'adam', 'paul', 'mark', 'john'
+];
+
 function generateNextHandle(pattern) {
   // 1. 2L Pure Alpha (AA - ZZ)
   if (pattern === '2L_ALPHA') {
@@ -181,6 +200,26 @@ function generateNextHandle(pattern) {
     const word = OG_DICTIONARY_WORDS[ogWordIndex % OG_DICTIONARY_WORDS.length];
     ogWordIndex++;
     return word;
+  }
+
+  // 7b. OG Prefixes & Suffixes (dev, og, ltc, btc, eth, sol, pro, god, etc.)
+  if (pattern === 'OG_PREFIX_SUFFIX' || pattern === 'PREFIX_SUFFIX' || pattern === 'AFFIX_OG') {
+    const base = AFFIX_BASE_WORDS[Math.floor(Math.random() * AFFIX_BASE_WORDS.length)];
+    const roll = Math.random();
+    if (roll < 0.45) {
+      // Prefix: dev_word, ogword, ltcword, btcword
+      const prefix = OG_PREFIXES[Math.floor(Math.random() * OG_PREFIXES.length)];
+      return prefix + base;
+    } else if (roll < 0.90) {
+      // Suffix: worddev, wordog, wordltc, wordbtc
+      const suffix = OG_SUFFIXES[Math.floor(Math.random() * OG_SUFFIXES.length)];
+      return base + suffix;
+    } else {
+      // 2L/3L Alpha + Affix (e.g. abdev, btcxy, etc.)
+      const shortAlpha = LETTERS[Math.floor(Math.random() * LETTERS.length)] + LETTERS[Math.floor(Math.random() * LETTERS.length)];
+      const affix = Math.random() > 0.5 ? OG_PREFIXES[Math.floor(Math.random() * OG_PREFIXES.length)] : OG_SUFFIXES[Math.floor(Math.random() * OG_SUFFIXES.length)];
+      return Math.random() > 0.5 ? (affix + shortAlpha) : (shortAlpha + affix);
+    }
   }
 
   // 8. Gaming & Clout Handles
@@ -254,6 +293,39 @@ window.loadPresetOGHandles = function() {
     window.injectCustomWordlist();
     showToast(`👑 Loaded ${OG_DICTIONARY_WORDS.length} Pure OG Dictionary Handles into queue!`);
   }
+};
+
+window.loadPresetAffixHandles = function() {
+  const area = document.getElementById('dashWordlistArea');
+  if (!area) return;
+
+  const list = [];
+  const set = new Set();
+  
+  // Top crypto / dev / og prefix combinations
+  const topPrefixes = ['dev', 'og', 'ltc', 'btc', 'eth', 'sol', 'god', 'pro', 'mr', 'real', 'the', 'its', 'neo', 'vip'];
+  const topSuffixes = ['dev', 'og', 'ltc', 'btc', 'eth', 'sol', 'god', 'pro', 'bot', 'hub', 'lab', 'app', 'ai', 'io', 'gg', 'hq'];
+  
+  for (const base of AFFIX_BASE_WORDS) {
+    for (const p of topPrefixes) {
+      const h = (p + base).toLowerCase();
+      if (!set.has(h) && h.length <= 12) {
+        set.add(h);
+        list.push(h);
+      }
+    }
+    for (const s of topSuffixes) {
+      const h = (base + s).toLowerCase();
+      if (!set.has(h) && h.length <= 12) {
+        set.add(h);
+        list.push(h);
+      }
+    }
+  }
+
+  area.value = list.slice(0, 400).join('\n');
+  window.injectCustomWordlist();
+  showToast(`⚡ Loaded ${Math.min(list.length, 400)} Dev, OG & Crypto Affix Handles into queue!`);
 };
 
 window.injectCustomWordlist = function() {
