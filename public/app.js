@@ -443,7 +443,7 @@ async function executeHandleCheck(handle) {
     if (checkResult.available === true || checkResult.status === 'available') {
       isAvailable = true;
     } else if (checkResult.status === 'rate_limited') {
-      logMessage('WARN', `⚠️ Rate-limit on @${handle} (${platform.toUpperCase()}). ${hasProxies ? 'Rotating proxy...' : 'Add proxies to bypass.'}`);
+      logMessage('WARN', `⚠️ Rate-limit on @${handle} (${platform.toUpperCase()}). ${hasTokens ? 'Rotating session token...' : (hasProxies ? 'Rotating proxy...' : 'Add proxies or tokens to bypass.')}`);
       if (window.isScanning) await new Promise(r => setTimeout(r, 300));
       return;
     } else if (checkResult.status === 'restricted') {

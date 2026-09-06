@@ -98,14 +98,24 @@ def check_discord_live(handle, proxy=None, token=None):
     if not re.match(r'^[a-z0-9_.]+$', handle):
         return {'available': False, 'status': 'restricted', 'reason': 'Invalid characters for Discord'}
 
-    url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
-    headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
+    clean_tok = None
     if token:
         clean_tok = token.split(':')[-1].strip() if ':' in token else token.strip()
-        headers['Authorization'] = clean_tok
+
+    # If token exists, use authenticated pomelo-attempt endpoint which is tied to token limits, not unauthed IP limits
+    if clean_tok:
+        url = "https://discord.com/api/v9/users/@me/pomelo-attempt"
+        headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Authorization': clean_tok
+        }
+    else:
+        url = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
+        headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
 
     req = urllib.request.Request(url, data=json.dumps({"username": handle}).encode('utf-8'), headers=headers)
     opener = get_opener(proxy)
@@ -113,7 +123,7 @@ def check_discord_live(handle, proxy=None, token=None):
         with opener.open(req, timeout=3.5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
             is_taken = data.get('taken', True)
-            return {'available': not is_taken, 'status': 'available' if not is_taken else 'taken', 'data': data, 'tokenUsed': bool(token)}
+            return {'available': not is_taken, 'status': 'available' if not is_taken else 'taken', 'data': data, 'tokenUsed': bool(clean_tok)}
     except urllib.error.HTTPError as e:
         if e.code == 429:
             return {'available': False, 'status': 'rate_limited', 'reason': 'Discord 429 Rate Limited'}
