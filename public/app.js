@@ -6,7 +6,7 @@
 // Global State
 window.isScanning = false;
 window.activePlatform = 'tiktok';
-window.currentGenPattern = '4L_ALPHA';
+window.currentGenPattern = 'OG_HANDLES';
 window.scannerQueue = [];
 window.queueCursor = 0;
 window.availableHits = [];
@@ -180,8 +180,8 @@ function generateNextHandle(pattern) {
     return c1 + v1 + c2 + v2 + c3;
   }
 
-  // 7. Real Dictionary OG Words
-  if (pattern === 'OG_DICTIONARY') {
+  // 7. OG Handles & Real Words
+  if (pattern === 'OG_HANDLES' || pattern === 'OG_DICTIONARY') {
     return OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
   }
 
@@ -226,10 +226,8 @@ function generateNextHandle(pattern) {
     }
   }
 
-  // Fallback: 4L Clean
-  let s = '';
-  for (let j = 0; j < 4; j++) s += LETTERS[Math.floor(Math.random() * LETTERS.length)];
-  return s;
+  // Fallback: OG Handles
+  return OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
 }
 
 window.selectGenPattern = function(pattern, el) {
@@ -248,6 +246,31 @@ window.selectGenPattern = function(pattern, el) {
 
   showToast(`✓ Selected Generator Pattern: [${pattern}]`);
   logMessage('SYS', `Active handle generator pattern changed to [${pattern}].`);
+};
+
+window.loadPresetOGHandles = function() {
+  const area = document.getElementById('dashWordlistArea');
+  if (area) {
+    area.value = OG_DICTIONARY_WORDS.slice(0, 100).join('\n');
+    window.injectCustomWordlist();
+    showToast(`👑 Loaded ${Math.min(100, OG_DICTIONARY_WORDS.length)} OG Handles into queue!`);
+  }
+};
+
+window.injectCustomWordlist = function() {
+  const area = document.getElementById('dashWordlistArea');
+  if (!area) return;
+  const lines = area.value.split('\n').map(l => l.trim().replace(/^@/, '')).filter(l => l.length > 0);
+  if (lines.length === 0) {
+    showToast('⚠️ Wordlist area is empty. Paste handles or click Load 100+ OG Handles.');
+    return;
+  }
+  customHandlesList = lines;
+  customQueueIndex = 0;
+  window.currentGenPattern = 'CUSTOM';
+  document.querySelectorAll('.dash-preset-card').forEach(c => c.classList.remove('active'));
+  showToast(`✓ Injected ${lines.length} custom handles into active scan queue`);
+  logMessage('SYS', `Injected ${lines.length} custom handles into active scan queue.`);
 };
 
 let scannerAbortController = null;
