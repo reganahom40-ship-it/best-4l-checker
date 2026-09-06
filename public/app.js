@@ -57,34 +57,54 @@ const DIGITS = '0123456789';
 const ALPHANUM = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
 const OG_DICTIONARY_WORDS = [
-  'ghost', 'blade', 'frost', 'toxic', 'demon', 'angel', 'cyber', 'matrix', 'pulse', 'storm',
-  'venom', 'shadow', 'phantom', 'vamp', 'draco', 'opium', 'wrath', 'sin', 'god', 'zen',
-  'beast', 'flame', 'blood', 'grave', 'magic', 'viper', 'night', 'titan', 'alpha', 'omega',
-  'chaos', 'havoc', 'prime', 'rebel', 'siren', 'abyss', 'wraith', 'void', 'nova', 'apex',
-  'onyx', 'echo', 'flux', 'glow', 'soul', 'pure', 'lunar', 'zero', 'neon', 'fade',
-  'dark', 'cult', 'mint', 'wave', 'sage', 'lust', 'vibe', 'hype', 'bolt', 'sync',
-  'myth', 'evil', 'holy', 'rare', 'grim', 'drip', 'crave', 'bliss', 'saint', 'curse',
-  'spell', 'charm', 'witch', 'devil', 'skull', 'knife', 'sword', 'crown', 'throne', 'spark',
-  'flash', 'blaze', 'inferno', 'smoke', 'mist', 'haze', 'shade', 'twilight', 'eclipse', 'comet',
-  'meteor', 'orbit', 'quasar', 'pulsar', 'stellar', 'nebula', 'zenith', 'ocean', 'river', 'cliff',
-  'stone', 'flint', 'steel', 'iron', 'gold', 'silk', 'velvet', 'pearl', 'ruby', 'diamond',
-  'amber', 'jade', 'opal', 'frenzy', 'karma', 'omen', 'saint', 'wrath', 'solace', 'sanctum',
-  'tempest', 'valkyrie', 'paragon', 'seraph', 'archon', 'revenant', 'specter', 'phantom', 'chimera'
+  'zenith', 'phantom', 'wraith', 'cypher', 'kuro', 'solis', 'onyx', 'reign', 'vortex', 'havoc',
+  'echo', 'mirage', 'valkyrie', 'strife', 'solitude', 'syndicate', 'blaze', 'frost', 'eclipse', 'shiver',
+  'apex', 'grim', 'dusk', 'shade', 'specter', 'cinder', 'venom', 'siphon', 'glitch', 'rift',
+  'nexus', 'pulse', 'surge', 'abyss', 'titan', 'aether', 'nova', 'chronos', 'hyper', 'drifter',
+  'zen', 'envy', 'wrath', 'luster', 'radiance', 'seraph', 'cipher', 'relic', 'arcane', 'mythic',
+  'valiant', 'lucid', 'sinister', 'tempest', 'savage', 'fatal', 'scythe', 'ruin', 'purge', 'bane',
+  'omen', 'haze', 'reaper', 'covert', 'stealth', 'silent', 'frenzy', 'vicious', 'carnage', 'slayer',
+  'chaos', 'revolt', 'anarchy', 'vengeance', 'overlord', 'divine', 'ascend', 'immortal', 'eternal', 'infinite',
+  'obsidian', 'crimson', 'scarlet', 'velvet', 'sapphire', 'cobalt', 'emerald', 'amethyst', 'onyxcore', 'solaris',
+  'lunar', 'celestial', 'nebula', 'supernova', 'singularity', 'paragon', 'vanguard', 'sentinel',
+  'scarfo', 'corkwell', 'royce', 'kiefer', 'hoyte', 'kolve', 'raynard', 'darocha', 'gianni', 'hurda',
+  'bogdanov', 'redar', 'stehli', 'leckrone', 'despain', 'caponigro', 'lambertson', 'shouman', 'sappington', 'candelori',
+  'whitestone', 'romain', 'phaup', 'villaman', 'hagerstrom', 'gaudreault', 'labriola', 'sigsby', 'stumper', 'lucian',
+  'barrnett', 'tallerico', 'litteken', 'reustle', 'serpa', 'zimmerman', 'humbarger', 'louwers', 'quest', 'tae',
+  'salonia', 'sokolosky', 'dahilig', 'stanwick', 'debiasse', 'courter', 'delee', 'elsdon', 'boskey', 'hendron',
+  'wass', 'helmin', 'esparza', 'oellerich', 'moeung', 'kocot', 'duran', 'wilhelm', 'pedrero', 'detrich',
+  'schreifels', 'lloyd', 'ballina', 'barngrover', 'paulemon', 'hehl', 'augustyniak', 'ryker', 'halamicek', 'radvansky',
+  'abadie', 'basore', 'leining', 'muenks', 'kupres', 'bertot', 'ulett', 'tangi', 'octave', 'basnight',
+  'candle', 'monter', 'panyard', 'balsbaugh', 'luthi', 'bondaruk', 'ebrahim', 'reill', 'shoap', 'decosmo',
+  'dvix', 'kvamme', 'kehrob', 'oamva', 'wphr', 'marcone', 'trahin', 'knode',
+  'ghost', 'blade', 'demon', 'angel', 'cyber', 'matrix', 'storm', 'vamp', 'draco', 'opium',
+  'beast', 'flame', 'blood', 'grave', 'magic', 'viper', 'night', 'prime', 'rebel', 'siren',
+  'void', 'flux', 'glow', 'soul', 'pure', 'zero', 'neon', 'fade', 'dark', 'cult',
+  'mint', 'wave', 'sage', 'lust', 'vibe', 'hype', 'bolt', 'sync', 'myth', 'evil',
+  'holy', 'rare', 'drip', 'crave', 'bliss', 'saint', 'curse', 'spell', 'charm', 'witch',
+  'devil', 'skull', 'knife', 'sword', 'crown', 'throne', 'spark', 'flash', 'inferno', 'smoke',
+  'mist', 'twilight', 'comet', 'meteor', 'orbit', 'quasar', 'pulsar', 'stellar', 'ocean', 'river',
+  'cliff', 'stone', 'flint', 'steel', 'iron', 'gold', 'silk', 'pearl', 'ruby', 'diamond',
+  'amber', 'jade', 'opal', 'solace', 'sanctum', 'archon', 'revenant', 'chimera'
 ];
 
 const HYPE_GAMING_WORDS = [
+  'zenith', 'phantom', 'wraith', 'cypher', 'kuro', 'solis', 'onyx', 'reign', 'vortex', 'havoc',
+  'echo', 'mirage', 'valkyrie', 'strife', 'solitude', 'syndicate', 'blaze', 'frost', 'eclipse', 'shiver',
+  'apex', 'grim', 'dusk', 'shade', 'specter', 'cinder', 'venom', 'siphon', 'glitch', 'rift',
+  'nexus', 'pulse', 'surge', 'abyss', 'titan', 'aether', 'nova', 'chronos', 'hyper', 'drifter',
   'faze', 'optic', 'clout', 'drip', 'godly', 'snipes', 'tap', 'frag', 'aim', 'vibe',
-  'grim', 'glitch', 'reaper', 'slayer', 'toxic', 'savage', 'insane', 'clutch', 'streak', 'flex',
-  'hyped', 'demon', 'grind', 'lockin', 'shifty', 'speed', 'drift', 'nitro', 'pulse', 'shock',
-  'stun', 'peek', 'headshot', 'scope', 'ghost', 'ninja', 'rogue', 'hunter', 'raider', 'titan',
-  'rebel', 'havoc', 'rage', 'fatal', 'lethal', 'killer', 'deadly', 'snipe', 'strafe', 'flick',
+  'glitch', 'reaper', 'slayer', 'toxic', 'savage', 'insane', 'clutch', 'streak', 'flex',
+  'hyped', 'demon', 'grind', 'lockin', 'shifty', 'speed', 'drift', 'nitro', 'shock',
+  'stun', 'peek', 'headshot', 'scope', 'ninja', 'rogue', 'hunter', 'raider',
+  'rebel', 'rage', 'fatal', 'lethal', 'killer', 'deadly', 'snipe', 'strafe', 'flick',
   'recoil', 'sweat', 'carry', 'smurf', 'ranked', 'predator', 'unreal', 'mythic', 'exotic', 'cracked',
   'fused', 'amped', 'blitz', 'rush', 'tilt', 'drop', 'zone', 'looted', 'shield', 'armor'
 ];
 
 const JAPANESE_AESTHETIC_WORDS = [
-  'kumo', 'yuki', 'kage', 'tsuki', 'hana', 'sora', 'shin', 'kami', 'ryu', 'oni',
-  'ken', 'zen', 'mizu', 'kai', 'yami', 'haze', 'kawa', 'nami', 'kuro', 'shiro',
+  'kuro', 'kumo', 'yuki', 'kage', 'tsuki', 'hana', 'sora', 'shin', 'kami', 'ryu', 'oni',
+  'ken', 'zen', 'mizu', 'kai', 'yami', 'haze', 'kawa', 'nami', 'shiro',
   'neko', 'kitsune', 'samurai', 'ronin', 'senpai', 'hikari', 'chiyo', 'haru', 'aki', 'fuyu',
   'natsu', 'ren', 'jin', 'rei', 'rin', 'kyo', 'toru', 'akira', 'kaede', 'sakura',
   'momiji', 'hotaru', 'tsubaki', 'ayame', 'kaida', 'kazuki', 'daiki', 'satoshi', 'ryota', 'shota',
@@ -162,32 +182,23 @@ function generateNextHandle(pattern) {
 
   // 7. Real Dictionary OG Words
   if (pattern === 'OG_DICTIONARY') {
-    const w = OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
-    const affixes = ['', '', '', 'x', 'z', '_', 'og', 'hq', '7', '9'];
-    const aff = affixes[Math.floor(Math.random() * affixes.length)];
-    return Math.random() > 0.8 ? (Math.random() > 0.5 ? w + aff : aff + w) : w;
+    return OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
   }
 
   // 8. Gaming & Clout Handles
   if (pattern === 'HYPE_GAMING') {
     const w = HYPE_GAMING_WORDS[Math.floor(Math.random() * HYPE_GAMING_WORDS.length)];
-    const affixes = ['', '', 'x', 'z', '_', 'fn', 'gg', 'up', '77', '99', 'god'];
-    const aff = affixes[Math.floor(Math.random() * affixes.length)];
-    return Math.random() > 0.7 ? (Math.random() > 0.5 ? w + aff : aff + w) : w;
+    return Math.random() > 0.85 ? (Math.random() > 0.5 ? `v_${w}` : `x${w}`) : w;
   }
 
   // 9. Japanese Romaji / Aesthetic
   if (pattern === 'JAPANESE_AESTHETIC') {
-    const w = JAPANESE_AESTHETIC_WORDS[Math.floor(Math.random() * JAPANESE_AESTHETIC_WORDS.length)];
-    return Math.random() > 0.8 ? w + (Math.random() > 0.5 ? 'x' : 'z') : w;
+    return JAPANESE_AESTHETIC_WORDS[Math.floor(Math.random() * JAPANESE_AESTHETIC_WORDS.length)];
   }
 
   // 10. First Names / IRL
   if (pattern === 'FIRST_NAMES') {
-    const w = FIRST_NAMES_LIST[Math.floor(Math.random() * FIRST_NAMES_LIST.length)];
-    const affixes = ['', '', '', 'x', 'z', '_', 'real', 'its'];
-    const aff = affixes[Math.floor(Math.random() * affixes.length)];
-    return Math.random() > 0.8 ? (Math.random() > 0.5 ? aff + w : w + aff) : w;
+    return FIRST_NAMES_LIST[Math.floor(Math.random() * FIRST_NAMES_LIST.length)];
   }
 
   // 11. Numeric Clean (777 / 1337 / Quad)
