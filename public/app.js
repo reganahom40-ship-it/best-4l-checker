@@ -19,6 +19,8 @@ let checkTimestamps = [];
 let cpsTimer = null;
 let customHandlesList = [];
 let customQueueIndex = 0;
+let ogWordIndex = 0;
+window.discoveredHitsSet = new Set();
 
 // ----------------------------------------------------------
 // 1. COMPREHENSIVE 17-PLATFORM REGISTRY
@@ -57,35 +59,29 @@ const DIGITS = '0123456789';
 const ALPHANUM = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
 const OG_DICTIONARY_WORDS = [
-  'zenith', 'phantom', 'wraith', 'cypher', 'kuro', 'solis', 'onyx', 'reign', 'vortex', 'havoc',
-  'echo', 'mirage', 'valkyrie', 'strife', 'solitude', 'syndicate', 'blaze', 'frost', 'eclipse', 'shiver',
-  'apex', 'grim', 'dusk', 'shade', 'specter', 'cinder', 'venom', 'siphon', 'glitch', 'rift',
-  'nexus', 'pulse', 'surge', 'abyss', 'titan', 'aether', 'nova', 'chronos', 'hyper', 'drifter',
-  'zen', 'envy', 'wrath', 'luster', 'radiance', 'seraph', 'cipher', 'relic', 'arcane', 'mythic',
-  'valiant', 'lucid', 'sinister', 'tempest', 'savage', 'fatal', 'scythe', 'ruin', 'purge', 'bane',
-  'omen', 'haze', 'reaper', 'covert', 'stealth', 'silent', 'frenzy', 'vicious', 'carnage', 'slayer',
-  'chaos', 'revolt', 'anarchy', 'vengeance', 'overlord', 'divine', 'ascend', 'immortal', 'eternal', 'infinite',
-  'obsidian', 'crimson', 'scarlet', 'velvet', 'sapphire', 'cobalt', 'emerald', 'amethyst', 'onyxcore', 'solaris',
-  'lunar', 'celestial', 'nebula', 'supernova', 'singularity', 'paragon', 'vanguard', 'sentinel',
-  'scarfo', 'corkwell', 'royce', 'kiefer', 'hoyte', 'kolve', 'raynard', 'darocha', 'gianni', 'hurda',
-  'bogdanov', 'redar', 'stehli', 'leckrone', 'despain', 'caponigro', 'lambertson', 'shouman', 'sappington', 'candelori',
-  'whitestone', 'romain', 'phaup', 'villaman', 'hagerstrom', 'gaudreault', 'labriola', 'sigsby', 'stumper', 'lucian',
-  'barrnett', 'tallerico', 'litteken', 'reustle', 'serpa', 'zimmerman', 'humbarger', 'louwers', 'quest', 'tae',
-  'salonia', 'sokolosky', 'dahilig', 'stanwick', 'debiasse', 'courter', 'delee', 'elsdon', 'boskey', 'hendron',
-  'wass', 'helmin', 'esparza', 'oellerich', 'moeung', 'kocot', 'duran', 'wilhelm', 'pedrero', 'detrich',
-  'schreifels', 'lloyd', 'ballina', 'barngrover', 'paulemon', 'hehl', 'augustyniak', 'ryker', 'halamicek', 'radvansky',
-  'abadie', 'basore', 'leining', 'muenks', 'kupres', 'bertot', 'ulett', 'tangi', 'octave', 'basnight',
-  'candle', 'monter', 'panyard', 'balsbaugh', 'luthi', 'bondaruk', 'ebrahim', 'reill', 'shoap', 'decosmo',
-  'dvix', 'kvamme', 'kehrob', 'oamva', 'wphr', 'marcone', 'trahin', 'knode',
-  'ghost', 'blade', 'demon', 'angel', 'cyber', 'matrix', 'storm', 'vamp', 'draco', 'opium',
-  'beast', 'flame', 'blood', 'grave', 'magic', 'viper', 'night', 'prime', 'rebel', 'siren',
-  'void', 'flux', 'glow', 'soul', 'pure', 'zero', 'neon', 'fade', 'dark', 'cult',
-  'mint', 'wave', 'sage', 'lust', 'vibe', 'hype', 'bolt', 'sync', 'myth', 'evil',
-  'holy', 'rare', 'drip', 'crave', 'bliss', 'saint', 'curse', 'spell', 'charm', 'witch',
-  'devil', 'skull', 'knife', 'sword', 'crown', 'throne', 'spark', 'flash', 'inferno', 'smoke',
-  'mist', 'twilight', 'comet', 'meteor', 'orbit', 'quasar', 'pulsar', 'stellar', 'ocean', 'river',
-  'cliff', 'stone', 'flint', 'steel', 'iron', 'gold', 'silk', 'pearl', 'ruby', 'diamond',
-  'amber', 'jade', 'opal', 'solace', 'sanctum', 'archon', 'revenant', 'chimera'
+  'void', 'echo', 'apex', 'grim', 'dusk', 'nova', 'rift', 'zen', 'onyx', 'flux',
+  'glow', 'soul', 'pure', 'zero', 'neon', 'fade', 'dark', 'cult', 'mint', 'wave',
+  'sage', 'lust', 'vibe', 'hype', 'bolt', 'sync', 'myth', 'evil', 'holy', 'rare',
+  'drip', 'crave', 'bliss', 'saint', 'curse', 'spell', 'charm', 'witch', 'devil',
+  'skull', 'knife', 'sword', 'crown', 'throne', 'spark', 'flash', 'smoke', 'mist',
+  'orbit', 'ocean', 'river', 'cliff', 'stone', 'flint', 'steel', 'iron', 'gold',
+  'silk', 'pearl', 'ruby', 'amber', 'jade', 'opal', 'frost', 'blaze', 'venom',
+  'shade', 'haven', 'karma', 'wrath', 'envy', 'pride', 'greed', 'sloth', 'glory',
+  'mercy', 'grace', 'faith', 'truth', 'trust', 'valor', 'vigor', 'vital', 'vivid',
+  'panic', 'frenzy', 'chaos', 'reign', 'havoc', 'abyss', 'titan', 'seraph', 'relic',
+  'arcane', 'purge', 'bane', 'omen', 'haze', 'reaper', 'silent', 'fatal', 'scythe',
+  'ruin', 'slayer', 'revolt', 'divine', 'ascend', 'lunar', 'nebula', 'phantom',
+  'wraith', 'cypher', 'solis', 'vortex', 'mirage', 'strife', 'cinder', 'siphon',
+  'glitch', 'nexus', 'pulse', 'surge', 'aether', 'hyper', 'luster', 'lucid',
+  'tempest', 'savage', 'covert', 'carnage', 'velvet', 'crimson', 'scarlet', 'cobalt',
+  'emerald', 'solaris', 'paragon', 'sentinel', 'solace', 'sanctum', 'archon',
+  'revenant', 'chimera', 'valkyrie', 'solitude', 'syndicate', 'eclipse', 'specter',
+  'chronos', 'drifter', 'radiance', 'cipher', 'mythic', 'valiant', 'sinister',
+  'stealth', 'vicious', 'anarchy', 'immortal', 'eternal', 'infinite', 'obsidian',
+  'sapphire', 'amethyst', 'celestial', 'supernova', 'vanguard', 'ghost', 'blade',
+  'demon', 'angel', 'cyber', 'matrix', 'storm', 'vamp', 'draco', 'opium', 'beast',
+  'flame', 'blood', 'grave', 'magic', 'viper', 'night', 'prime', 'rebel', 'siren',
+  'twilight', 'comet', 'meteor', 'quasar', 'pulsar', 'stellar', 'diamond'
 ];
 
 const HYPE_GAMING_WORDS = [
@@ -182,7 +178,9 @@ function generateNextHandle(pattern) {
 
   // 7. OG Real Dictionary Words
   if (pattern === 'OG_HANDLES' || pattern === 'OG_DICTIONARY') {
-    return OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
+    const word = OG_DICTIONARY_WORDS[ogWordIndex % OG_DICTIONARY_WORDS.length];
+    ogWordIndex++;
+    return word;
   }
 
   // 8. Gaming & Clout Handles
@@ -326,9 +324,11 @@ window.resetScannerStats = function() {
   window.stopScannerEngine();
   window.totalCheckedCount = 0;
   window.availableHits = [];
+  window.discoveredHitsSet = new Set();
   window.takenCount = 0;
   window.queueCursor = 0;
   customQueueIndex = 0;
+  ogWordIndex = 0;
   checkTimestamps = [];
 
   updateDashboardMetrics();
@@ -477,6 +477,14 @@ async function executeHandleCheck(handle) {
 }
 
 async function handleDiscoveryHit(handle, platform, checkResult) {
+  const hitKey = `${platform.toLowerCase()}:${handle.toLowerCase()}`;
+  if (window.discoveredHitsSet && window.discoveredHitsSet.has(hitKey)) {
+    return; // Ignore duplicate hit
+  }
+  if (window.discoveredHitsSet) {
+    window.discoveredHitsSet.add(hitKey);
+  }
+
   const score = handle.length <= 3 ? '★ 99 Score' : (handle.length === 4 ? '★ 96 Score' : '★ 91 Score');
   const hit = {
     handle: handle,
