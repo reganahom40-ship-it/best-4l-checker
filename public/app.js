@@ -136,6 +136,27 @@ const REPEATING_SYMMETRICAL_LIST = [
   'rrrr', 'ssss', 'tttt', 'wwww'
 ];
 
+const HIGH_HIT_OG_HANDLES = [
+  'v_zenith', 'v_phantom', 'v_wraith', 'v_cypher', 'v_kuro', 'v_solis', 'v_onyx', 'v_reign',
+  'v_vortex', 'v_havoc', 'v_echo', 'v_mirage', 'v_valkyrie', 'v_strife', 'v_solitude', 'v_syndicate',
+  'v_blaze', 'v_frost', 'v_eclipse', 'v_shiver', 'v_apex', 'v_grim', 'v_dusk', 'v_shade',
+  'v_specter', 'v_cinder', 'v_venom', 'v_siphon', 'v_glitch', 'v_rift', 'v_nexus', 'v_pulse',
+  'v_surge', 'v_abyss', 'v_titan', 'v_aether', 'v_nova', 'v_hyper', 'v_drifter', 'v_seraph',
+  'xzenith', 'xsolis', 'xwraith', 'xreign', 'xhavoc', 'xonyx', 'xkuro', 'xglitch',
+  'xpulse', 'xcinder', 'xdrifter', 'xaether', 'xseraph', 'xvaliant', 'xtempest', 'xsavage',
+  'solis_', 'kuro_', 'wraith_', 'reign_', 'havoc_', 'cinder_', 'glitch_', 'nexus_',
+  'rift_', 'pulse_', 'abyss_', 'titan_', 'aether_', 'nova_', 'drifter_', 'seraph_',
+  'zexo', 'vlux', 'kuroz', 'nyxo', 'vexo', 'zivo', 'razeo', 'solix',
+  'lunax', 'aethx', 'cyphr', 'duskz', 'grimz', 'shvr', 'pyrx', 'flxz',
+  'zynx', 'vyrx', 'nexuz', 'astrx', 'cindx', 'valx', 'reigx', 'havcx',
+  'darkzen', 'voidkuro', 'frostapex', 'grimsolis', 'novawraith', 'shadowreign', 'bloodhavoc', 'pureonyx',
+  'cyberkuro', 'lunarvex', 'astralpulse', 'phantomrift', 'cinderglitch', 'valkyrienexus', 'solituderuin', 'syndicateomen',
+  'scarfo_', 'corkwell_', 'v_royce', 'v_kiefer', 'v_hoyte', 'v_kolve', 'v_raynard', 'v_darocha',
+  'v_gianni', 'v_hurda', 'v_bogdanov', 'v_redar', 'v_stehli', 'v_leckrone', 'v_despain', 'v_solis',
+  'v_capo', 'v_lambertson', 'v_shouman', 'v_candelori', 'v_whitestone', 'v_romain', 'v_phaup', 'v_villaman',
+  'v_sigsby', 'v_stumper', 'v_lucian', 'v_barrnett', 'v_tallerico', 'v_litteken', 'v_reustle', 'v_serpa'
+];
+
 function generateNextHandle(pattern) {
   // 1. 2L Pure Alpha (AA - ZZ)
   if (pattern === '2L_ALPHA') {
@@ -180,8 +201,15 @@ function generateNextHandle(pattern) {
     return c1 + v1 + c2 + v2 + c3;
   }
 
-  // 7. OG Handles & Real Words
+  // 7. OG Handles & Real Words (High-Hit-Rate Blends)
   if (pattern === 'OG_HANDLES' || pattern === 'OG_DICTIONARY') {
+    const r = Math.random();
+    if (r < 0.65) {
+      return HIGH_HIT_OG_HANDLES[Math.floor(Math.random() * HIGH_HIT_OG_HANDLES.length)];
+    } else if (r < 0.85) {
+      const w = OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
+      return Math.random() > 0.5 ? `v_${w}` : `x${w}`;
+    }
     return OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
   }
 
@@ -226,8 +254,8 @@ function generateNextHandle(pattern) {
     }
   }
 
-  // Fallback: OG Handles
-  return OG_DICTIONARY_WORDS[Math.floor(Math.random() * OG_DICTIONARY_WORDS.length)];
+  // Fallback: High Hit OG Handles
+  return HIGH_HIT_OG_HANDLES[Math.floor(Math.random() * HIGH_HIT_OG_HANDLES.length)];
 }
 
 window.selectGenPattern = function(pattern, el) {
@@ -251,9 +279,9 @@ window.selectGenPattern = function(pattern, el) {
 window.loadPresetOGHandles = function() {
   const area = document.getElementById('dashWordlistArea');
   if (area) {
-    area.value = OG_DICTIONARY_WORDS.slice(0, 100).join('\n');
+    area.value = HIGH_HIT_OG_HANDLES.join('\n');
     window.injectCustomWordlist();
-    showToast(`👑 Loaded ${Math.min(100, OG_DICTIONARY_WORDS.length)} OG Handles into queue!`);
+    showToast(`👑 Loaded ${HIGH_HIT_OG_HANDLES.length} High-Hit OG Handles into queue!`);
   }
 };
 
